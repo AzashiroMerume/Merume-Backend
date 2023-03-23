@@ -16,12 +16,12 @@ pub async fn channels_handler(
     ws.on_upgrade(|socket| websocket(socket, State(client)))
 }
 
-async fn websocket(mut socket: WebSocket, state: State<Client>) {
+async fn websocket(mut socket: WebSocket, client: State<Client>) {
     // By splitting we can send and receive at the same time.
     let (mut sender, receiver) = socket.split();
 
     // Retrieve all channels from the "channels" collection
-    let collection = state.database("Merume").collection("channels");
+    let collection = client.database("Merume").collection("channels");
 
     // Send the initial data over the WebSocket as a JSON string
     let channels: Vec<Channel> = collection

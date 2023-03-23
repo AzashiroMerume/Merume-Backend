@@ -1,3 +1,4 @@
+pub mod auth_handler;
 pub mod common_handler;
 pub mod websockets;
 
