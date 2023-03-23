@@ -2,9 +2,6 @@ mod handlers;
 mod models;
 mod responses;
 
-use std::net::SocketAddr;
-use std::time::Duration;
-
 use axum::{
     http::{header, HeaderValue},
     routing::get,
@@ -20,11 +17,11 @@ use tower_http::{
     trace::TraceLayer,
 };
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+// use structopt::StructOpt;
+use std::{net::SocketAddr, time::Duration};
 
-use handlers::{
-    channels_handler::{get_channels, get_channels_by_id},
-    common_handler::handler_404,
-};
+use handlers::common_handler::handler_404;
+use handlers::websockets::channels_handler;
 
 #[tokio::main]
 async fn main() {
@@ -51,7 +48,7 @@ async fn main() {
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
             std::env::var("RUST_LOG").unwrap_or_else(|_| {
-                "rust_axum=debug,axum=debug,tower_http=debug,mongodb=debug".into()
+                "example_websockets=debug,rust_axum=debug,axum=debug,tower_http=debug,mongodb=debug".into()
             }),
         ))
         .with(tracing_subscriber::fmt::layer())
@@ -75,9 +72,7 @@ async fn main() {
     let client = Client::with_options(client_options).unwrap();
     let server_header_value = HeaderValue::from_static("Merume");
 
-    let channel_routes = Router::new()
-        .route("/", get(get_channels))
-        .route("/:id", get(get_channels_by_id));
+    let channel_routes = Router::new().route("/", get(channels_handler::channels_handler));
 
     // build our application with a route
     let app = Router::new()
@@ -93,7 +88,7 @@ async fn main() {
         ));
     let app = app.fallback(handler_404).with_state(client);
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    let addr = SocketAddr::from(([127, 0, 0, 1], 8081));
     tracing::debug!("listening on {}", addr);
 
     axum::Server::bind(&addr)
