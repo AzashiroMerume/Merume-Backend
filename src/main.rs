@@ -73,7 +73,9 @@ async fn main() {
     let client = Client::with_options(client_options).unwrap();
     let server_header_value = HeaderValue::from_static("Merume");
 
-    let auth_routes = Router::new().route("/login", post(auth_handler::login));
+    let auth_routes = Router::new()
+        .route("/register", post(auth_handler::register))
+        .route("/login", post(auth_handler::login));
     let channel_routes = Router::new().route("/", get(channels_handler::channels_handler));
 
     // build our application with a route
