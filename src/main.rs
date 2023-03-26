@@ -20,9 +20,9 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 // use structopt::StructOpt;
 use std::{net::SocketAddr, time::Duration};
 
-use handlers::auth_handler;
+use handlers::auth_handlers;
 use handlers::common_handler;
-use handlers::websockets::channels_handler;
+use handlers::websockets::user_channels_handler;
 
 #[tokio::main]
 async fn main() {
@@ -74,9 +74,9 @@ async fn main() {
     let server_header_value = HeaderValue::from_static("Merume");
 
     let auth_routes = Router::new()
-        .route("/register", post(auth_handler::register))
-        .route("/login", post(auth_handler::login));
-    let channel_routes = Router::new().route("/", get(channels_handler::channels_handler));
+        .route("/register", post(auth_handlers::register_handler::register))
+        .route("/login", post(auth_handlers::login_handler::login));
+    let channel_routes = Router::new().route("/", get(user_channels_handler::channels_handler));
 
     // build our application with a route
     let app = Router::new()

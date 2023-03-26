@@ -1,1 +1,1 @@
-pub mod channels_handler;
+pub mod user_channels_handler;

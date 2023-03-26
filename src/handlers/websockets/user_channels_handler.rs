@@ -1,4 +1,4 @@
-use crate::models::channels_model::Channel;
+use crate::models::channel_model::Channel;
 use axum::{
     extract::{
         ws::{Message, WebSocket, WebSocketUpgrade},
