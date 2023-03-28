@@ -1,6 +1,7 @@
-pub mod handlers;
+mod handlers;
 mod models;
 mod responses;
+mod utils;
 
 use axum::{
     http::{header, HeaderValue},
@@ -43,8 +44,8 @@ async fn main() {
         .expect("Failed to load `MONGO_MAX_POOL_SIZE` environment variable.")
         .parse()
         .expect("Failed to parse `MONGO_MAX_POOL_SIZE` environment variable.");
-    // let mongo_db: String =
-    //     std::env::var("MONGO_DB").expect("Failed to load `MONGO_DB` environment variable.");
+    let _jwt_secret: String =
+        std::env::var("JWT_SECRET").expect("Failed to load `JWT_SECRET` environment variable.");
 
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(

@@ -1,5 +1,6 @@
 use crate::models::{auth_model::RegisterPayload, user_model::User};
 use crate::responses::main_response::MainResponse;
+use crate::utils::jwt::generate_jwt_token;
 
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use bson::{doc, oid::ObjectId};
@@ -47,18 +48,24 @@ pub async fn register(
         password: payload.password,
     };
 
-    let result = collection.insert_one(user, None).await;
+    let result = collection.insert_one(user.to_owned(), None).await;
 
     match result {
-        Ok(inserted) => (
-            StatusCode::CREATED,
-            Json(MainResponse {
-                success: true,
-                data: Some(vec![inserted]),
-                error_message: None,
-            }),
-        )
-            .into_response(),
+        Ok(_) => {
+            let jwt_secret = std::env::var("JWT_SECRET");
+
+            let token =
+                generate_jwt_token(&user.id.unwrap(), jwt_secret.unwrap().as_str()).unwrap();
+            return (
+                StatusCode::CREATED,
+                Json(MainResponse {
+                    success: true,
+                    data: Some(vec![token]),
+                    error_message: None,
+                }),
+            )
+                .into_response();
+        }
         Err(e) => {
             eprintln!("Error inserting user: {:?}", e);
             (

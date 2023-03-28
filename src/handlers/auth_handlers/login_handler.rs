@@ -1,5 +1,6 @@
 use crate::models::{auth_model::LoginPayload, user_model::User};
 use crate::responses::main_response::MainResponse;
+use crate::utils::jwt::generate_jwt_token;
 
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use bson::doc;
@@ -60,9 +61,23 @@ pub async fn login(
         return (StatusCode::BAD_REQUEST, Json(main_response));
     }
 
+    let jwt_secret = std::env::var("JWT_SECRET");
+
+    let token = match generate_jwt_token(&user.id.unwrap(), jwt_secret.unwrap().as_str()) {
+        Ok(token) => token,
+        Err(e) => {
+            let main_response = MainResponse {
+                success: false,
+                data: None,
+                error_message: Some(e),
+            };
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(main_response));
+        }
+    };
+
     let main_response = MainResponse {
         success: true,
-        data: Some(vec![user.id.unwrap()]),
+        data: Some(vec![token]),
         error_message: None,
     };
     (StatusCode::OK, Json(main_response))
