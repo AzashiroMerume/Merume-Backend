@@ -1,10 +1,12 @@
 mod handlers;
+mod middlewares;
 mod models;
 mod responses;
 mod utils;
 
 use axum::{
     http::{header, HeaderValue},
+    middleware,
     routing::{get, post},
     Router,
 };
@@ -13,6 +15,7 @@ use mongodb::{
     options::{ClientOptions, Compressor},
     Client,
 };
+use tower::ServiceBuilder;
 use tower_http::{
     limit::RequestBodyLimitLayer, set_header::SetResponseHeaderLayer, timeout::TimeoutLayer,
     trace::TraceLayer,
@@ -24,6 +27,8 @@ use std::{net::SocketAddr, time::Duration};
 use handlers::auth_handlers;
 use handlers::common_handler;
 use handlers::websockets::user_channels_handler;
+
+use middlewares::auth_middlewares;
 
 #[tokio::main]
 async fn main() {
@@ -44,7 +49,7 @@ async fn main() {
         .expect("Failed to load `MONGO_MAX_POOL_SIZE` environment variable.")
         .parse()
         .expect("Failed to parse `MONGO_MAX_POOL_SIZE` environment variable.");
-    let _jwt_secret: String =
+    let jwt_secret: String =
         std::env::var("JWT_SECRET").expect("Failed to load `JWT_SECRET` environment variable.");
 
     tracing_subscriber::registry()
@@ -77,21 +82,30 @@ async fn main() {
     let auth_routes = Router::new()
         .route("/register", post(auth_handlers::register_handler::register))
         .route("/login", post(auth_handlers::login_handler::login));
-    let channel_routes = Router::new().route("/", get(user_channels_handler::channels_handler));
+
+    let user_channels_routes = Router::new()
+        .route("/", get(user_channels_handler::channels_handler))
+        .route_layer(middleware::from_fn(auth_middlewares::auth));
 
     // build our application with a route
     let app = Router::new()
-        .nest("/channels", channel_routes)
+        .route("/test", get(common_handler::test_handler))
+        .route_layer(middleware::from_fn(auth_middlewares::auth))
+        .nest("/channels", user_channels_routes)
         .nest("/auth", auth_routes)
-        // timeout requests after 10 secs, returning 408 status code
-        .layer(TimeoutLayer::new(Duration::from_secs(10)))
-        // don't allow request bodies larger than 1024 bytes, returning 413 status code
-        .layer(RequestBodyLimitLayer::new(1024))
-        .layer(TraceLayer::new_for_http())
-        .layer(SetResponseHeaderLayer::if_not_present(
-            header::SERVER,
-            server_header_value,
-        ));
+        .layer(
+            ServiceBuilder::new()
+                // don't allow request bodies larger than 1024 bytes, returning 413 status code
+                .layer(RequestBodyLimitLayer::new(1024))
+                .layer(TraceLayer::new_for_http())
+                .layer(SetResponseHeaderLayer::if_not_present(
+                    header::SERVER,
+                    server_header_value,
+                ))
+                // timeout requests after 10 secs, returning 408 status code
+                .layer(TimeoutLayer::new(Duration::from_secs(10))),
+        );
+
     let app = app.fallback(common_handler::handler_404).with_state(client);
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 8081));

@@ -63,7 +63,7 @@ pub async fn login(
 
     let jwt_secret = std::env::var("JWT_SECRET");
 
-    let token = match generate_jwt_token(&user.id.unwrap(), jwt_secret.unwrap().as_str()) {
+    let token = match generate_jwt_token(&user.id.unwrap().to_string(), &jwt_secret.unwrap()) {
         Ok(token) => token,
         Err(e) => {
             let main_response = MainResponse {

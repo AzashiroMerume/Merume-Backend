@@ -55,7 +55,7 @@ pub async fn register(
             let jwt_secret = std::env::var("JWT_SECRET");
 
             let token =
-                generate_jwt_token(&user.id.unwrap(), jwt_secret.unwrap().as_str()).unwrap();
+                generate_jwt_token(&user.id.unwrap().to_string(), &jwt_secret.unwrap()).unwrap();
             return (
                 StatusCode::CREATED,
                 Json(MainResponse {

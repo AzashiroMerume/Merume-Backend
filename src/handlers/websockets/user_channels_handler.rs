@@ -1,10 +1,11 @@
-use crate::models::channel_model::Channel;
+use crate::{models::channel_model::Channel, utils::jwt::Claims};
 use axum::{
     extract::{
         ws::{Message, WebSocket, WebSocketUpgrade},
         State,
     },
     response::IntoResponse,
+    Extension,
 };
 use futures::{SinkExt, StreamExt, TryStreamExt};
 use mongodb::Client;
@@ -12,11 +13,16 @@ use mongodb::Client;
 pub async fn channels_handler(
     ws: WebSocketUpgrade,
     State(client): State<Client>,
+    Extension(token_info): Extension<Claims>,
 ) -> impl IntoResponse {
-    ws.on_upgrade(|socket| websocket(socket, State(client)))
+    ws.on_upgrade(|socket| websocket(socket, State(client), Extension(token_info)))
 }
 
-async fn websocket(mut socket: WebSocket, client: State<Client>) {
+async fn websocket(
+    mut socket: WebSocket,
+    client: State<Client>,
+    Extension(token_info): Extension<Claims>,
+) {
     // By splitting we can send and receive at the same time.
     let (mut sender, receiver) = socket.split();
 
