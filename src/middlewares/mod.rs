@@ -1,1 +1,1 @@
-pub mod auth_middlewares;
+pub mod auth_middleware;

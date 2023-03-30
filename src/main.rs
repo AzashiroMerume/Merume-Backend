@@ -28,7 +28,7 @@ use handlers::auth_handlers;
 use handlers::common_handler;
 use handlers::websockets::user_channels_handler;
 
-use middlewares::auth_middlewares;
+use middlewares::auth_middleware;
 
 #[tokio::main]
 async fn main() {
@@ -49,7 +49,7 @@ async fn main() {
         .expect("Failed to load `MONGO_MAX_POOL_SIZE` environment variable.")
         .parse()
         .expect("Failed to parse `MONGO_MAX_POOL_SIZE` environment variable.");
-    let jwt_secret: String =
+    let _jwt_secret: String =
         std::env::var("JWT_SECRET").expect("Failed to load `JWT_SECRET` environment variable.");
 
     tracing_subscriber::registry()
@@ -85,12 +85,12 @@ async fn main() {
 
     let user_channels_routes = Router::new()
         .route("/", get(user_channels_handler::channels_handler))
-        .route_layer(middleware::from_fn(auth_middlewares::auth));
+        .route_layer(middleware::from_fn(auth_middleware::auth));
 
     // build our application with a route
     let app = Router::new()
         .route("/test", get(common_handler::test_handler))
-        .route_layer(middleware::from_fn(auth_middlewares::auth))
+        .route_layer(middleware::from_fn(auth_middleware::auth))
         .nest("/channels", user_channels_routes)
         .nest("/auth", auth_routes)
         .layer(

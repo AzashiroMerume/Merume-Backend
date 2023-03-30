@@ -5,6 +5,7 @@ use axum::{
     response::Response,
 };
 
+// Make validation for id here not in handler
 pub async fn auth<B>(mut req: Request<B>, next: Next<B>) -> Result<Response, StatusCode> {
     let auth_header = req
         .headers()
