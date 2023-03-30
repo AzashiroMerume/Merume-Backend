@@ -26,7 +26,7 @@ use std::{net::SocketAddr, time::Duration};
 
 use handlers::auth_handlers;
 use handlers::common_handler;
-use handlers::websockets::user_channels_handler;
+use handlers::websockets::channels_handlers;
 
 use middlewares::auth_middleware;
 
@@ -84,7 +84,7 @@ async fn main() {
         .route("/login", post(auth_handlers::login_handler::login));
 
     let user_channels_routes = Router::new()
-        .route("/", get(user_channels_handler::channels_handler))
+        .route("/", get(channels_handlers::user_channels_handler::channels_handler))
         .route_layer(middleware::from_fn(auth_middleware::auth));
 
     // build our application with a route
