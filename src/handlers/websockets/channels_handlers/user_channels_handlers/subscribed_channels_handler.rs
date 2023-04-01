@@ -15,7 +15,7 @@ use bson::{doc, oid::ObjectId};
 use futures::{SinkExt, StreamExt, TryStreamExt};
 use mongodb::{Client, Collection};
 
-pub async fn channels_handler(
+pub async fn subscribed_channels_handler(
     ws: WebSocketUpgrade,
     State(client): State<Client>,
     Extension(token_info): Extension<Claims>,
