@@ -86,9 +86,17 @@ async fn main() {
     let user_channels_routes = Router::new()
         .route(
             "/subscriptions",
-            get(user_channels_handlers::subscribed_channels_handler::subscribed_channels_handler),
+            get(user_channels_handlers::subscribed_channels_handler::subscribed_channels),
         )
-        .route_layer(middleware::from_fn(auth_middleware::auth));
+        .route(
+            "/created",
+            get(user_channels_handlers::created_channels_handler::created_channels),
+        )
+        .route(
+            "/new",
+            post(user_channels_handlers::new_channel_handler::new_channel),
+        )
+        .layer(middleware::from_fn(auth_middleware::auth));
 
     // build our application with a route
     let app = Router::new()

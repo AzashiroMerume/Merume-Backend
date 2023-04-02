@@ -11,3 +11,11 @@ pub struct Channel {
     pub description: Option<String>,
     pub base_image: Option<String>,
 }
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub struct ChannelPayload {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub base_image: Option<String>,
+}

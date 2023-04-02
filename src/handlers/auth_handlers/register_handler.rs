@@ -19,13 +19,12 @@ pub async fn register(
     if payload.nickname.is_none() || payload.email.is_none() || payload.password.is_none() {
         return (
             StatusCode::BAD_REQUEST,
-            Json(MainResponse::<User> {
+            Json(MainResponse {
                 success: false,
                 data: None,
                 error_message: Some("Missing fields".to_string()),
             }),
-        )
-            .into_response();
+        );
     }
 
     if let Some(_) = collection
@@ -33,12 +32,12 @@ pub async fn register(
         .await
         .unwrap()
     {
-        let main_response = MainResponse::<User> {
+        let main_response = MainResponse {
             success: false,
             data: None,
             error_message: Some("Email already in use".to_string()),
         };
-        return (StatusCode::BAD_REQUEST, Json(main_response)).into_response();
+        return (StatusCode::BAD_REQUEST, Json(main_response));
     }
 
     let user = User {
@@ -63,20 +62,18 @@ pub async fn register(
                     data: Some(vec![token]),
                     error_message: None,
                 }),
-            )
-                .into_response();
+            );
         }
         Err(e) => {
             eprintln!("Error inserting user: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(MainResponse::<User> {
+                Json(MainResponse {
                     success: false,
                     data: None,
                     error_message: Some("Failed to insert user".to_string()),
                 }),
             )
-                .into_response()
         }
     }
 }
