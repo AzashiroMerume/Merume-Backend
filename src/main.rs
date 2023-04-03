@@ -22,13 +22,13 @@ use tower_http::{
 };
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 // use structopt::StructOpt;
+use handlers::auth_handlers;
+use handlers::channels_handlers::user_channels_handlers;
+use handlers::common_handler;
+use middlewares::auth_middleware;
 use std::{net::SocketAddr, time::Duration};
 
-use handlers::auth_handlers;
-use handlers::common_handler;
-use handlers::websockets::channels_handlers::user_channels_handlers;
-
-use middlewares::auth_middleware;
+use crate::handlers::channels_handlers;
 
 #[tokio::main]
 async fn main() {
@@ -98,12 +98,20 @@ async fn main() {
         )
         .layer(middleware::from_fn(auth_middleware::auth));
 
+    let channels_routes = Router::new()
+        .route(
+            "/:channel_id",
+            post(channels_handlers::subscribe_to_channel_handler::subscribe_to_channel),
+        )
+        .layer(middleware::from_fn(auth_middleware::auth));
+
     // build our application with a route
     let app = Router::new()
         // .route("/test", get(common_handler::test_handler))
         // .route_layer(middleware::from_fn(auth_middleware::auth))
         .nest("/users/channels", user_channels_routes)
         .nest("/auth", auth_routes)
+        .nest("/channels", channels_routes)
         .layer(
             ServiceBuilder::new()
                 // don't allow request bodies larger than 1024 bytes, returning 413 status code
