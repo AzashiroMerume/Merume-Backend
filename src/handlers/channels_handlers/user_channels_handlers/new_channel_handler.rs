@@ -29,6 +29,17 @@ pub async fn new_channel(
         }
     };
 
+    if payload.name.is_none() || payload.description.is_none() {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(MainResponse {
+                success: false,
+                data: None,
+                error_message: Some("Missing fields".to_string()),
+            }),
+        );
+    }
+
     let channels_collection = client.database("Merume").collection::<Channel>("channels");
     let user_channels_collection = client
         .database("Merume")
@@ -62,7 +73,7 @@ pub async fn new_channel(
     let user_channel = UserChannel {
         id: Some(ObjectId::new()),
         user_id: Some(user_id),
-        channel_id: channel_id,
+        channel_id,
         is_owner: Some(true),
     };
 

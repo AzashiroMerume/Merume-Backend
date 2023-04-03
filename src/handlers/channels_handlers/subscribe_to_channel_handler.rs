@@ -67,6 +67,18 @@ pub async fn subscribe_to_channel(
         }
     };
 
+    // Check if the channel belongs to the user trying to subscribe
+    if channel.owner_id.unwrap() == user_id {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(MainResponse {
+                success: false,
+                data: None,
+                error_message: Some("You cannot subscribe to your own channel".to_string()),
+            }),
+        );
+    }
+
     let user_channels_collection = client
         .database("Merume")
         .collection::<UserChannel>("user_channels");
