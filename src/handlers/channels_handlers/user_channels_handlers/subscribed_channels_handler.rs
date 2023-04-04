@@ -1,13 +1,9 @@
-use crate::{
-    models::{channel_model::Channel, user_channel_model::UserChannel, user_model::User},
-    utils::jwt::Claims,
-};
+use crate::models::{channel_model::Channel, user_channel_model::UserChannel};
 use axum::{
     extract::{
         ws::{Message, WebSocket, WebSocketUpgrade},
         State,
     },
-    http::StatusCode,
     response::IntoResponse,
     Extension,
 };
@@ -18,21 +14,9 @@ use mongodb::{Client, Collection};
 pub async fn subscribed_channels(
     ws: WebSocketUpgrade,
     State(client): State<Client>,
-    Extension(token_info): Extension<Claims>,
+    Extension(user_id): Extension<ObjectId>,
 ) -> impl IntoResponse {
-    let user_id = match ObjectId::parse_str(&token_info.sub) {
-        Ok(id) => id,
-        Err(_) => return Err(StatusCode::UNAUTHORIZED),
-    };
-    let collection: Collection<User> = client.database("Merume").collection("users");
-
-    if let Ok(Some(_)) = collection.find_one(doc! {"_id": user_id}, None).await {
-        // Document with the specified ObjectId exists in the collection
-        Ok(ws.on_upgrade(move |socket| websocket(socket, State(client), user_id)))
-    } else {
-        // Document with the specified ObjectId does not exist in the collection
-        return Err(StatusCode::UNAUTHORIZED);
-    }
+    ws.on_upgrade(move |socket| websocket(socket, State(client), user_id))
 }
 
 async fn websocket(mut socket: WebSocket, client: State<Client>, user_id: ObjectId) {

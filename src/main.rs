@@ -94,20 +94,29 @@ async fn main() {
             "/new",
             post(user_channels_handlers::new_channel_handler::new_channel),
         )
-        //use from fn with state to make check to user existence in db only in middleware not in handlers
-        .layer(middleware::from_fn(auth_middleware::auth));
+        //use from_fn with state to make check to user existence in db only in middleware not in handlers
+        .layer(middleware::from_fn_with_state(
+            client.clone(),
+            auth_middleware::auth,
+        ));
 
     let channels_routes = Router::new()
         .route(
             "/:channel_id",
             post(channels_handlers::subscribe_to_channel_handler::subscribe_to_channel),
         )
-        .route_layer(middleware::from_fn(auth_middleware::auth));
+        .route_layer(middleware::from_fn_with_state(
+            client.clone(),
+            auth_middleware::auth,
+        ));
 
-    // build our application with a route
+    // build our application with a routes
     let app = Router::new()
         .route("/test", get(common_handler::test_handler))
-        .route_layer(middleware::from_fn(auth_middleware::auth))
+        .route_layer(middleware::from_fn_with_state(
+            client.clone(),
+            auth_middleware::auth,
+        ))
         .nest("/users/channels", user_channels_routes)
         .nest("/auth", auth_routes)
         .nest("/channels", channels_routes)

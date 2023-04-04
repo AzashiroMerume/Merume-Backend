@@ -1,7 +1,6 @@
 use crate::{
     models::{channel_model::Channel, user_channel_model::UserChannel},
     responses::main_response::MainResponse,
-    utils::jwt::Claims,
 };
 use axum::{
     extract::{Path, State},
@@ -14,23 +13,9 @@ use mongodb::Client;
 
 pub async fn subscribe_to_channel(
     State(client): State<Client>,
-    Extension(token_info): Extension<Claims>,
+    Extension(user_id): Extension<ObjectId>,
     Path(channel_id): Path<String>,
 ) -> impl IntoResponse {
-    let user_id = match ObjectId::parse_str(&token_info.sub) {
-        Ok(id) => id,
-        Err(_) => {
-            return (
-                StatusCode::UNAUTHORIZED,
-                Json(MainResponse {
-                    success: false,
-                    data: None,
-                    error_message: Some("Unauthorized".to_string()),
-                }),
-            )
-        }
-    };
-
     let channels_collection = client.database("Merume").collection::<Channel>("channels");
 
     let channel = match channels_collection
