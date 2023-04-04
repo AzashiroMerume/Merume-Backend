@@ -8,14 +8,13 @@ pub struct Post {
     pub id: Option<ObjectId>,
     pub owner_id: Option<ObjectId>,
     pub channel_id: Option<String>,
-    pub description: Option<String>,
-    pub base_image: Option<String>,
+    pub body: Option<String>,
+    pub images: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct PostPayload {
-    pub name: Option<String>,
-    pub description: Option<String>,
-    pub base_image: Option<String>,
+    pub body: Option<String>,
+    pub images: Option<String>,
 }
