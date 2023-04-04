@@ -27,41 +27,39 @@ async fn websocket(mut socket: WebSocket, client: State<Client>, user_id: Object
         client.database("Merume").collection("user_channels");
 
     let user_channels: Vec<UserChannel> = user_channels_col
-        .find(doc! {"user_id": user_id}, None)
+        .find(doc! {"user_id": user_id, "is_owner": false}, None)
         .await
         .unwrap()
         .try_collect()
         .await
         .unwrap();
 
-    // Retrieve all channels from the "channels" collection that are not owned by the user
-    let collection: Collection<Channel> = client.database("Merume").collection("channels");
+    // Retrieve the channels corresponding to the user's subscribed channels
     let channel_ids: Vec<ObjectId> = user_channels
         .iter()
-        .filter(|uc| uc.is_owner != Some(true))
         .map(|uc| uc.channel_id.clone().unwrap())
         .collect();
+    let channels_col: Collection<Channel> = client.database("Merume").collection("channels");
     let filter = doc! {"_id": {"$in": channel_ids}};
-
-    // Send the initial data over the WebSocket as a JSON string
-    let channels: Vec<Channel> = collection
-        .find(filter.clone(), None)
+    let channels: Vec<Channel> = channels_col
+        .find(filter.to_owned(), None)
         .await
         .unwrap()
         .try_collect()
         .await
         .unwrap();
+
     let json = serde_json::to_string(&channels).unwrap();
     sender.send(Message::Text(json)).await.unwrap();
 
     // Watch for changes in the collection
-    let mut change_stream = collection.watch(None, None).await.unwrap();
+    let mut change_stream = channels_col.watch(None, None).await.unwrap();
 
     loop {
         match change_stream.try_next().await {
             Ok(Some(change_event)) => {
                 // A change event occurred in the collection
-                let channels: Vec<Channel> = collection
+                let channels: Vec<Channel> = channels_col
                     .find(filter.clone(), None)
                     .await
                     .unwrap()
