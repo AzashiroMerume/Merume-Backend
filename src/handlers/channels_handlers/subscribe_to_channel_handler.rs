@@ -68,6 +68,21 @@ pub async fn subscribe_to_channel(
         .database("Merume")
         .collection::<UserChannel>("user_channels");
 
+    // Check if the user is already subscribed to the channel
+    if let Ok(Some(_)) = user_channels_collection
+        .find_one(doc! {"user_id": user_id, "channel_id": channel_id}, None)
+        .await
+    {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(MainResponse {
+                success: false,
+                data: None,
+                error_message: Some("User is already subscribed to this channel".to_string()),
+            }),
+        );
+    }
+
     let user_channel = UserChannel {
         id: Some(ObjectId::new()),
         user_id: Some(user_id),
