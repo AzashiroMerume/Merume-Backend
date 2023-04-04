@@ -94,7 +94,6 @@ async fn main() {
             "/new",
             post(user_channels_handlers::new_channel_handler::new_channel),
         )
-        //use from_fn with state to make check to user existence in db only in middleware not in handlers
         .layer(middleware::from_fn_with_state(
             client.clone(),
             auth_middleware::auth,

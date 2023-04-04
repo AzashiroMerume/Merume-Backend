@@ -4,7 +4,6 @@ use crate::{
         user_channel_model::UserChannel,
     },
     responses::main_response::MainResponse,
-    utils::jwt::Claims,
 };
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, Json};
 use bson::{doc, oid::ObjectId};
@@ -12,23 +11,9 @@ use mongodb::Client;
 
 pub async fn new_channel(
     State(client): State<Client>,
-    Extension(token_info): Extension<Claims>,
+    Extension(user_id): Extension<ObjectId>,
     Json(payload): Json<ChannelPayload>,
 ) -> impl IntoResponse {
-    let user_id = match ObjectId::parse_str(&token_info.sub) {
-        Ok(id) => id,
-        Err(_) => {
-            return (
-                StatusCode::UNAUTHORIZED,
-                Json(MainResponse {
-                    success: false,
-                    data: None,
-                    error_message: Some("Unauthorized".to_string()),
-                }),
-            )
-        }
-    };
-
     if payload.name.is_none() || payload.description.is_none() {
         return (
             StatusCode::BAD_REQUEST,

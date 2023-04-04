@@ -8,7 +8,6 @@ use axum::{
 use bson::{doc, oid::ObjectId};
 use mongodb::{Client, Collection};
 
-// Make validation for id here not in handler
 pub async fn auth<B>(
     State(client): State<Client>,
     mut req: Request<B>,
