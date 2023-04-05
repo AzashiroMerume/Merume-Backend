@@ -20,7 +20,7 @@ pub async fn created_channels(
 }
 
 async fn websocket(mut socket: WebSocket, client: State<Client>, user_id: ObjectId) {
-    let (mut sender, receiver) = socket.split();
+    let (mut sender, _receiver) = socket.split();
 
     let channels_col: Collection<Channel> = client.database("Merume").collection("channels");
 

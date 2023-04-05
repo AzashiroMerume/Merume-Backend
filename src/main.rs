@@ -4,7 +4,6 @@ mod models;
 mod responses;
 mod utils;
 
-use crate::handlers::channels_handlers;
 use axum::{
     http::{header, HeaderValue},
     middleware,
@@ -13,6 +12,7 @@ use axum::{
 };
 use dotenv::dotenv;
 use handlers::auth_handlers;
+use handlers::channels_handlers;
 use handlers::channels_handlers::user_channels_handlers;
 use handlers::common_handler;
 use middlewares::auth_middleware;
@@ -102,9 +102,13 @@ async fn main() {
     let channels_routes = Router::new()
         .route(
             "/:channel_id",
-            post(channels_handlers::subscribe_to_channel_handler::subscribe_to_channel),
+            get(channels_handlers::get_channel_handler::get_channel),
         )
-        .route_layer(middleware::from_fn_with_state(
+        .route(
+            "/:channel_id/subscribe",
+            get(channels_handlers::subscribe_to_channel_handler::subscribe_to_channel),
+        )
+        .layer(middleware::from_fn_with_state(
             client.clone(),
             auth_middleware::auth,
         ));

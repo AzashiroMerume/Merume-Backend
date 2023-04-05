@@ -70,7 +70,10 @@ pub async fn subscribe_to_channel(
 
     // Check if the user is already subscribed to the channel
     if let Ok(Some(_)) = user_channels_collection
-        .find_one(doc! {"user_id": user_id, "channel_id": channel_id}, None)
+        .find_one(
+            doc! {"user_id": user_id, "channel_id": channel.id.unwrap()},
+            None,
+        )
         .await
     {
         return (
@@ -114,7 +117,7 @@ pub async fn subscribe_to_channel(
         StatusCode::OK,
         Json(MainResponse {
             success: true,
-            data: Some(vec![channel]),
+            data: Some(vec![user_channel]),
             error_message: None,
         }),
     )

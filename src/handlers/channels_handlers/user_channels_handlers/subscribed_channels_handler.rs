@@ -21,7 +21,7 @@ pub async fn subscribed_channels(
 
 async fn websocket(mut socket: WebSocket, client: State<Client>, user_id: ObjectId) {
     // By splitting we can send and receive at the same time.
-    let (mut sender, receiver) = socket.split();
+    let (mut sender, _receiver) = socket.split();
 
     let user_channels_col: Collection<UserChannel> =
         client.database("Merume").collection("user_channels");
@@ -53,11 +53,11 @@ async fn websocket(mut socket: WebSocket, client: State<Client>, user_id: Object
     sender.send(Message::Text(json)).await.unwrap();
 
     // Watch for changes in the collection
-    let mut change_stream = channels_col.watch(None, None).await.unwrap();
+    let mut change_stream = user_channels_col.watch(None, None).await.unwrap();
 
     loop {
         match change_stream.try_next().await {
-            Ok(Some(change_event)) => {
+            Ok(Some(_)) => {
                 // A change event occurred in the collection
                 let channels: Vec<Channel> = channels_col
                     .find(filter.clone(), None)
@@ -71,12 +71,7 @@ async fn websocket(mut socket: WebSocket, client: State<Client>, user_id: Object
                 let json = serde_json::to_string(&channels).unwrap();
                 sender.send(Message::Text(json)).await.unwrap();
             }
-            Ok(None) => {
-                // The change stream has been closed
-                break;
-            }
-            Err(_) => {
-                // An error occurred in the change stream
+            Ok(None) | Err(_) => {
                 break;
             }
         }
