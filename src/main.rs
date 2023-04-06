@@ -78,6 +78,11 @@ async fn main() {
     let server_header_value = HeaderValue::from_static("Merume");
 
     let auth_routes = Router::new()
+        .route("/", get(auth_handlers::verify_auth_handler::verify_auth))
+        .route_layer(middleware::from_fn_with_state(
+            client.clone(),
+            auth_middleware::auth,
+        ))
         .route("/register", post(auth_handlers::register_handler::register))
         .route("/login", post(auth_handlers::login_handler::login));
 
