@@ -15,7 +15,8 @@ use handlers::auth_handlers;
 use handlers::channels_handlers;
 use handlers::channels_handlers::user_channels_handlers;
 use handlers::common_handler;
-use middlewares::auth_middleware;
+use handlers::posts_handlers;
+use middlewares::{auth_middleware, verify_channel_owner_middleware};
 use mongodb::{
     options::{ClientOptions, Compressor},
     Client,
@@ -118,6 +119,22 @@ async fn main() {
             auth_middleware::auth,
         ));
 
+    let post_routes = Router::new()
+        .route(
+            "/:channel_id",
+            post(posts_handlers::create_post_handler::create_post),
+        )
+        .layer(middleware::from_fn_with_state(
+            client.clone(),
+            verify_channel_owner_middleware::verify_channel_owner,
+        ))
+        .layer(middleware::from_fn_with_state(
+            client.clone(),
+            auth_middleware::auth,
+        ));
+
+    let channel_system = Router::new().merge(channels_routes).merge(post_routes);
+
     // build our application with a routes
     let app = Router::new()
         .route("/test", get(common_handler::test_handler))
@@ -127,7 +144,7 @@ async fn main() {
         ))
         .nest("/users/channels", user_channels_routes)
         .nest("/auth", auth_routes)
-        .nest("/channels", channels_routes)
+        .nest("/channels", channel_system)
         .layer(
             ServiceBuilder::new()
                 // don't allow request bodies larger than 1024 bytes, returning 413 status code
