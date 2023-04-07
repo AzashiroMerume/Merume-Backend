@@ -12,4 +12,5 @@ pub async fn create_post(
     Extension(user_id): Extension<ObjectId>,
     Path(channel_id): Path<String>,
 ) -> impl IntoResponse {
+    (StatusCode::OK, Json("hello"))
 }
