@@ -11,12 +11,6 @@ use axum::{
     Router,
 };
 use dotenv::dotenv;
-use handlers::auth_handlers;
-use handlers::channels_handlers;
-use handlers::channels_handlers::user_channels_handlers;
-use handlers::common_handler;
-use handlers::posts_handlers;
-use middlewares::{auth_middleware, verify_channel_owner_middleware};
 use mongodb::{
     options::{ClientOptions, Compressor},
     Client,
@@ -28,6 +22,12 @@ use tower_http::{
     trace::TraceLayer,
 };
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+use handlers::{
+    auth_handlers, channels_handlers, channels_handlers::user_channels_handlers, common_handler,
+    posts_handlers,
+};
+use middlewares::{auth_middleware, verify_channel_owner_middleware};
 
 #[tokio::main]
 async fn main() {
