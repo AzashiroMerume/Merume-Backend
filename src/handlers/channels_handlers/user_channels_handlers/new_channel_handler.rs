@@ -7,6 +7,7 @@ use crate::{
 };
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, Json};
 use bson::{doc, oid::ObjectId};
+use chrono::Utc;
 use mongodb::Client;
 
 pub async fn new_channel(
@@ -36,6 +37,7 @@ pub async fn new_channel(
         name: payload.name,
         description: payload.description,
         base_image: payload.base_image,
+        created_at: Utc::now(),
     };
 
     let channel_result = channels_collection
@@ -60,6 +62,8 @@ pub async fn new_channel(
         user_id: Some(user_id),
         channel_id,
         is_owner: Some(true),
+        subscribed_at: None,
+        created_at: Some(Utc::now()),
     };
 
     let user_channel_result = user_channels_collection

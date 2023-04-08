@@ -9,6 +9,7 @@ use axum::{
     Extension, Json,
 };
 use bson::{doc, oid::ObjectId};
+use chrono::Utc;
 use mongodb::Client;
 
 pub async fn subscribe_to_channel(
@@ -87,6 +88,8 @@ pub async fn subscribe_to_channel(
         user_id: Some(user_id),
         channel_id: channel.id.clone(),
         is_owner: Some(false),
+        subscribed_at: Some(Utc::now()),
+        created_at: None,
     };
 
     match user_channels_collection

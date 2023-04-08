@@ -1,4 +1,5 @@
 use bson::oid::ObjectId;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -9,4 +10,6 @@ pub struct UserChannel {
     pub user_id: Option<ObjectId>,
     pub channel_id: Option<ObjectId>,
     pub is_owner: Option<bool>,
+    pub subscribed_at: Option<DateTime<Utc>>,
+    pub created_at: Option<DateTime<Utc>>,
 }

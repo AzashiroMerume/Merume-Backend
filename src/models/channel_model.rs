@@ -1,4 +1,5 @@
 use bson::oid::ObjectId;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -10,6 +11,7 @@ pub struct Channel {
     pub name: Option<String>,
     pub description: Option<String>,
     pub base_image: Option<String>,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

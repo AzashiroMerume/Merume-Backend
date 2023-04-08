@@ -5,6 +5,7 @@ use axum::{
     Extension, Json,
 };
 use bson::oid::ObjectId;
+use chrono::Utc;
 use mongodb::Client;
 
 use crate::models::post_model::{Post, PostPayload};
@@ -34,6 +35,8 @@ pub async fn create_post(
         channel_id: Some(channel_id),
         body: payload.body,
         images: payload.images,
+        created_at: Utc::now(),
+        updated_at: Utc::now(),
     };
 
     let result = post_collection.insert_one(post, None).await;

@@ -4,6 +4,7 @@ use crate::utils::jwt::generate_jwt_token;
 
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use bson::{doc, oid::ObjectId};
+use chrono::Utc;
 use mongodb::Client;
 
 pub async fn register(
@@ -42,6 +43,8 @@ pub async fn register(
         nickname: payload.nickname,
         email: payload.email,
         password: payload.password,
+        created_at: Utc::now(),
+        updated_at: Utc::now(),
     };
 
     let result = collection.insert_one(user.to_owned(), None).await;
