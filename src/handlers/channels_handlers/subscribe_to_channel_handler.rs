@@ -1,6 +1,6 @@
 use crate::{
     models::{channel_model::Channel, user_channel_model::UserChannel},
-    responses::main_response::MainResponse,
+    responses::bool_response::BoolResponse,
 };
 use axum::{
     extract::{Path, State},
@@ -29,9 +29,8 @@ pub async fn subscribe_to_channel(
         Err(err) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(MainResponse {
+                Json(BoolResponse {
                     success: false,
-                    data: None,
                     error_message: Some(format!("Failed to retrieve channel: {}", err.to_string())),
                 }),
             )
@@ -43,9 +42,8 @@ pub async fn subscribe_to_channel(
         None => {
             return (
                 StatusCode::NOT_FOUND,
-                Json(MainResponse {
+                Json(BoolResponse {
                     success: false,
-                    data: None,
                     error_message: Some("Channel not found".to_string()),
                 }),
             )
@@ -56,9 +54,8 @@ pub async fn subscribe_to_channel(
     if channel.owner_id.unwrap() == user_id {
         return (
             StatusCode::BAD_REQUEST,
-            Json(MainResponse {
+            Json(BoolResponse {
                 success: false,
-                data: None,
                 error_message: Some("You cannot subscribe to your own channel".to_string()),
             }),
         );
@@ -78,9 +75,8 @@ pub async fn subscribe_to_channel(
     {
         return (
             StatusCode::BAD_REQUEST,
-            Json(MainResponse {
+            Json(BoolResponse {
                 success: false,
-                data: None,
                 error_message: Some("User is already subscribed to this channel".to_string()),
             }),
         );
@@ -101,9 +97,8 @@ pub async fn subscribe_to_channel(
         Err(err) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(MainResponse {
+                Json(BoolResponse {
                     success: false,
-                    data: None,
                     error_message: Some(format!(
                         "Failed to insert user channel: {}",
                         err.to_string()
@@ -115,9 +110,8 @@ pub async fn subscribe_to_channel(
 
     (
         StatusCode::OK,
-        Json(MainResponse {
+        Json(BoolResponse {
             success: true,
-            data: Some(vec![user_channel]),
             error_message: None,
         }),
     )
