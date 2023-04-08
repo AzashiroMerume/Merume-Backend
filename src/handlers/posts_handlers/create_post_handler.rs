@@ -36,7 +36,7 @@ pub async fn create_post(
         images: payload.images,
     };
 
-    let result = post_collection.insert_one(post.to_owned(), None).await;
+    let result = post_collection.insert_one(post, None).await;
 
     match result {
         Ok(_) => {
