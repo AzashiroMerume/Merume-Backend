@@ -10,10 +10,7 @@ pub async fn register(
     State(client): State<Client>,
     Json(payload): Json<RegisterPayload>,
 ) -> impl IntoResponse {
-    let collection_name = "users";
-    let collection = client
-        .database("Merume")
-        .collection::<User>(collection_name);
+    let collection = client.database("Merume").collection::<User>("users");
 
     // Validate the payload
     if payload.nickname.is_none() || payload.email.is_none() || payload.password.is_none() {
