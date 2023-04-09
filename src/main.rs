@@ -75,6 +75,7 @@ async fn main() {
             level: Default::default(),
         },
     ]);
+
     let client = Client::with_options(client_options).unwrap();
     let server_header_value = HeaderValue::from_static("Merume");
 

@@ -38,7 +38,7 @@ pub async fn login(
                 data: None,
                 error_message: Some("Email not found. Try to sign up".to_string()),
             };
-            return (StatusCode::BAD_REQUEST, Json(main_response));
+            return (StatusCode::NOT_FOUND, Json(main_response));
         }
         Err(e) => {
             eprintln!("Error finding user: {:?}", e);
@@ -56,7 +56,7 @@ pub async fn login(
         let main_response = MainResponse {
             success: false,
             data: None,
-            error_message: Some("Incorrect password".to_string()),
+            error_message: Some("Incorrect credentials".to_string()),
         };
         return (StatusCode::BAD_REQUEST, Json(main_response));
     }
