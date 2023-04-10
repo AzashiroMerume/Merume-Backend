@@ -38,13 +38,15 @@ pub async fn register(
         return (StatusCode::BAD_REQUEST, Json(main_response));
     }
 
+    let now = Utc::now();
+
     let user = User {
         id: ObjectId::new(),
         nickname: payload.nickname,
         email: payload.email,
         password: payload.password,
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
+        created_at: now,
+        updated_at: now,
     };
 
     let result = collection.insert_one(user.to_owned(), None).await;
