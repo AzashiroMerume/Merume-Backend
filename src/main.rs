@@ -109,7 +109,7 @@ async fn main() {
     let channels_routes = Router::new()
         .route(
             "/:channel_id",
-            get(channels_handlers::get_channel_handler::get_channel),
+            get(channels_handlers::get_channel_handler::get_channel_by_id),
         )
         .route(
             "/:channel_id/subscribe",

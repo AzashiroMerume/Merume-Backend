@@ -8,7 +8,7 @@ use axum::{
 use bson::{doc, oid::ObjectId};
 use mongodb::Client;
 
-pub async fn get_channel(
+pub async fn get_channel_by_id(
     State(client): State<Client>,
     Path(channel_id): Path<String>,
 ) -> impl IntoResponse {
