@@ -17,11 +17,11 @@ pub async fn login(
 
     if payload.email.is_empty() || payload.password.is_empty() {
         return (
-            StatusCode::BAD_REQUEST,
+            StatusCode::UNPROCESSABLE_ENTITY,
             Json(MainResponse {
                 success: false,
                 data: None,
-                error_message: Some("Missing fields".to_string()),
+                error_message: Some("Please fill in all required fields".to_string()),
             }),
         );
     }
@@ -36,7 +36,10 @@ pub async fn login(
             let main_response = MainResponse {
                 success: false,
                 data: None,
-                error_message: Some("Email not found. Try to sign up".to_string()),
+                error_message: Some(
+                    "Email or password are incorrect, please try a different email or sign up for a new account."
+                        .to_string(),
+                ),
             };
             return (StatusCode::NOT_FOUND, Json(main_response));
         }
@@ -45,7 +48,10 @@ pub async fn login(
             let main_response = MainResponse {
                 success: false,
                 data: None,
-                error_message: Some("Failed to find user".to_string()),
+                error_message: Some(
+                    "Email not recognized. Please try again or sign up for a new account."
+                        .to_string(),
+                ),
             };
             return (StatusCode::INTERNAL_SERVER_ERROR, Json(main_response));
         }
@@ -56,7 +62,7 @@ pub async fn login(
         let main_response = MainResponse {
             success: false,
             data: None,
-            error_message: Some("Incorrect credentials".to_string()),
+            error_message: Some("Email or password are incorrect, please try a different email or sign up for a new account.".to_string()),
         };
         return (StatusCode::UNAUTHORIZED, Json(main_response));
     }
@@ -66,10 +72,13 @@ pub async fn login(
     let token = match generate_jwt_token(&user.id.to_string(), &jwt_secret.unwrap()) {
         Ok(token) => token,
         Err(e) => {
+            eprintln!("Error while matching token: {:?}", e);
             let main_response = MainResponse {
                 success: false,
                 data: None,
-                error_message: Some(e),
+                error_message: Some(
+                    "There was an error on the server side, try again later.".to_string(),
+                ),
             };
             return (StatusCode::INTERNAL_SERVER_ERROR, Json(main_response));
         }

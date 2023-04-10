@@ -16,11 +16,11 @@ pub async fn register(
     // Validate the payload
     if payload.nickname.is_empty() || payload.email.is_empty() || payload.password.is_empty() {
         return (
-            StatusCode::BAD_REQUEST,
+            StatusCode::UNPROCESSABLE_ENTITY,
             Json(MainResponse {
                 success: false,
                 data: None,
-                error_message: Some("Missing fields".to_string()),
+                error_message: Some("Please fill in all required fields".to_string()),
             }),
         );
     }
@@ -33,7 +33,7 @@ pub async fn register(
         let main_response = MainResponse {
             success: false,
             data: None,
-            error_message: Some("Email already in use".to_string()),
+            error_message: Some("Email already in use. Please try to sign in.".to_string()),
         };
         return (StatusCode::BAD_REQUEST, Json(main_response));
     }
@@ -72,7 +72,9 @@ pub async fn register(
                 Json(MainResponse {
                     success: false,
                     data: None,
-                    error_message: Some("Failed to insert user".to_string()),
+                    error_message: Some(
+                        "There was an error on the server side, try again later.".to_string(),
+                    ),
                 }),
             )
         }
