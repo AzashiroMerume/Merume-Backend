@@ -37,7 +37,7 @@ async fn websocket(mut socket: WebSocket, client: State<Client>, user_id: Object
     // Retrieve the channels corresponding to the user's subscribed channels
     let channel_ids: Vec<ObjectId> = user_channels
         .iter()
-        .map(|uc| uc.channel_id.clone().unwrap())
+        .map(|uc| uc.channel_id.clone())
         .collect();
     let channels_col: Collection<Channel> = client.database("Merume").collection("channels");
     let filter = doc! {"_id": {"$in": channel_ids}};

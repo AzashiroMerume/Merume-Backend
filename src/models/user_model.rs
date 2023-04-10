@@ -6,10 +6,10 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "snake_case")]
 pub struct User {
     #[serde(rename = "_id")]
-    pub id: Option<ObjectId>,
-    pub nickname: Option<String>,
-    pub email: Option<String>,
-    pub password: Option<String>,
+    pub id: ObjectId,
+    pub nickname: String,
+    pub email: String,
+    pub password: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }

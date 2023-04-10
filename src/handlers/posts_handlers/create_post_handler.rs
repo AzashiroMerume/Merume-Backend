@@ -19,7 +19,7 @@ pub async fn create_post(
 ) -> impl IntoResponse {
     let post_collection = client.database("Merume").collection::<Post>("posts");
 
-    if payload.body.is_none() {
+    if payload.body.is_empty() {
         return (
             StatusCode::BAD_REQUEST,
             Json(BoolResponse {
@@ -30,9 +30,9 @@ pub async fn create_post(
     }
 
     let post = Post {
-        id: Some(ObjectId::new()),
-        owner_id: Some(user_id),
-        channel_id: Some(channel_id),
+        id: ObjectId::new(),
+        owner_id: user_id,
+        channel_id: channel_id,
         body: payload.body,
         images: payload.images,
         created_at: Utc::now(),

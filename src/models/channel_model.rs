@@ -6,10 +6,10 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "snake_case")]
 pub struct Channel {
     #[serde(rename = "_id")]
-    pub id: Option<ObjectId>,
-    pub owner_id: Option<ObjectId>,
-    pub name: Option<String>,
-    pub description: Option<String>,
+    pub id: ObjectId,
+    pub owner_id: ObjectId,
+    pub name: String,
+    pub description: String,
     pub base_image: Option<String>,
     pub created_at: DateTime<Utc>,
 }
@@ -17,7 +17,7 @@ pub struct Channel {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct ChannelPayload {
-    pub name: Option<String>,
-    pub description: Option<String>,
+    pub name: String,
+    pub description: String,
     pub base_image: Option<String>,
 }

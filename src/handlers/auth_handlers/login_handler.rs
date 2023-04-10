@@ -15,7 +15,7 @@ pub async fn login(
         .database("Merume")
         .collection::<User>(collection_name);
 
-    if payload.email.is_none() || payload.password.is_none() {
+    if payload.email.is_empty() || payload.password.is_empty() {
         return (
             StatusCode::BAD_REQUEST,
             Json(MainResponse {
@@ -28,7 +28,7 @@ pub async fn login(
 
     // Find the user with the given email
     let user = match collection
-        .find_one(doc! {"email": &payload.email.unwrap()}, None)
+        .find_one(doc! {"email": &payload.email}, None)
         .await
     {
         Ok(Some(user)) => user,
@@ -58,12 +58,12 @@ pub async fn login(
             data: None,
             error_message: Some("Incorrect credentials".to_string()),
         };
-        return (StatusCode::BAD_REQUEST, Json(main_response));
+        return (StatusCode::UNAUTHORIZED, Json(main_response));
     }
 
     let jwt_secret = std::env::var("JWT_SECRET");
 
-    let token = match generate_jwt_token(&user.id.unwrap().to_string(), &jwt_secret.unwrap()) {
+    let token = match generate_jwt_token(&user.id.to_string(), &jwt_secret.unwrap()) {
         Ok(token) => token,
         Err(e) => {
             let main_response = MainResponse {

@@ -14,7 +14,7 @@ pub async fn register(
     let collection = client.database("Merume").collection::<User>("users");
 
     // Validate the payload
-    if payload.nickname.is_none() || payload.email.is_none() || payload.password.is_none() {
+    if payload.nickname.is_empty() || payload.email.is_empty() || payload.password.is_empty() {
         return (
             StatusCode::BAD_REQUEST,
             Json(MainResponse {
@@ -26,7 +26,7 @@ pub async fn register(
     }
 
     if let Some(_) = collection
-        .find_one(doc! {"email": payload.email.clone().unwrap()}, None)
+        .find_one(doc! {"email": payload.email.clone()}, None)
         .await
         .unwrap()
     {
@@ -39,7 +39,7 @@ pub async fn register(
     }
 
     let user = User {
-        id: Some(ObjectId::new()),
+        id: ObjectId::new(),
         nickname: payload.nickname,
         email: payload.email,
         password: payload.password,
@@ -53,8 +53,7 @@ pub async fn register(
         Ok(_) => {
             let jwt_secret = std::env::var("JWT_SECRET");
 
-            let token =
-                generate_jwt_token(&user.id.unwrap().to_string(), &jwt_secret.unwrap()).unwrap();
+            let token = generate_jwt_token(&user.id.to_string(), &jwt_secret.unwrap()).unwrap();
             return (
                 StatusCode::CREATED,
                 Json(MainResponse {

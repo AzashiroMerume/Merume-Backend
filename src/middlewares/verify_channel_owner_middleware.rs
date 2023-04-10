@@ -29,7 +29,7 @@ pub async fn verify_channel_owner<B>(
 
     let channel = channel.ok_or(StatusCode::NOT_FOUND)?;
 
-    match channel.owner_id.unwrap() == user_id {
+    match channel.owner_id == user_id {
         true => Ok(next.run(req).await),
         false => Err(StatusCode::UNAUTHORIZED),
     }

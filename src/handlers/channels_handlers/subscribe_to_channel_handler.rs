@@ -52,7 +52,7 @@ pub async fn subscribe_to_channel(
     };
 
     // Check if the channel belongs to the user trying to subscribe
-    if channel.owner_id.unwrap() == user_id {
+    if channel.owner_id == user_id {
         return (
             StatusCode::BAD_REQUEST,
             Json(BoolResponse {
@@ -68,10 +68,7 @@ pub async fn subscribe_to_channel(
 
     // Check if the user is already subscribed to the channel
     if let Ok(Some(_)) = user_channels_collection
-        .find_one(
-            doc! {"user_id": user_id, "channel_id": channel.id.unwrap()},
-            None,
-        )
+        .find_one(doc! {"user_id": user_id, "channel_id": channel.id}, None)
         .await
     {
         return (
@@ -84,10 +81,10 @@ pub async fn subscribe_to_channel(
     }
 
     let user_channel = UserChannel {
-        id: Some(ObjectId::new()),
-        user_id: Some(user_id),
+        id: ObjectId::new(),
+        user_id,
         channel_id: channel.id.clone(),
-        is_owner: Some(false),
+        is_owner: false,
         subscribed_at: Some(Utc::now()),
         created_at: None,
     };

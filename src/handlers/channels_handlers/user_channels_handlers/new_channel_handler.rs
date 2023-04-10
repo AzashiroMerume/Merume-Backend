@@ -15,7 +15,7 @@ pub async fn new_channel(
     Extension(user_id): Extension<ObjectId>,
     Json(payload): Json<ChannelPayload>,
 ) -> impl IntoResponse {
-    if payload.name.is_none() || payload.description.is_none() {
+    if payload.name.is_empty() || payload.description.is_empty() {
         return (
             StatusCode::BAD_REQUEST,
             Json(MainResponse {
@@ -32,8 +32,8 @@ pub async fn new_channel(
         .collection::<UserChannel>("user_channels");
 
     let channel = Channel {
-        id: Some(ObjectId::new()),
-        owner_id: Some(user_id),
+        id: ObjectId::new(),
+        owner_id: user_id,
         name: payload.name,
         description: payload.description,
         base_image: payload.base_image,
@@ -58,10 +58,10 @@ pub async fn new_channel(
     let channel_id = channel_result.unwrap().inserted_id.as_object_id();
 
     let user_channel = UserChannel {
-        id: Some(ObjectId::new()),
-        user_id: Some(user_id),
-        channel_id,
-        is_owner: Some(true),
+        id: ObjectId::new(),
+        user_id,
+        channel_id: channel_id.unwrap(),
+        is_owner: true,
         subscribed_at: None,
         created_at: Some(Utc::now()),
     };

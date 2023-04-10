@@ -6,10 +6,10 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "snake_case")]
 pub struct Post {
     #[serde(rename = "_id")]
-    pub id: Option<ObjectId>,
-    pub owner_id: Option<ObjectId>,
-    pub channel_id: Option<String>,
-    pub body: Option<String>,
+    pub id: ObjectId,
+    pub owner_id: ObjectId,
+    pub channel_id: String,
+    pub body: String,
     pub images: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -18,6 +18,6 @@ pub struct Post {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct PostPayload {
-    pub body: Option<String>,
+    pub body: String,
     pub images: Option<String>,
 }
