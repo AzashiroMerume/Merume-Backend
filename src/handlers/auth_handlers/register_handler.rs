@@ -45,6 +45,7 @@ pub async fn register(
         nickname: payload.nickname,
         email: payload.email,
         password: payload.password,
+        preferences: None,
         created_at: now,
         updated_at: now,
     };

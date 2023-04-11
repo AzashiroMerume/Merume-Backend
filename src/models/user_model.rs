@@ -10,6 +10,13 @@ pub struct User {
     pub nickname: String,
     pub email: String,
     pub password: String,
+    pub preferences: Option<Vec<String>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub struct UserPreferencesPayload {
+    pub categories: Vec<String>,
 }

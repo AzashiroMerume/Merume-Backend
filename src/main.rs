@@ -25,7 +25,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use handlers::{
     auth_handlers, channels_handlers, channels_handlers::user_channels_handlers, common_handler,
-    posts_handlers,
+    posts_handlers, preferred_content_handlers,
 };
 use middlewares::{auth_middleware, verify_channel_owner_middleware};
 
@@ -136,6 +136,16 @@ async fn main() {
 
     let channel_system = Router::new().merge(channels_routes).merge(post_routes);
 
+    let preferred_content_routes = Router::new()
+        .route(
+            "/",
+            post(preferred_content_handlers::post_preferrences_handler::post_preferences),
+        )
+        .layer(middleware::from_fn_with_state(
+            client.clone(),
+            auth_middleware::auth,
+        ));
+
     // build our application with a routes
     let app = Router::new()
         .route("/test", get(common_handler::test_handler))
@@ -146,6 +156,7 @@ async fn main() {
         .nest("/users/channels", user_channels_routes)
         .nest("/auth", auth_routes)
         .nest("/channels", channel_system)
+        .nest("/preferred", preferred_content_routes)
         .layer(
             ServiceBuilder::new()
                 // don't allow request bodies larger than 1024 bytes, returning 413 status code
