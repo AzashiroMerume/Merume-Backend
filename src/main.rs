@@ -156,7 +156,7 @@ async fn main() {
         .nest("/users/channels", user_channels_routes)
         .nest("/auth", auth_routes)
         .nest("/channels", channel_system)
-        .nest("/preferred", preferred_content_routes)
+        .nest("/preferences", preferred_content_routes)
         .layer(
             ServiceBuilder::new()
                 // don't allow request bodies larger than 1024 bytes, returning 413 status code
