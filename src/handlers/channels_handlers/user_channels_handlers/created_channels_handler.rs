@@ -19,8 +19,8 @@ pub async fn created_channels(
     ws.on_upgrade(move |socket| websocket(socket, State(client), user_id))
 }
 
-async fn websocket(mut socket: WebSocket, client: State<Client>, user_id: ObjectId) {
-    let (mut sender, _receiver) = socket.split();
+async fn websocket(mut _socket: WebSocket, client: State<Client>, user_id: ObjectId) {
+    let (mut sender, _receiver) = _socket.split();
 
     let channels_col: Collection<Channel> = client.database("Merume").collection("channels");
 

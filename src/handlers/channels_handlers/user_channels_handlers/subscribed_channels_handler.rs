@@ -19,9 +19,9 @@ pub async fn subscribed_channels(
     ws.on_upgrade(move |socket| websocket(socket, State(client), user_id))
 }
 
-async fn websocket(mut socket: WebSocket, client: State<Client>, user_id: ObjectId) {
+async fn websocket(mut _socket: WebSocket, client: State<Client>, user_id: ObjectId) {
     // By splitting we can send and receive at the same time.
-    let (mut sender, _receiver) = socket.split();
+    let (mut sender, _receiver) = _socket.split();
 
     let user_channels_col: Collection<UserChannel> =
         client.database("Merume").collection("user_channels");

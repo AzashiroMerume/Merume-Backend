@@ -1,1 +1,1 @@
-pub async fn get_recomendations() {}
+pub async fn _get_recomendations() {}
