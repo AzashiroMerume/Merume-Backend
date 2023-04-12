@@ -139,7 +139,8 @@ async fn main() {
     let preferred_content_routes = Router::new()
         .route(
             "/",
-            post(preferred_content_handlers::post_preferrences_handler::post_preferences),
+            get(preferred_content_handlers::get_preferences_handler::get_preferences)
+                .post(preferred_content_handlers::post_preferences_handler::post_preferences),
         )
         .layer(middleware::from_fn_with_state(
             client.clone(),

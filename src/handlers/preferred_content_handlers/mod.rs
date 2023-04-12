@@ -1,1 +1,2 @@
-pub mod post_preferrences_handler;
+pub mod post_preferences_handler;
+pub mod get_preferences_handler;

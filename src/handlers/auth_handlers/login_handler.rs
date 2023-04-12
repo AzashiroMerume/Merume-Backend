@@ -49,7 +49,7 @@ pub async fn login(
                 success: false,
                 data: None,
                 error_message: Some(
-                    "Email not recognized. Please try again or sign up for a new account."
+                    "There was an error on the server side, try again later."
                         .to_string(),
                 ),
             };
