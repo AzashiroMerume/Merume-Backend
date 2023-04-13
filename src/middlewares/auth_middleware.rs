@@ -37,11 +37,11 @@ pub async fn auth<B>(
         Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
     };
 
-    if pass_full_user.is_none() {
-        req.extensions_mut().insert(user_id);
-    } else {
+    if let Some(true) = pass_full_user {
         req.extensions_mut().insert(user);
-    };
+    } else {
+        req.extensions_mut().insert(user_id);
+    }
 
     Ok(next.run(req).await)
 }
