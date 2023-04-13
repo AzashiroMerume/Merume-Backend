@@ -83,7 +83,7 @@ async fn main() {
         .route("/", get(auth_handlers::verify_auth_handler::verify_auth))
         .route_layer(middleware::from_fn_with_state(
             client.clone(),
-            auth_middleware::auth,
+            |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
         ))
         .route("/register", post(auth_handlers::register_handler::register))
         .route("/login", post(auth_handlers::login_handler::login));
@@ -103,7 +103,7 @@ async fn main() {
         )
         .layer(middleware::from_fn_with_state(
             client.clone(),
-            auth_middleware::auth,
+            |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
         ));
 
     let channels_routes = Router::new()
@@ -117,7 +117,7 @@ async fn main() {
         )
         .layer(middleware::from_fn_with_state(
             client.clone(),
-            auth_middleware::auth,
+            |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
         ));
 
     let post_routes = Router::new()
@@ -131,7 +131,7 @@ async fn main() {
         ))
         .layer(middleware::from_fn_with_state(
             client.clone(),
-            auth_middleware::auth,
+            |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
         ));
 
     let channel_system = Router::new().merge(channels_routes).merge(post_routes);
@@ -143,7 +143,7 @@ async fn main() {
         )
         .route_layer(middleware::from_fn_with_state(
             client.clone(),
-            auth_middleware::auth_with_user,
+            |state, req, next| auth_middleware::auth(state, req, next, Some(true)),
         ))
         .route(
             "/",
@@ -151,7 +151,7 @@ async fn main() {
         )
         .route_layer(middleware::from_fn_with_state(
             client.clone(),
-            auth_middleware::auth,
+            |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
         ));
 
     // build our application with a routes
@@ -159,7 +159,7 @@ async fn main() {
         .route("/test", get(common_handler::test_handler))
         .route_layer(middleware::from_fn_with_state(
             client.clone(),
-            auth_middleware::auth,
+            |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
         ))
         .nest("/users/channels", user_channels_routes)
         .nest("/auth", auth_routes)
