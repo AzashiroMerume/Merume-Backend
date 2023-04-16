@@ -18,5 +18,5 @@ pub struct User {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct UserPreferencesPayload {
-    pub categories: Vec<String>,
+    pub preferences: Vec<String>,
 }

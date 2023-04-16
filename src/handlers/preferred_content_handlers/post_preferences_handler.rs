@@ -14,7 +14,7 @@ pub async fn post_preferences(
 ) -> impl IntoResponse {
     let collection = client.database("Merume").collection::<User>("users");
 
-    if payload.categories.is_empty() {
+    if payload.preferences.is_empty() {
         return (
             StatusCode::UNPROCESSABLE_ENTITY,
             Json(BoolResponse {
@@ -25,7 +25,7 @@ pub async fn post_preferences(
     }
 
     let filter = doc! {"_id": user_id};
-    let update = doc! {"$set": {"preferences": payload.categories}};
+    let update = doc! {"$set": {"preferences": payload.preferences}};
     let options = UpdateOptions::builder().upsert(false).build();
     let result = collection.update_one(filter, update, options).await;
 
