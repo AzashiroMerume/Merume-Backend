@@ -2,12 +2,16 @@ mod handlers;
 mod middlewares;
 mod models;
 mod responses;
+mod routes;
 mod utils;
 
+use std::{iter::once, net::SocketAddr, time::Duration};
+
 use axum::{
-    http::{header, HeaderValue},
-    middleware,
-    routing::{get, post},
+    http::{
+        header::{self, AUTHORIZATION},
+        HeaderValue,
+    },
     Router,
 };
 use dotenv::dotenv;
@@ -15,19 +19,15 @@ use mongodb::{
     options::{ClientOptions, Compressor},
     Client,
 };
-use std::{net::SocketAddr, time::Duration};
 use tower::ServiceBuilder;
 use tower_http::{
-    limit::RequestBodyLimitLayer, set_header::SetResponseHeaderLayer, timeout::TimeoutLayer,
-    trace::TraceLayer,
+    sensitive_headers::SetSensitiveRequestHeadersLayer, set_header::SetResponseHeaderLayer,
+    timeout::TimeoutLayer, trace::TraceLayer,
 };
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use handlers::{
-    auth_handlers, channels_handlers, channels_handlers::user_channels_handlers, common_handler,
-    posts_handlers, preferred_content_handlers,
-};
-use middlewares::{auth_middleware, verify_channel_owner_middleware};
+use handlers::common_handler;
+use routes::*;
 
 #[tokio::main]
 async fn main() {
@@ -79,96 +79,26 @@ async fn main() {
     let client = Client::with_options(client_options).unwrap();
     let server_header_value = HeaderValue::from_static("Merume");
 
-    let auth_routes = Router::new()
-        .route("/", get(auth_handlers::verify_auth_handler::verify_auth))
-        .route_layer(middleware::from_fn_with_state(
-            client.clone(),
-            |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
-        ))
-        .route("/register", post(auth_handlers::register_handler::register))
-        .route("/login", post(auth_handlers::login_handler::login));
-
-    let user_channels_routes = Router::new()
-        .route(
-            "/subscriptions",
-            get(user_channels_handlers::subscribed_channels_handler::subscribed_channels),
-        )
-        .route(
-            "/created",
-            get(user_channels_handlers::created_channels_handler::created_channels),
-        )
-        .route(
-            "/new",
-            post(user_channels_handlers::new_channel_handler::new_channel),
-        )
-        .layer(middleware::from_fn_with_state(
-            client.clone(),
-            |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
-        ));
-
-    let channels_routes = Router::new()
-        .route(
-            "/:channel_id",
-            get(channels_handlers::get_channel_handler::get_channel_by_id),
-        )
-        .route(
-            "/:channel_id/subscribe",
-            get(channels_handlers::subscribe_to_channel_handler::subscribe_to_channel),
-        )
-        .layer(middleware::from_fn_with_state(
-            client.clone(),
-            |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
-        ));
-
-    let post_routes = Router::new()
-        .route(
-            "/:channel_id",
-            post(posts_handlers::create_post_handler::create_post),
-        )
-        .layer(middleware::from_fn_with_state(
-            client.clone(),
-            verify_channel_owner_middleware::verify_channel_owner,
-        ))
-        .layer(middleware::from_fn_with_state(
-            client.clone(),
-            |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
-        ));
-
-    let channel_system = Router::new().merge(channels_routes).merge(post_routes);
-
-    let preferred_content_routes = Router::new()
-        .route(
-            "/",
-            get(preferred_content_handlers::get_preferences_handler::get_preferences),
-        )
-        .route_layer(middleware::from_fn_with_state(
-            client.clone(),
-            |state, req, next| auth_middleware::auth(state, req, next, Some(true)),
-        ))
-        .route(
-            "/",
-            post(preferred_content_handlers::post_preferences_handler::post_preferences),
-        )
-        .route_layer(middleware::from_fn_with_state(
-            client.clone(),
-            |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
-        ));
+    //creating routers
+    let auth_routes = auth_routes(client.clone());
+    let user_channels_routes = user_channels_routes(client.clone());
+    let channel_system = channel_system(client.clone());
+    let preferred_content_routes = preferred_content_routes(client.clone());
 
     // build our application with a routes
     let app = Router::new()
-        .route("/test", get(common_handler::test_handler))
-        .route_layer(middleware::from_fn_with_state(
-            client.clone(),
-            |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
-        ))
+        // .route("/test", get(common_handler::test_handler))
+        // .route_layer(middleware::from_fn_with_state(
+        //     client.clone(),
+        //     |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
+        // ))
         .nest("/users/channels", user_channels_routes)
         .nest("/auth", auth_routes)
         .nest("/channels", channel_system)
         .nest("/preferences", preferred_content_routes)
         .layer(
             ServiceBuilder::new()
-                // don't allow request bodies larger than 1024 bytes, returning 413 status code
-                .layer(RequestBodyLimitLayer::new(1024))
+                .layer(SetSensitiveRequestHeadersLayer::new(once(AUTHORIZATION)))
                 .layer(TraceLayer::new_for_http())
                 .layer(SetResponseHeaderLayer::if_not_present(
                     header::SERVER,
