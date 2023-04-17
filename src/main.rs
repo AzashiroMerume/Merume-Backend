@@ -85,9 +85,9 @@ async fn main() {
     let channel_system = channel_system(client.clone());
     let preferred_content_routes = preferred_content_routes(client.clone());
 
-    // build our application with a routes
+    // build application with a routes
     let app = Router::new()
-        // .route("/test", get(common_handler::test_handler))
+        // .route("/test", get(common_handler::_test_handler))
         // .route_layer(middleware::from_fn_with_state(
         //     client.clone(),
         //     |state, req, next| auth_middleware::auth(state, req, next, Some(false)),

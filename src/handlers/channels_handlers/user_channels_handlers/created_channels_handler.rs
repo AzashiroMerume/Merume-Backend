@@ -26,35 +26,79 @@ async fn websocket(mut _socket: WebSocket, client: State<Client>, user_id: Objec
 
     let filter = doc! {"owner_id": user_id};
 
-    let channels: Vec<Channel> = channels_col
+    let channels_result = channels_col
         .find(filter.to_owned(), None)
         .await
-        .unwrap()
-        .try_collect()
-        .await
-        .unwrap();
+        .map_err(|e| {
+            eprintln!("Error finding channels: {:?}", e);
+            "Failed to fetch channels".to_string()
+        });
 
-    let json = serde_json::to_string(&channels).unwrap();
-    sender.send(Message::Text(json)).await.unwrap();
+    let channels: Vec<Channel> = match channels_result {
+        Ok(channels) => channels.try_collect().await.map_err(|e| {
+            eprintln!("Error collecting channels: {:?}", e);
+            "Failed to fetch channels".to_string()
+        }),
+        Err(e) => Err(e),
+    }
+    .unwrap();
 
-    let mut change_stream = channels_col.watch(None, None).await.unwrap();
+    let json = serde_json::to_string(&channels).map_err(|e| {
+        eprintln!("Error serializing channels: {:?}", e);
+        "Failed to serialize channels".to_string()
+    });
 
-    loop {
-        match change_stream.try_next().await {
-            Ok(Some(_)) => {
-                let channels: Vec<Channel> = channels_col
-                    .find(filter.clone(), None)
-                    .await
-                    .unwrap()
-                    .try_collect()
-                    .await
+    if let Ok(json) = json {
+        if let Err(e) = sender.send(Message::Text(json)).await {
+            eprintln!("Error sending message to websocket client: {:?}", e);
+        }
+    }
+
+    let change_stream = channels_col.watch(None, None).await.map_err(|e| {
+        eprintln!("Error creating change stream: {:?}", e);
+        "Failed to create change stream".to_string()
+    });
+
+    if let Ok(mut change_stream) = change_stream {
+        loop {
+            match change_stream.try_next().await {
+                Ok(Some(_)) => {
+                    let channels_result =
+                        channels_col.find(filter.clone(), None).await.map_err(|e| {
+                            eprintln!("Error finding channels: {:?}", e);
+                            "Failed to fetch channels".to_string()
+                        });
+
+                    let channels: Vec<Channel> = match channels_result {
+                        Ok(channels) => channels.try_collect().await.map_err(|e| {
+                            eprintln!("Error collecting channels: {:?}", e);
+                            "Failed to fetch channels".to_string()
+                        }),
+                        Err(e) => Err(e),
+                    }
                     .unwrap();
 
-                let json = serde_json::to_string(&channels).unwrap();
-                sender.send(Message::Text(json)).await.unwrap();
-            }
-            Ok(None) | Err(_) => {
-                break;
+                    let json = serde_json::to_string(&channels).map_err(|e| {
+                        eprintln!("Error serializing channels: {:?}", e);
+                        "Failed to serialize channels".to_string()
+                    });
+
+                    if let Ok(json) = json {
+                        if let Err(e) = sender.send(Message::Text(json)).await {
+                            eprintln!("Error sending message to websocket client: {:?}", e);
+                            break;
+                        }
+                    } else {
+                        break;
+                    }
+                }
+                Ok(None) => {
+                    break;
+                }
+                Err(e) => {
+                    eprintln!("Error reading change stream: {:?}", e);
+                    break;
+                }
             }
         }
     }
