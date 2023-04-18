@@ -1,3 +1,5 @@
+use crate::models::channel_model::Channel;
+
 use axum::{
     extract::{Path, State},
     http::{Request, StatusCode},
@@ -7,8 +9,6 @@ use axum::{
 };
 use bson::{doc, oid::ObjectId};
 use mongodb::Client;
-
-use crate::models::channel_model::Channel;
 
 pub async fn verify_channel_owner<B>(
     State(client): State<Client>,

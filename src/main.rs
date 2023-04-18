@@ -5,7 +5,8 @@ mod responses;
 mod routes;
 mod utils;
 
-use std::{iter::once, net::SocketAddr, time::Duration};
+use handlers::common_handler;
+use routes::*;
 
 use axum::{
     http::{
@@ -19,15 +20,13 @@ use mongodb::{
     options::{ClientOptions, Compressor},
     Client,
 };
+use std::{iter::once, net::SocketAddr, time::Duration};
 use tower::ServiceBuilder;
 use tower_http::{
     sensitive_headers::SetSensitiveRequestHeadersLayer, set_header::SetResponseHeaderLayer,
     timeout::TimeoutLayer, trace::TraceLayer,
 };
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-
-use handlers::common_handler;
-use routes::*;
 
 #[tokio::main]
 async fn main() {

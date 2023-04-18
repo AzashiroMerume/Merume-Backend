@@ -1,3 +1,10 @@
+use crate::{handlers, middlewares};
+use handlers::{
+    auth_handlers, channels_handlers, channels_handlers::user_channels_handlers, posts_handlers,
+    preferred_content_handlers,
+};
+use middlewares::{auth_middleware, verify_channel_owner_middleware};
+
 use axum::{
     middleware,
     routing::{get, post},
@@ -5,13 +12,6 @@ use axum::{
 };
 use mongodb::Client;
 use tower_http::limit::RequestBodyLimitLayer;
-
-use crate::{handlers, middlewares};
-use handlers::{
-    auth_handlers, channels_handlers, channels_handlers::user_channels_handlers, posts_handlers,
-    preferred_content_handlers,
-};
-use middlewares::{auth_middleware, verify_channel_owner_middleware};
 
 pub fn auth_routes(client: Client) -> Router<Client> {
     Router::new()
