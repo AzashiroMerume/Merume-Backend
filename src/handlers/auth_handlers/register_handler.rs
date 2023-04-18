@@ -2,6 +2,10 @@ use crate::models::{auth_model::RegisterPayload, user_model::User};
 use crate::responses::main_response::MainResponse;
 use crate::utils::jwt::generate_jwt_token;
 
+use argon2::{
+    password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
+    Argon2,
+};
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use bson::{doc, oid::ObjectId};
 use chrono::Utc;
@@ -25,6 +29,7 @@ pub async fn register(
         );
     }
 
+    //checking email for existence
     if let Some(_) = collection
         .find_one(doc! {"email": payload.email.clone()}, None)
         .await
@@ -38,13 +43,21 @@ pub async fn register(
         return (StatusCode::BAD_REQUEST, Json(main_response));
     }
 
+    //hashing password using default argon2
+    let salt = SaltString::generate(&mut OsRng);
+    let argon2 = Argon2::default();
+    let hashed_password = argon2
+        .hash_password(payload.password.as_bytes(), &salt)
+        .unwrap()
+        .to_string();
+
     let now = Utc::now();
 
     let user = User {
         id: ObjectId::new(),
         nickname: payload.nickname,
         email: payload.email,
-        password: payload.password,
+        password: hashed_password,
         preferences: None,
         created_at: now,
         updated_at: now,

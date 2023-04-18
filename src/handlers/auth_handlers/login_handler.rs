@@ -2,6 +2,10 @@ use crate::models::{auth_model::LoginPayload, user_model::User};
 use crate::responses::main_response::MainResponse;
 use crate::utils::jwt::generate_jwt_token;
 
+use argon2::{
+    password_hash::{PasswordHash, PasswordVerifier},
+    Argon2,
+};
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use bson::doc;
 use mongodb::Client;
@@ -49,16 +53,20 @@ pub async fn login(
                 success: false,
                 data: None,
                 error_message: Some(
-                    "There was an error on the server side, try again later."
-                        .to_string(),
+                    "There was an error on the server side, try again later.".to_string(),
                 ),
             };
             return (StatusCode::INTERNAL_SERVER_ERROR, Json(main_response));
         }
     };
 
-    // Check if the password is correct
-    if user.password != payload.password {
+    let parsed_hash = PasswordHash::new(&user.password).unwrap();
+
+    // Check if the password is correct using argon2 verifier
+    if Argon2::default()
+        .verify_password(payload.password.as_bytes(), &parsed_hash)
+        .is_err()
+    {
         let main_response = MainResponse {
             success: false,
             data: None,
