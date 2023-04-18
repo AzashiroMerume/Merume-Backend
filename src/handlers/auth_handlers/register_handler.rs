@@ -59,6 +59,7 @@ pub async fn register(
 
     let user = User {
         id: ObjectId::new(),
+        username: payload.username,
         nickname: payload.nickname,
         email: payload.email,
         password: hashed_password,
