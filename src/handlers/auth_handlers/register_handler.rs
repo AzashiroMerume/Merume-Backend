@@ -10,6 +10,7 @@ use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use bson::{doc, oid::ObjectId};
 use chrono::Utc;
 use mongodb::Client;
+use validator::Validate;
 
 pub async fn register(
     State(client): State<Client>,
@@ -18,15 +19,18 @@ pub async fn register(
     let collection = client.database("Merume").collection::<User>("users");
 
     // Validate the payload
-    if payload.nickname.is_empty() || payload.email.is_empty() || payload.password.is_empty() {
-        return (
-            StatusCode::UNPROCESSABLE_ENTITY,
-            Json(MainResponse {
-                success: false,
-                data: None,
-                error_message: Some("Please fill in all required fields".to_string()),
-            }),
-        );
+    match payload.validate() {
+        Ok(()) => {} // Validation successful, do nothing
+        Err(e) => {
+            return (
+                StatusCode::UNPROCESSABLE_ENTITY,
+                Json(MainResponse {
+                    success: false,
+                    data: None,
+                    error_message: Some(e.to_string()),
+                }),
+            );
+        }
     }
 
     //checking email for existence
