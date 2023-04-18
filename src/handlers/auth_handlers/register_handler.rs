@@ -33,27 +33,82 @@ pub async fn register(
         }
     }
 
-    //checking email for existence
-    if let Some(_) = collection
+    //checking email and nickname for existence
+    match collection
         .find_one(doc! {"email": payload.email.clone()}, None)
         .await
-        .unwrap()
     {
-        let main_response = MainResponse {
-            success: false,
-            data: None,
-            error_message: Some("Email already in use. Please try to sign in.".to_string()),
-        };
-        return (StatusCode::BAD_REQUEST, Json(main_response));
+        Ok(Some(_)) => {
+            let main_response = MainResponse {
+                success: false,
+                data: None,
+                error_message: Some("Email already in use. Please try to sign in.".to_string()),
+            };
+            return (StatusCode::BAD_REQUEST, Json(main_response));
+        }
+        Err(e) => {
+            eprintln!("Error checking email: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(MainResponse {
+                    success: false,
+                    data: None,
+                    error_message: Some(
+                        "There was an error on the server side, try again later.".to_string(),
+                    ),
+                }),
+            );
+        }
+        _ => {} // continue checking for nickname
+    }
+
+    match collection
+        .find_one(doc! {"nickname": payload.nickname.clone()}, None)
+        .await
+    {
+        Ok(Some(_)) => {
+            let main_response = MainResponse {
+                success: false,
+                data: None,
+                error_message: Some("Nickname already in use. Please choose another.".to_string()),
+            };
+            return (StatusCode::BAD_REQUEST, Json(main_response));
+        }
+        Err(e) => {
+            eprintln!("Error checking nickname: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(MainResponse {
+                    success: false,
+                    data: None,
+                    error_message: Some(
+                        "There was an error on the server side, try again later.".to_string(),
+                    ),
+                }),
+            );
+        }
+        _ => {} // continue with registration
     }
 
     //hashing password using default argon2
     let salt = SaltString::generate(&mut OsRng);
     let argon2 = Argon2::default();
-    let hashed_password = argon2
-        .hash_password(payload.password.as_bytes(), &salt)
-        .unwrap()
-        .to_string();
+    let hashed_password = match argon2.hash_password(payload.password.as_bytes(), &salt) {
+        Ok(hash) => hash.to_string(),
+        Err(e) => {
+            eprintln!("Error hashing password: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(MainResponse {
+                    success: false,
+                    data: None,
+                    error_message: Some(
+                        "There was an error on the server side, try again later.".to_string(),
+                    ),
+                }),
+            );
+        }
+    };
 
     let now = Utc::now();
 
