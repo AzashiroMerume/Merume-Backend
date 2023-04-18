@@ -64,9 +64,20 @@ pub async fn login(
         }
     };
 
-    let parsed_hash = PasswordHash::new(&user.password).unwrap();
+    //check hash_represantation of string
+    let parsed_hash = match PasswordHash::new(&user.password) {
+        Ok(hash) => hash,
+        Err(_) => {
+            let main_response = MainResponse {
+                success: false,
+                data: None,
+                error_message: Some("Email or password are incorrect, please try a different email or sign up for a new account.".to_string()),
+            };
+            return (StatusCode::UNAUTHORIZED, Json(main_response));
+        }
+    };
 
-    // Check if the password is correct using argon2 verifier
+    //verify password using argon2 verifier
     if Argon2::default()
         .verify_password(payload.password.as_bytes(), &parsed_hash)
         .is_err()
