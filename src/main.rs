@@ -59,6 +59,7 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
+    //specifying some connection settings
     let mut client_options = ClientOptions::parse(mongo_uri).await.unwrap();
     client_options.connect_timeout = Some(Duration::from_secs(mongo_connection_timeout));
     client_options.max_pool_size = Some(mongo_max_pool_size);
@@ -97,6 +98,7 @@ async fn main() {
         .nest("/preferences", preferred_content_routes)
         .layer(
             ServiceBuilder::new()
+                //sensetive header authorization from request
                 .layer(SetSensitiveRequestHeadersLayer::new(once(AUTHORIZATION)))
                 .layer(TraceLayer::new_for_http())
                 .layer(SetResponseHeaderLayer::if_not_present(
