@@ -7,6 +7,7 @@ use axum::{
 use bson::oid::ObjectId;
 use chrono::Utc;
 use mongodb::Client;
+use validator::Validate;
 
 use crate::models::post_model::{Post, PostPayload};
 use crate::responses::bool_response::BoolResponse;
@@ -19,14 +20,18 @@ pub async fn create_post(
 ) -> impl IntoResponse {
     let post_collection = client.database("Merume").collection::<Post>("posts");
 
-    if payload.body.is_empty() {
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(BoolResponse {
-                success: false,
-                error_message: Some("Missing fields".to_string()),
-            }),
-        );
+    // Validate the payload
+    match payload.validate() {
+        Ok(()) => {} // Validation successful, do nothing
+        Err(e) => {
+            return (
+                StatusCode::UNPROCESSABLE_ENTITY,
+                Json(BoolResponse {
+                    success: false,
+                    error_message: Some(e.to_string()),
+                }),
+            );
+        }
     }
 
     let post = Post {

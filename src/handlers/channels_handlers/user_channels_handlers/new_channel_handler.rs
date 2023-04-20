@@ -9,21 +9,26 @@ use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, 
 use bson::{doc, oid::ObjectId};
 use chrono::Utc;
 use mongodb::Client;
+use validator::Validate;
 
 pub async fn new_channel(
     State(client): State<Client>,
     Extension(user_id): Extension<ObjectId>,
     Json(payload): Json<ChannelPayload>,
 ) -> impl IntoResponse {
-    if payload.name.is_empty() || payload.description.is_empty() {
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(MainResponse {
-                success: false,
-                data: None,
-                error_message: Some("Missing fields".to_string()),
-            }),
-        );
+    // Validate the payload
+    match payload.validate() {
+        Ok(()) => {} // Validation successful, do nothing
+        Err(e) => {
+            return (
+                StatusCode::UNPROCESSABLE_ENTITY,
+                Json(MainResponse {
+                    success: false,
+                    data: None,
+                    error_message: Some(e.to_string()),
+                }),
+            );
+        }
     }
 
     let channels_collection = client.database("Merume").collection::<Channel>("channels");

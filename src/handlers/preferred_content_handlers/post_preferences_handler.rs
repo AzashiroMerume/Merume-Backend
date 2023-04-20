@@ -1,6 +1,7 @@
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, Json};
 use bson::{doc, oid::ObjectId};
 use mongodb::{options::UpdateOptions, Client};
+use validator::Validate;
 
 use crate::{
     models::user_model::{User, UserPreferencesPayload},
@@ -14,14 +15,18 @@ pub async fn post_preferences(
 ) -> impl IntoResponse {
     let collection = client.database("Merume").collection::<User>("users");
 
-    if payload.preferences.is_empty() {
-        return (
-            StatusCode::UNPROCESSABLE_ENTITY,
-            Json(BoolResponse {
-                success: false,
-                error_message: Some("Please fill in all required fields".to_string()),
-            }),
-        );
+    // Validate the payload
+    match payload.validate() {
+        Ok(()) => {} // Validation successful, do nothing
+        Err(e) => {
+            return (
+                StatusCode::UNPROCESSABLE_ENTITY,
+                Json(BoolResponse {
+                    success: false,
+                    error_message: Some(e.to_string()),
+                }),
+            );
+        }
     }
 
     let filter = doc! {"_id": user_id};
