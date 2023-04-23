@@ -23,6 +23,7 @@ pub async fn login(
     match payload.validate() {
         Ok(()) => {} // Validation successful, do nothing
         Err(e) => {
+            eprintln!("{:?}", e);
             return (
                 StatusCode::UNPROCESSABLE_ENTITY,
                 Json(MainResponse {
