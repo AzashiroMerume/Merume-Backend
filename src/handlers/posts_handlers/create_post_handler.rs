@@ -34,14 +34,16 @@ pub async fn create_post(
         }
     }
 
+    let now = Utc::now();
+
     let post = Post {
         id: ObjectId::new(),
         owner_id: user_id,
-        channel_id: channel_id,
+        channel_id,
         body: payload.body,
         images: payload.images,
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
+        created_at: now,
+        updated_at: now,
     };
 
     let result = post_collection.insert_one(post, None).await;
