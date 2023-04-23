@@ -30,7 +30,6 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
 async fn main() {
-    // initialize tracing
     dotenv().ok();
 
     let mongo_uri: String =
@@ -50,6 +49,7 @@ async fn main() {
     let _jwt_secret: String =
         std::env::var("JWT_SECRET").expect("Failed to load `JWT_SECRET` environment variable.");
 
+    // initialize tracing
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
             std::env::var("RUST_LOG").unwrap_or_else(|_| {
@@ -83,6 +83,7 @@ async fn main() {
     let auth_routes = auth_routes(client.clone());
     let user_channels_routes = user_channels_routes(client.clone());
     let channel_system = channel_system(client.clone());
+    let recomendations_routes = recomendations_routes(client.clone());
     let preferred_content_routes = preferred_content_routes(client.clone());
 
     // build application with a routes
@@ -93,6 +94,7 @@ async fn main() {
         //     |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
         // ))
         .nest("/users/channels", user_channels_routes)
+        .nest("/users/recomendations", recomendations_routes)
         .nest("/auth", auth_routes)
         .nest("/channels", channel_system)
         .nest("/preferences", preferred_content_routes)

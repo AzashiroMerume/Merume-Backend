@@ -1,7 +1,7 @@
 use crate::{handlers, middlewares};
 use handlers::{
-    auth_handlers, channels_handlers, channels_handlers::user_channels_handlers, posts_handlers,
-    preferred_content_handlers,
+    auth_handlers, channels_handlers, channels_handlers::user_channels_handlers,
+    content_recomendation_handlers, posts_handlers, preferred_content_handlers,
 };
 use middlewares::{auth_middleware, verify_channel_owner_middleware};
 
@@ -83,6 +83,18 @@ pub fn channel_system(client: Client) -> Router<Client> {
     Router::new()
         .merge(channels_routes(client.clone()))
         .merge(post_routes(client))
+}
+
+pub fn recomendations_routes(client: Client) -> Router<Client> {
+    Router::new()
+        .route(
+            "/recomendations",
+            get(content_recomendation_handlers::recomendations_handler::recomendations),
+        )
+        .layer(middleware::from_fn_with_state(
+            client,
+            |state, req, next| auth_middleware::auth(state, req, next, Some(true)),
+        ))
 }
 
 pub fn preferred_content_routes(client: Client) -> Router<Client> {
