@@ -41,6 +41,7 @@ pub async fn new_channel(
         owner_id: user_id,
         name: payload.name,
         description: payload.description,
+        categories: payload.categories,
         base_image: payload.base_image,
         created_at: Utc::now(),
     };

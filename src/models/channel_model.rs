@@ -11,6 +11,7 @@ pub struct Channel {
     pub owner_id: ObjectId,
     pub name: String,
     pub description: String,
+    pub categories: Vec<String>,
     pub base_image: Option<String>,
     pub created_at: DateTime<Utc>,
 }
@@ -22,5 +23,7 @@ pub struct ChannelPayload {
     pub name: String,
     #[validate(length(min = 1))]
     pub description: String,
+    #[validate(length(min = 1))]
+    pub categories: Vec<String>,
     pub base_image: Option<String>,
 }
