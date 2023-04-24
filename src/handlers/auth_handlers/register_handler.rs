@@ -119,6 +119,8 @@ pub async fn register(
         email: payload.email,
         password: hashed_password,
         preferences: None,
+        liked: None,
+        bookmarks: None,
         created_at: now,
         updated_at: now,
     };

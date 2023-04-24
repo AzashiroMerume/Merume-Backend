@@ -13,6 +13,8 @@ pub struct User {
     pub email: String,
     pub password: String,
     pub preferences: Option<Vec<String>>,
+    pub liked: Option<Vec<ObjectId>>,
+    pub bookmarks: Option<Vec<ObjectId>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
