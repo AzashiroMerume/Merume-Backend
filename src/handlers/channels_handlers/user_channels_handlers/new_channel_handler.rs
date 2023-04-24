@@ -1,6 +1,6 @@
 use crate::{
     models::{
-        channel_model::{Channel, ChannelPayload},
+        channel_model::{Channel, ChannelPayload, Subscriptions},
         user_channel_model::UserChannel,
     },
     responses::main_response::MainResponse,
@@ -36,14 +36,27 @@ pub async fn new_channel(
         .database("Merume")
         .collection::<UserChannel>("user_channels");
 
+    let now = Utc::now();
+
+    //init subscriptions for channel
+    let subscriptions = Subscriptions {
+        current_subscriptions: 0,
+        monthly_subscribers: vec![0],
+        yearly_subscribers: vec![0],
+        two_week_subscribers: vec![0],
+        last_updated: now,
+    };
+
     let channel = Channel {
         id: ObjectId::new(),
         owner_id: user_id,
         name: payload.name,
+        channel_type: payload.channel_type,
         description: payload.description,
         categories: payload.categories,
+        subscriptions: subscriptions,
         base_image: payload.base_image,
-        created_at: Utc::now(),
+        created_at: now,
     };
 
     let channel_result = channels_collection
