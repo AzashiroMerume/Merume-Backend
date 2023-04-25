@@ -1,9 +1,12 @@
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, Json};
-use bson::{doc, oid::ObjectId};
+use bson::doc;
 use futures::stream::TryStreamExt;
-use mongodb::{options::UpdateOptions, Client};
+use mongodb::{options::FindOptions, Client};
 
-use crate::models::{channel_model::Channel, post_model::Post, user_model::User};
+use crate::{
+    models::{channel_model::Channel, user_model::User},
+    responses::main_response::MainResponse,
+};
 
 pub async fn recommendations(
     State(client): State<Client>,
@@ -12,15 +15,29 @@ pub async fn recommendations(
     let user_preferences = user.preferences.unwrap();
     let channels_collection = client.database("Merume").collection::<Channel>("channels");
 
-    let mut cursor = channels_collection
-        .find(doc! {"categories": {"$in": user_preferences}}, None)
-        .await
-        .unwrap();
+    let options = FindOptions::builder().limit(20).build();
+    let cursor = channels_collection
+        .find(doc! {"categories": {"$in": user_preferences}}, options)
+        .await;
 
     let mut channels = vec![];
 
-    while let Some(channel) = cursor.try_next().await.unwrap() {
-        channels.push(channel);
+    match cursor {
+        Ok(mut cursor) => {
+            while let Some(channel) = cursor.try_next().await.unwrap() {
+                channels.push(channel);
+            }
+        }
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(MainResponse {
+                    success: false,
+                    data: None,
+                    error_message: Some(format!("Failed to find recomendations")),
+                }),
+            );
+        }
     }
 
     // Step 2: Calculate percentage increase in two-week subscribers for each channel
@@ -30,7 +47,7 @@ pub async fn recommendations(
         let two_week_subscribers = channel.subscriptions.two_week_subscribers.len() as usize;
         let previous_week_subscribers = channel
             .subscriptions
-            .monthly_subscribers
+            .two_week_subscribers
             .last()
             .cloned()
             .unwrap_or(0) as usize;
@@ -54,5 +71,12 @@ pub async fn recommendations(
         .map(|(channel, _)| channel)
         .collect::<Vec<_>>();
 
-    (StatusCode::OK, Json(sorted_channels))
+    (
+        StatusCode::OK,
+        Json(MainResponse {
+            success: false,
+            data: Some(sorted_channels),
+            error_message: None,
+        }),
+    )
 }
