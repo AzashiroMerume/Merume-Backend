@@ -65,7 +65,7 @@ pub fn channels_routes(client: Client) -> Router<Client> {
 pub fn post_routes(client: Client) -> Router<Client> {
     Router::new()
         .route(
-            "/:channel_id",
+            "/:channel_id/post",
             post(posts_handlers::create_post_handler::create_post),
         )
         .layer(middleware::from_fn_with_state(
