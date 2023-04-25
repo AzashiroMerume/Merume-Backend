@@ -93,7 +93,15 @@ pub async fn subscribe_to_channel(
         .insert_one(user_channel.clone(), None)
         .await
     {
-        Ok(_) => {}
+        Ok(_) => {
+            return (
+                StatusCode::OK,
+                Json(BoolResponse {
+                    success: true,
+                    error_message: None,
+                }),
+            )
+        }
         Err(err) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -107,12 +115,4 @@ pub async fn subscribe_to_channel(
             )
         }
     }
-
-    (
-        StatusCode::OK,
-        Json(BoolResponse {
-            success: true,
-            error_message: None,
-        }),
-    )
 }
