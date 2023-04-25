@@ -68,6 +68,10 @@ pub fn post_routes(client: Client) -> Router<Client> {
             "/:channel_id/post",
             post(posts_handlers::create_post_handler::create_post),
         )
+        .route(
+            "/:channel_id/:post_id/delete",
+            post(posts_handlers::delete_post_handler::delete_post),
+        )
         .layer(middleware::from_fn_with_state(
             client.clone(),
             verify_channel_owner_middleware::verify_channel_owner,
