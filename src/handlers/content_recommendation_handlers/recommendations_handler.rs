@@ -74,7 +74,7 @@ pub async fn recommendations(
     (
         StatusCode::OK,
         Json(MainResponse {
-            success: false,
+            success: true,
             data: Some(sorted_channels),
             error_message: None,
         }),
