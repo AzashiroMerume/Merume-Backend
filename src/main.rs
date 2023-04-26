@@ -34,10 +34,15 @@ async fn main() {
 
     let mongo_uri: String =
         std::env::var("MONGO_URI").expect("Failed to load `MONGO_URI` environment variable.");
-    let mongo_connection_timeout: u64 = std::env::var("MONGO_CONNECTION_TIMEOUT")
-        .expect("Failed to load `MONGO_CONNECTION_TIMEOUT` environment variable.")
-        .parse()
-        .expect("Failed to parse `MONGO_CONNECTION_TIMEOUT` environment variable.");
+    let mongo_connection_timeout: u64 = match std::env::var("MONGO_CONNECTION_TIMEOUT") {
+        Ok(val) => val
+            .parse()
+            .expect("Failed to parse `MONGO_CONNECTION_TIMEOUT` environment variable."),
+        Err(e) => panic!(
+            "Failed to load `MONGO_CONNECTION_TIMEOUT` environment variable: {}",
+            e
+        ),
+    };
     let mongo_min_pool_size: u32 = std::env::var("MONGO_MIN_POOL_SIZE")
         .expect("Failed to load `MONGO_MIN_POOL_SIZE` environment variable.")
         .parse()
@@ -46,6 +51,12 @@ async fn main() {
         .expect("Failed to load `MONGO_MAX_POOL_SIZE` environment variable.")
         .parse()
         .expect("Failed to parse `MONGO_MAX_POOL_SIZE` environment variable.");
+
+    // Load the timeout value from the environment variable "REQUEST_TIMEOUT"
+    let request_timeout: u64 = std::env::var("REQUEST_TIMEOUT")
+        .expect("Failed to load `REQUEST_TIMEOUT` environment variable.")
+        .parse()
+        .expect("Failed to parse `REQUEST_TIMEOUT` environment variable.");
     let _jwt_secret: String =
         std::env::var("JWT_SECRET").expect("Failed to load `JWT_SECRET` environment variable.");
 
@@ -60,7 +71,9 @@ async fn main() {
         .init();
 
     //specifying some connection settings
-    let mut client_options = ClientOptions::parse(mongo_uri).await.unwrap();
+    let mut client_options = ClientOptions::parse(mongo_uri)
+        .await
+        .expect("Failed to parse MongoDB URI");
     client_options.connect_timeout = Some(Duration::from_secs(mongo_connection_timeout));
     client_options.max_pool_size = Some(mongo_max_pool_size);
     client_options.min_pool_size = Some(mongo_min_pool_size);
@@ -108,7 +121,7 @@ async fn main() {
                     server_header_value,
                 ))
                 // timeout requests after 10 secs, returning 408 status code
-                .layer(TimeoutLayer::new(Duration::from_secs(10))),
+                .layer(TimeoutLayer::new(Duration::from_secs(request_timeout))),
         );
 
     let app = app.fallback(common_handler::handler_404).with_state(client);
