@@ -14,11 +14,22 @@ pub async fn get_channel_by_id(
 ) -> impl IntoResponse {
     let channels_collection = client.database("Merume").collection::<Channel>("channels");
 
+    let channel_id = match ObjectId::parse_str(&channel_id) {
+        Ok(channel_id) => channel_id,
+        Err(_) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(MainResponse {
+                    success: false,
+                    data: None,
+                    error_message: Some("Invalid channel ID".to_string()),
+                }),
+            )
+        }
+    };
+
     let channel = match channels_collection
-        .find_one(
-            doc! { "_id": ObjectId::parse_str(&channel_id).unwrap() },
-            None,
-        )
+        .find_one(doc! { "_id": channel_id }, None)
         .await
     {
         Ok(channel) => channel,

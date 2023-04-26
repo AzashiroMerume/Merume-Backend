@@ -23,12 +23,13 @@ pub async fn create_post(
     // Validate the payload
     match payload.validate() {
         Ok(()) => {} // Validation successful, do nothing
-        Err(e) => {
+        Err(err) => {
+            eprintln!("Error validating payload: {:?}", err);
             return (
                 StatusCode::UNPROCESSABLE_ENTITY,
                 Json(BoolResponse {
                     success: false,
-                    error_message: Some(e.to_string()),
+                    error_message: Some(err.to_string()),
                 }),
             );
         }
@@ -58,8 +59,8 @@ pub async fn create_post(
                 }),
             );
         }
-        Err(e) => {
-            eprintln!("Error inserting user: {:?}", e);
+        Err(err) => {
+            eprintln!("Error inserting user: {:?}", err);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(BoolResponse {

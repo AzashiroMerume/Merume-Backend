@@ -10,12 +10,40 @@ use mongodb::Client;
 use crate::models::{channel_model::Channel, post_model::Post};
 use crate::responses::bool_response::BoolResponse;
 
-pub async fn delete_post(
+pub async fn delete_post_by_id(
     State(client): State<Client>,
-    Path((channel_id, post_id)): Path<(ObjectId, ObjectId)>,
+    Path((channel_id, post_id)): Path<(String, String)>,
 ) -> impl IntoResponse {
     let channel_collection = client.database("Merume").collection::<Channel>("channels");
     let post_collection = client.database("Merume").collection::<Post>("posts");
+
+    let channel_id = match ObjectId::parse_str(&channel_id) {
+        Ok(channel_id) => channel_id,
+        Err(err) => {
+            eprintln!("Error parsing channel_id: {:?}", err);
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(BoolResponse {
+                    success: false,
+                    error_message: Some("Invalid channel ID".to_string()),
+                }),
+            );
+        }
+    };
+
+    let post_id = match ObjectId::parse_str(&post_id) {
+        Ok(post_id) => post_id,
+        Err(err) => {
+            eprintln!("Error parsing post_id: {:?}", err);
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(BoolResponse {
+                    success: false,
+                    error_message: Some("Invalid post ID".to_string()),
+                }),
+            );
+        }
+    };
 
     //check the channel for existence
     match channel_collection
@@ -29,8 +57,8 @@ pub async fn delete_post(
             };
             return (StatusCode::BAD_REQUEST, Json(main_response));
         }
-        Err(e) => {
-            eprintln!("Error checking email: {:?}", e);
+        Err(err) => {
+            eprintln!("Error checking channel: {:?}", err);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(BoolResponse {
@@ -44,29 +72,39 @@ pub async fn delete_post(
         _ => {} // continue checking for nickname
     }
 
-    let result = post_collection
-        .delete_one(doc! {"_id": post_id}, None)
+    let deletion_result = post_collection
+        .delete_one(doc! { "_id": post_id }, None)
         .await;
 
-    match result {
-        Ok(_) => {
-            return (
-                StatusCode::OK,
-                Json(BoolResponse {
-                    success: true,
-                    error_message: None,
-                }),
-            )
+    match deletion_result {
+        Ok(result) => {
+            if result.deleted_count == 1 {
+                (
+                    StatusCode::OK,
+                    Json(BoolResponse {
+                        success: true,
+                        error_message: None,
+                    }),
+                )
+            } else {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(BoolResponse {
+                        success: false,
+                        error_message: Some("Channel not found".to_string()),
+                    }),
+                )
+            }
         }
         Err(err) => {
-            eprintln!("Error deleting post: {}", err.to_string());
-            return (
+            eprintln!("Error deleting post: {:?}", err);
+            (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(BoolResponse {
                     success: false,
-                    error_message: Some(format!("Error deleting post")),
+                    error_message: Some(format!("Failed to delete channel: {}", err.to_string())),
                 }),
-            );
+            )
         }
     }
 }
