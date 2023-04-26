@@ -56,6 +56,10 @@ pub fn channels_routes(client: Client) -> Router<Client> {
             "/:channel_id/subscribe",
             get(channels_handlers::subscribe_to_channel_handler::subscribe_to_channel),
         )
+        .route(
+            "/:channel_id/delete",
+            post(channels_handlers::delete_channel_handler::delete_channel_by_id),
+        )
         .layer(middleware::from_fn_with_state(
             client,
             |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
@@ -70,7 +74,7 @@ pub fn post_routes(client: Client) -> Router<Client> {
         )
         .route(
             "/:channel_id/:post_id/delete",
-            post(posts_handlers::delete_post_handler::delete_post),
+            post(posts_handlers::delete_post_handler::delete_post_by_id),
         )
         .layer(middleware::from_fn_with_state(
             client.clone(),
