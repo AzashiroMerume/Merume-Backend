@@ -2,30 +2,18 @@ mod handlers;
 mod middlewares;
 mod models;
 mod responses;
+mod router;
 mod routes;
 mod utils;
 
-use handlers::common_handler;
-use routes::*;
+use router::create_router;
 
-use axum::{
-    http::{
-        header::{self, AUTHORIZATION},
-        HeaderValue,
-    },
-    Router,
-};
 use dotenv::dotenv;
 use mongodb::{
     options::{ClientOptions, Compressor},
     Client,
 };
-use std::{iter::once, net::SocketAddr, time::Duration};
-use tower::ServiceBuilder;
-use tower_http::{
-    sensitive_headers::SetSensitiveRequestHeadersLayer, set_header::SetResponseHeaderLayer,
-    timeout::TimeoutLayer, trace::TraceLayer,
-};
+use std::{net::SocketAddr, time::Duration};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
@@ -53,10 +41,6 @@ async fn main() {
         .expect("Failed to parse `MONGO_MAX_POOL_SIZE` environment variable.");
 
     // Load the timeout value from the environment variable "REQUEST_TIMEOUT"
-    let request_timeout: u64 = std::env::var("REQUEST_TIMEOUT")
-        .expect("Failed to load `REQUEST_TIMEOUT` environment variable.")
-        .parse()
-        .expect("Failed to parse `REQUEST_TIMEOUT` environment variable.");
     let _jwt_secret: String =
         std::env::var("JWT_SECRET").expect("Failed to load `JWT_SECRET` environment variable.");
 
@@ -90,41 +74,9 @@ async fn main() {
     ]);
 
     let client = Client::with_options(client_options).unwrap();
-    let server_header_value = HeaderValue::from_static("Merume");
 
-    //creating routers
-    let auth_routes = auth_routes(client.clone());
-    let user_channels_routes = user_channels_routes(client.clone());
-    let channel_system = channel_system(client.clone());
-    let recomendations_routes = recomendations_routes(client.clone());
-    let preferred_content_routes = preferred_content_routes(client.clone());
-
-    // build application with a routes
-    let app = Router::new()
-        // .route("/test", get(common_handler::_test_handler))
-        // .route_layer(middleware::from_fn_with_state(
-        //     client.clone(),
-        //     |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
-        // ))
-        .nest("/users/channels", user_channels_routes)
-        .nest("/users/recomendations", recomendations_routes)
-        .nest("/auth", auth_routes)
-        .nest("/channels", channel_system)
-        .nest("/preferences", preferred_content_routes)
-        .layer(
-            ServiceBuilder::new()
-                //sensetive header authorization from request
-                .layer(SetSensitiveRequestHeadersLayer::new(once(AUTHORIZATION)))
-                .layer(TraceLayer::new_for_http())
-                .layer(SetResponseHeaderLayer::if_not_present(
-                    header::SERVER,
-                    server_header_value,
-                ))
-                // timeout requests after 10 secs, returning 408 status code
-                .layer(TimeoutLayer::new(Duration::from_secs(request_timeout))),
-        );
-
-    let app = app.fallback(common_handler::handler_404).with_state(client);
+    // build application with a router
+    let app = create_router(client);
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 8081));
     tracing::debug!("listening on {}", addr);
