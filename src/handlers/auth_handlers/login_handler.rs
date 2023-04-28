@@ -52,8 +52,8 @@ pub async fn login(
             };
             return (StatusCode::NOT_FOUND, Json(main_response));
         }
-        Err(e) => {
-            eprintln!("Error finding user: {:?}", e);
+        Err(err) => {
+            eprintln!("Error finding user: {:?}", err);
             let main_response = MainResponse {
                 success: false,
                 data: None,
@@ -95,8 +95,8 @@ pub async fn login(
 
     let token = match generate_jwt_token(&user.id.to_string(), &jwt_secret.unwrap()) {
         Ok(token) => token,
-        Err(e) => {
-            eprintln!("Error while matching token: {:?}", e);
+        Err(err) => {
+            eprintln!("Error while matching token: {:?}", err);
             let main_response = MainResponse {
                 success: false,
                 data: None,

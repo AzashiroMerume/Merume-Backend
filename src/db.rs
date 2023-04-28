@@ -29,18 +29,10 @@ impl DB {
             Ok(val) => val
                 .parse()
                 .expect("Failed to parse `MONGO_CONNECTION_TIMEOUT` environment variable."),
-            Err(e) => {
-                return Err((
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(BoolResponse {
-                        success: false,
-                        error_message: Some(format!(
-                            "Failed to load `MONGO_CONNECTION_TIMEOUT` environment variable: {}",
-                            e
-                        )),
-                    }),
-                ));
-            }
+            Err(err) => panic!(
+                "Failed to load `MONGO_CONNECTION_TIMEOUT` environment variable: {}",
+                err
+            ),
         };
         let mongo_min_pool_size: u32 = std::env::var("MONGO_MIN_POOL_SIZE")
             .expect("Failed to load `MONGO_MIN_POOL_SIZE` environment variable.")
@@ -50,6 +42,18 @@ impl DB {
             .expect("Failed to load `MONGO_MAX_POOL_SIZE` environment variable.")
             .parse()
             .expect("Failed to parse `MONGO_MAX_POOL_SIZE` environment variable.");
+
+        let db_name: String =
+            std::env::var("DB_NAME").expect("Failed to load `DB_NAME` environement variable.");
+        let users_collection_name: String = std::env::var("DB_USERS_TABLE")
+            .expect("Failed to load `DB_USERS_TABLE` environement variable.");
+        let channels_collection_name: String = std::env::var("DB_CHANNELS_TABLE")
+            .expect("Failed to load `DB_CHANNELS_TABLE` environement variable.");
+        let user_channels_collection_name: String = std::env::var("DB_USER_CHANNELS_TABLE")
+            .expect("Failed to load `DB_USER_CHANNELS_TABLE` environement variable.");
+        let posts_collection_name: String = std::env::var("DB_POSTS_TABLE")
+            .expect("Failed to load `DB_POSTS_TABLE` environement variable.");
+
         let mut client_options = ClientOptions::parse(mongo_uri).await.map_err(|err| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -62,17 +66,6 @@ impl DB {
                 }),
             )
         })?;
-
-        let db_name: String =
-            std::env::var("DB_NAME").expect("Failed to load `DB_NAME` environement variable.");
-        let users_collection_name: String = std::env::var("DB_USERS_TABLE")
-            .expect("Failed to load `DB_USERS_TABLE` environement variable.");
-        let channels_collection_name: String = std::env::var("DB_CHANNELS_TABLE")
-            .expect("Failed to load `DB_CHANNELS_TABLE` environement variable.");
-        let user_channels_collection_name: String = std::env::var("DB_USER_CHANNELS_TABLE")
-            .expect("Failed to load `DB_USER_CHANNELS_TABLE` environement variable.");
-        let posts_collection_name: String = std::env::var("DB_POSTS_TABLE")
-            .expect("Failed to load `DB_POSTS_TABLE` environement variable.");
 
         client_options.connect_timeout = Some(Duration::from_secs(mongo_connection_timeout));
         client_options.max_pool_size = Some(mongo_max_pool_size);
@@ -90,6 +83,7 @@ impl DB {
         ]);
 
         let client = Client::with_options(client_options).map_err(|err| {
+            eprintln!("Error applying options to client: {}", err);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(BoolResponse {
