@@ -5,6 +5,7 @@ mod responses;
 mod router;
 mod routes;
 mod utils;
+mod db;
 
 use router::create_router;
 
