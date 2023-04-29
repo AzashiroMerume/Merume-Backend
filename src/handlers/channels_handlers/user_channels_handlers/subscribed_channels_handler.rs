@@ -1,4 +1,7 @@
-use crate::models::{channel_model::Channel, user_channel_model::UserChannel};
+use crate::{
+    models::{channel_model::Channel, user_channel_model::UserChannel},
+    AppState,
+};
 use axum::{
     extract::{
         ws::{Message, WebSocket, WebSocketUpgrade},
@@ -9,24 +12,22 @@ use axum::{
 };
 use bson::{doc, oid::ObjectId};
 use futures::{SinkExt, StreamExt, TryStreamExt};
-use mongodb::{Client, Collection};
 
 pub async fn subscribed_channels(
     ws: WebSocketUpgrade,
-    State(client): State<Client>,
+    State(state): State<AppState>,
     Extension(user_id): Extension<ObjectId>,
 ) -> impl IntoResponse {
-    ws.on_upgrade(move |socket| websocket(socket, State(client), user_id))
+    ws.on_upgrade(move |socket| websocket(socket, State(state), user_id))
 }
 
-async fn websocket(mut _socket: WebSocket, client: State<Client>, user_id: ObjectId) {
+async fn websocket(mut _socket: WebSocket, state: State<AppState>, user_id: ObjectId) {
     // By splitting we can send and receive at the same time.
     let (mut sender, _receiver) = _socket.split();
 
-    let user_channels_col: Collection<UserChannel> =
-        client.database("Merume").collection("user_channels");
-
-    let user_channels: Vec<UserChannel> = user_channels_col
+    let user_channels: Vec<UserChannel> = state
+        .db
+        .user_channels_collection
         .find(doc! {"user_id": user_id, "is_owner": false}, None)
         .await
         .unwrap()
@@ -39,9 +40,11 @@ async fn websocket(mut _socket: WebSocket, client: State<Client>, user_id: Objec
         .iter()
         .map(|uc| uc.channel_id.clone())
         .collect();
-    let channels_col: Collection<Channel> = client.database("Merume").collection("channels");
+
     let filter = doc! {"_id": {"$in": channel_ids}};
-    let channels: Vec<Channel> = channels_col
+    let channels: Vec<Channel> = state
+        .db
+        .channels_collection
         .find(filter.to_owned(), None)
         .await
         .unwrap()
@@ -53,13 +56,20 @@ async fn websocket(mut _socket: WebSocket, client: State<Client>, user_id: Objec
     sender.send(Message::Text(json)).await.unwrap();
 
     // Watch for changes in the collection
-    let mut change_stream = user_channels_col.watch(None, None).await.unwrap();
+    let mut change_stream = state
+        .db
+        .user_channels_collection
+        .watch(None, None)
+        .await
+        .unwrap();
 
     loop {
         match change_stream.try_next().await {
             Ok(Some(_)) => {
                 // A change event occurred in the collection
-                let channels: Vec<Channel> = channels_col
+                let channels: Vec<Channel> = state
+                    .db
+                    .channels_collection
                     .find(filter.clone(), None)
                     .await
                     .unwrap()

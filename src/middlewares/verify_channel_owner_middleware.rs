@@ -1,4 +1,4 @@
-use crate::models::channel_model::Channel;
+use crate::AppState;
 
 use axum::{
     extract::{Path, State},
@@ -8,18 +8,17 @@ use axum::{
     Extension,
 };
 use bson::{doc, oid::ObjectId};
-use mongodb::Client;
 
 pub async fn verify_channel_owner<B>(
-    State(client): State<Client>,
+    State(state): State<AppState>,
     Extension(user_id): Extension<ObjectId>,
     Path(channel_id): Path<String>,
     req: Request<B>,
     next: Next<B>,
 ) -> Result<Response, StatusCode> {
-    let channels_collection = client.database("Merume").collection::<Channel>("channels");
-
-    let channel = channels_collection
+    let channel = state
+        .db
+        .channels_collection
         .find_one(
             doc! {"_id": ObjectId::parse_str(&channel_id).unwrap()},
             None,

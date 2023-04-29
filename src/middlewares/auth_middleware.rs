@@ -1,4 +1,4 @@
-use crate::{models::user_model::User, utils::jwt::verify_token};
+use crate::{utils::jwt::verify_token, AppState};
 
 use axum::{
     extract::State,
@@ -7,10 +7,9 @@ use axum::{
     response::Response,
 };
 use bson::{doc, oid::ObjectId};
-use mongodb::{Client, Collection};
 
 pub async fn auth<B>(
-    State(client): State<Client>,
+    State(state): State<AppState>,
     mut req: Request<B>,
     next: Next<B>,
     pass_full_user: Option<bool>,
@@ -31,8 +30,12 @@ pub async fn auth<B>(
 
     let user_id = ObjectId::parse_str(&token_claims.sub).map_err(|_| StatusCode::UNAUTHORIZED)?;
 
-    let collection: Collection<User> = client.database("Merume").collection("users");
-    let user = match collection.find_one(doc! {"_id": user_id}, None).await {
+    let user = match state
+        .db
+        .users_collection
+        .find_one(doc! {"_id": user_id}, None)
+        .await
+    {
         Ok(Some(user)) => user,
         Ok(None) => return Err(StatusCode::UNAUTHORIZED),
         Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),

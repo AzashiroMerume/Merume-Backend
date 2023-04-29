@@ -1,4 +1,4 @@
-use crate::{models::channel_model::Channel, responses::main_response::MainResponse};
+use crate::{responses::main_response::MainResponse, AppState};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -6,14 +6,11 @@ use axum::{
     Json,
 };
 use bson::{doc, oid::ObjectId};
-use mongodb::Client;
 
 pub async fn get_channel_by_id(
-    State(client): State<Client>,
+    State(state): State<AppState>,
     Path(channel_id): Path<String>,
 ) -> impl IntoResponse {
-    let channels_collection = client.database("Merume").collection::<Channel>("channels");
-
     let channel_id = match ObjectId::parse_str(&channel_id) {
         Ok(channel_id) => channel_id,
         Err(_) => {
@@ -28,7 +25,9 @@ pub async fn get_channel_by_id(
         }
     };
 
-    let channel = match channels_collection
+    let channel = match state
+        .db
+        .channels_collection
         .find_one(doc! { "_id": channel_id }, None)
         .await
     {

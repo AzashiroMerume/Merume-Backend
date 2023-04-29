@@ -1,4 +1,4 @@
-use crate::{models::channel_model::Channel, responses::bool_response::BoolResponse};
+use crate::{responses::bool_response::BoolResponse, AppState};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -6,14 +6,11 @@ use axum::{
     Json,
 };
 use bson::{doc, oid::ObjectId};
-use mongodb::Client;
 
 pub async fn delete_channel_by_id(
-    State(client): State<Client>,
+    State(state): State<AppState>,
     Path(channel_id): Path<String>,
 ) -> impl IntoResponse {
-    let channels_collection = client.database("Merume").collection::<Channel>("channels");
-
     let channel_id = match ObjectId::parse_str(&channel_id) {
         Ok(channel_id) => channel_id,
         Err(err) => {
@@ -28,7 +25,9 @@ pub async fn delete_channel_by_id(
         }
     };
 
-    let deletion_result = channels_collection
+    let deletion_result = state
+        .db
+        .channels_collection
         .delete_one(doc! { "_id": channel_id }, None)
         .await;
 

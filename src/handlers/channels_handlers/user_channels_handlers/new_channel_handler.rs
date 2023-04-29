@@ -4,37 +4,32 @@ use crate::{
         user_channel_model::UserChannel,
     },
     responses::main_response::MainResponse,
+    AppState,
 };
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, Json};
 use bson::{doc, oid::ObjectId};
 use chrono::Utc;
-use mongodb::Client;
 use validator::Validate;
 
 pub async fn new_channel(
-    State(client): State<Client>,
+    State(state): State<AppState>,
     Extension(user_id): Extension<ObjectId>,
     Json(payload): Json<ChannelPayload>,
 ) -> impl IntoResponse {
     // Validate the payload
     match payload.validate() {
         Ok(()) => {} // Validation successful, do nothing
-        Err(e) => {
+        Err(err) => {
             return (
                 StatusCode::UNPROCESSABLE_ENTITY,
                 Json(MainResponse {
                     success: false,
                     data: None,
-                    error_message: Some(e.to_string()),
+                    error_message: Some(err.to_string()),
                 }),
             );
         }
     }
-
-    let channels_collection = client.database("Merume").collection::<Channel>("channels");
-    let user_channels_collection = client
-        .database("Merume")
-        .collection::<UserChannel>("user_channels");
 
     let now = Utc::now();
 
@@ -59,17 +54,23 @@ pub async fn new_channel(
         created_at: now,
     };
 
-    let channel_result = channels_collection
+    let channel_result = state
+        .db
+        .channels_collection
         .insert_one(channel.to_owned(), None)
         .await;
 
     if let Err(err) = channel_result {
+        eprintln!("Failed to insert channel: {}", err.to_string());
+
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(MainResponse {
                 success: false,
                 data: None,
-                error_message: Some(format!("Failed to insert channel: {}", err.to_string())),
+                error_message: Some(
+                    "There was an error on the server side, try again later.".to_string(),
+                ),
             }),
         );
     }
@@ -85,25 +86,32 @@ pub async fn new_channel(
         created_at: Some(Utc::now()),
     };
 
-    let user_channel_result = user_channels_collection
+    let user_channel_result = state
+        .db
+        .user_channels_collection
         .insert_one(user_channel.to_owned(), None)
         .await;
 
     if let Err(err) = user_channel_result {
+        eprintln!(
+            "Failed to insert user-channel relationship: {}",
+            err.to_string()
+        );
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(MainResponse {
                 success: false,
                 data: None,
-                error_message: Some(format!(
-                    "Failed to insert user-channel relationship: {}",
-                    err.to_string()
-                )),
+                error_message: Some(
+                    "There was an error on the server side, try again later.".to_string(),
+                ),
             }),
         );
     }
 
-    let response_data = channels_collection
+    let response_data = state
+        .db
+        .channels_collection
         .find_one(doc! { "_id": channel_id.unwrap() }, None)
         .await;
 
@@ -116,16 +124,21 @@ pub async fn new_channel(
                 error_message: None,
             }),
         ),
-        Err(err) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(MainResponse {
-                success: false,
-                data: None,
-                error_message: Some(format!(
-                    "Failed to retrieve newly created channel: {}",
-                    err.to_string()
-                )),
-            }),
-        ),
+        Err(err) => {
+            eprintln!(
+                "Failed to retrieve newly created channel: {}",
+                err.to_string()
+            );
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(MainResponse {
+                    success: false,
+                    data: None,
+                    error_message: Some(
+                        "There was an error on the server side, try again later.".to_string(),
+                    ),
+                }),
+            );
+        }
     }
 }

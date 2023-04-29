@@ -1,22 +1,24 @@
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, Json};
 use bson::doc;
 use futures::stream::TryStreamExt;
-use mongodb::{options::FindOptions, Client};
+use mongodb::options::FindOptions;
 
 use crate::{
     models::{channel_model::Channel, user_model::User},
     responses::main_response::MainResponse,
+    AppState,
 };
 
 pub async fn recommendations(
-    State(client): State<Client>,
+    State(state): State<AppState>,
     Extension(user): Extension<User>,
 ) -> impl IntoResponse {
     let user_preferences = user.preferences.unwrap();
-    let channels_collection = client.database("Merume").collection::<Channel>("channels");
 
     let options = FindOptions::builder().limit(20).build();
-    let cursor = channels_collection
+    let cursor = state
+        .db
+        .channels_collection
         .find(doc! {"categories": {"$in": user_preferences}}, options)
         .await;
 

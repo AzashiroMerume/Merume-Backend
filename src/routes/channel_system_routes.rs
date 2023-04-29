@@ -1,16 +1,16 @@
-use crate::{handlers, middlewares};
+use crate::{handlers, middlewares, AppState};
 use handlers::{channels_handlers, posts_handlers};
 use middlewares::{auth_middleware, verify_channel_owner_middleware};
 
 use axum::{
+    extract::State,
     middleware,
     routing::{get, post},
     Router,
 };
-use mongodb::Client;
 use tower_http::limit::RequestBodyLimitLayer;
 
-pub fn channels_routes(client: Client) -> Router<Client> {
+pub fn channels_routes(State(state): State<AppState>) -> Router<AppState> {
     Router::new()
         .route(
             "/:channel_id",
@@ -20,13 +20,12 @@ pub fn channels_routes(client: Client) -> Router<Client> {
             "/:channel_id/subscribe",
             get(channels_handlers::subscribe_to_channel_handler::subscribe_to_channel),
         )
-        .layer(middleware::from_fn_with_state(
-            client,
-            |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
-        ))
+        .layer(middleware::from_fn_with_state(state, |state, req, next| {
+            auth_middleware::auth(state, req, next, Some(false))
+        }))
 }
 
-pub fn post_routes(client: Client) -> Router<Client> {
+pub fn post_routes(State(state): State<AppState>) -> Router<AppState> {
     Router::new()
         .route(
             "/:channel_id/post",
@@ -37,18 +36,17 @@ pub fn post_routes(client: Client) -> Router<Client> {
             post(posts_handlers::delete_post_handler::delete_post_by_id),
         )
         .layer(middleware::from_fn_with_state(
-            client.clone(),
+            state.clone(),
             verify_channel_owner_middleware::verify_channel_owner,
         ))
-        .layer(middleware::from_fn_with_state(
-            client,
-            |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
-        ))
+        .layer(middleware::from_fn_with_state(state, |state, req, next| {
+            auth_middleware::auth(state, req, next, Some(false))
+        }))
         .layer(RequestBodyLimitLayer::new(1024))
 }
 
-pub fn channel_system(client: Client) -> Router<Client> {
+pub fn channel_system(State(state): State<AppState>) -> Router<AppState> {
     Router::new()
-        .merge(channels_routes(client.clone()))
-        .merge(post_routes(client))
+        .merge(channels_routes(State(state.clone())))
+        .merge(post_routes(State(state)))
 }

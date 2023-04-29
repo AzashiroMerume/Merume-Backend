@@ -1,6 +1,7 @@
-use crate::models::{auth_model::LoginPayload, user_model::User};
+use crate::models::auth_model::LoginPayload;
 use crate::responses::main_response::MainResponse;
 use crate::utils::jwt::generate_jwt_token;
+use crate::AppState;
 
 use argon2::{
     password_hash::{PasswordHash, PasswordVerifier},
@@ -8,35 +9,30 @@ use argon2::{
 };
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use bson::doc;
-use mongodb::Client;
 use validator::Validate;
 
 pub async fn login(
-    State(client): State<Client>,
+    State(state): State<AppState>,
     Json(payload): Json<LoginPayload>,
 ) -> impl IntoResponse {
-    let collection_name = "users";
-    let collection = client
-        .database("Merume")
-        .collection::<User>(collection_name);
-
     match payload.validate() {
         Ok(()) => {} // Validation successful, do nothing
-        Err(e) => {
-            eprintln!("{:?}", e);
+        Err(err) => {
             return (
                 StatusCode::UNPROCESSABLE_ENTITY,
                 Json(MainResponse {
                     success: false,
                     data: None,
-                    error_message: Some(e.to_string()),
+                    error_message: Some(err.to_string()),
                 }),
             );
         }
     }
 
     // Find the user with the given email
-    let user = match collection
+    let user = match state
+        .db
+        .users_collection
         .find_one(doc! {"email": &payload.email}, None)
         .await
     {

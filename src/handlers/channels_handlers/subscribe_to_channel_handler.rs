@@ -1,6 +1,5 @@
 use crate::{
-    models::{channel_model::Channel, user_channel_model::UserChannel},
-    responses::bool_response::BoolResponse,
+    models::user_channel_model::UserChannel, responses::bool_response::BoolResponse, AppState,
 };
 use axum::{
     extract::{Path, State},
@@ -10,16 +9,15 @@ use axum::{
 };
 use bson::{doc, oid::ObjectId};
 use chrono::Utc;
-use mongodb::Client;
 
 pub async fn subscribe_to_channel(
-    State(client): State<Client>,
+    State(state): State<AppState>,
     Extension(user_id): Extension<ObjectId>,
     Path(channel_id): Path<String>,
 ) -> impl IntoResponse {
-    let channels_collection = client.database("Merume").collection::<Channel>("channels");
-
-    let channel = match channels_collection
+    let channel = match state
+        .db
+        .channels_collection
         .find_one(
             doc! { "_id": ObjectId::parse_str(&channel_id).unwrap() },
             None,
@@ -62,12 +60,10 @@ pub async fn subscribe_to_channel(
         );
     }
 
-    let user_channels_collection = client
-        .database("Merume")
-        .collection::<UserChannel>("user_channels");
-
     // Check if the user is already subscribed to the channel
-    if let Ok(Some(_)) = user_channels_collection
+    if let Ok(Some(_)) = state
+        .db
+        .user_channels_collection
         .find_one(doc! {"user_id": user_id, "channel_id": channel.id}, None)
         .await
     {
@@ -89,7 +85,9 @@ pub async fn subscribe_to_channel(
         created_at: None,
     };
 
-    match user_channels_collection
+    match state
+        .db
+        .user_channels_collection
         .insert_one(user_channel.clone(), None)
         .await
     {

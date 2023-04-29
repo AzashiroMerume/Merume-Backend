@@ -4,16 +4,17 @@ use crate::{
         auth_routes, channel_system_routes, preferred_content_routes, recommendation_routes,
         user_channels_routes,
     },
+    AppState,
 };
 
 use axum::{
+    extract::State,
     http::{
         header::{self, AUTHORIZATION},
         HeaderValue,
     },
     Router,
 };
-use mongodb::Client;
 use std::{iter::once, time::Duration};
 use tower::ServiceBuilder;
 use tower_http::{
@@ -22,7 +23,7 @@ use tower_http::{
 };
 // use std::sync::Arc;
 
-pub fn create_router(client: Client) -> Router {
+pub fn create_router(State(state): State<AppState>) -> Router {
     //setting server configs
     let server_header_value = HeaderValue::from_static("Merume");
     let request_timeout: u64 = std::env::var("REQUEST_TIMEOUT")
@@ -31,12 +32,12 @@ pub fn create_router(client: Client) -> Router {
         .expect("Failed to parse `REQUEST_TIMEOUT` environment variable.");
 
     //creating routers
-    let auth_routes = auth_routes::auth_routes(client.clone());
-    let user_channels_routes = user_channels_routes::user_channels_routes(client.clone());
-    let channel_system = channel_system_routes::channel_system(client.clone());
-    let recomendations_routes = recommendation_routes::recomendations_routes(client.clone());
+    let auth_routes = auth_routes::auth_routes(State(state.clone()));
+    let user_channels_routes = user_channels_routes::user_channels_routes(State(state.clone()));
+    let channel_system = channel_system_routes::channel_system(State(state.clone()));
+    let recomendations_routes = recommendation_routes::recomendations_routes(State(state.clone()));
     let preferred_content_routes =
-        preferred_content_routes::preferred_content_routes(client.clone());
+        preferred_content_routes::preferred_content_routes(State(state.clone()));
 
     let app = Router::new()
         // .route("/test", get(common_handler::_test_handler))
@@ -61,5 +62,5 @@ pub fn create_router(client: Client) -> Router {
                 // timeout requests after 10 secs, returning 408 status code
                 .layer(TimeoutLayer::new(Duration::from_secs(request_timeout))),
         );
-    app.fallback(common_handler::handler_404).with_state(client)
+    app.fallback(common_handler::handler_404).with_state(state)
 }

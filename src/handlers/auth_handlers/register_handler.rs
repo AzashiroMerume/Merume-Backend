@@ -1,6 +1,7 @@
 use crate::models::{auth_model::RegisterPayload, user_model::User};
 use crate::responses::main_response::MainResponse;
 use crate::utils::jwt::generate_jwt_token;
+use crate::AppState;
 
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
@@ -9,15 +10,12 @@ use argon2::{
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use bson::{doc, oid::ObjectId};
 use chrono::Utc;
-use mongodb::Client;
 use validator::Validate;
 
 pub async fn register(
-    State(client): State<Client>,
+    State(state): State<AppState>,
     Json(payload): Json<RegisterPayload>,
 ) -> impl IntoResponse {
-    let collection = client.database("Merume").collection::<User>("users");
-
     // Validate the payload
     match payload.validate() {
         Ok(()) => {} // Validation successful, do nothing
@@ -34,7 +32,9 @@ pub async fn register(
     }
 
     //checking email and nickname for existence
-    match collection
+    match state
+        .db
+        .users_collection
         .find_one(doc! {"email": payload.email.clone()}, None)
         .await
     {
@@ -62,7 +62,9 @@ pub async fn register(
         _ => {} // continue checking for nickname
     }
 
-    match collection
+    match state
+        .db
+        .users_collection
         .find_one(doc! {"nickname": payload.nickname.clone()}, None)
         .await
     {
@@ -125,7 +127,11 @@ pub async fn register(
         updated_at: now,
     };
 
-    let result = collection.insert_one(user.to_owned(), None).await;
+    let result = state
+        .db
+        .users_collection
+        .insert_one(user.to_owned(), None)
+        .await;
 
     match result {
         Ok(_) => {

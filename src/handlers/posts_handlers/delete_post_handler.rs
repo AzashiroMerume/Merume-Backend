@@ -5,18 +5,14 @@ use axum::{
     Json,
 };
 use bson::{doc, oid::ObjectId};
-use mongodb::Client;
 
-use crate::models::{channel_model::Channel, post_model::Post};
 use crate::responses::bool_response::BoolResponse;
+use crate::AppState;
 
 pub async fn delete_post_by_id(
-    State(client): State<Client>,
+    State(state): State<AppState>,
     Path((channel_id, post_id)): Path<(String, String)>,
 ) -> impl IntoResponse {
-    let channel_collection = client.database("Merume").collection::<Channel>("channels");
-    let post_collection = client.database("Merume").collection::<Post>("posts");
-
     let channel_id = match ObjectId::parse_str(&channel_id) {
         Ok(channel_id) => channel_id,
         Err(err) => {
@@ -46,7 +42,9 @@ pub async fn delete_post_by_id(
     };
 
     //check the channel for existence
-    match channel_collection
+    match state
+        .db
+        .channels_collection
         .find_one(doc! {"_id": channel_id}, None)
         .await
     {
@@ -72,7 +70,9 @@ pub async fn delete_post_by_id(
         _ => {} // continue checking for nickname
     }
 
-    let deletion_result = post_collection
+    let deletion_result = state
+        .db
+        .posts_collection
         .delete_one(doc! { "_id": post_id }, None)
         .await;
 

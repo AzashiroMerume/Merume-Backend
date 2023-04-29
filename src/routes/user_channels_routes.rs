@@ -1,17 +1,25 @@
-use crate::{handlers, middlewares};
+use crate::{handlers, middlewares, AppState};
 use handlers::channels_handlers::user_channels_handlers;
 use middlewares::{auth_middleware, verify_channel_owner_middleware};
 
 use axum::{
+    extract::State,
     middleware,
     routing::{get, post},
     Router,
 };
-use mongodb::Client;
 use tower_http::limit::RequestBodyLimitLayer;
 
-pub fn user_channels_routes(client: Client) -> Router<Client> {
+pub fn user_channels_routes(State(state): State<AppState>) -> Router<AppState> {
     Router::new()
+        .route(
+            "/:channel_id/delete",
+            post(user_channels_handlers::delete_channel_handler::delete_channel_by_id),
+        )
+        .route_layer(middleware::from_fn_with_state(
+            state.clone(),
+            verify_channel_owner_middleware::verify_channel_owner,
+        ))
         .route(
             "/subscriptions",
             get(user_channels_handlers::subscribed_channels_handler::subscribed_channels),
@@ -24,17 +32,8 @@ pub fn user_channels_routes(client: Client) -> Router<Client> {
             "/new",
             post(user_channels_handlers::new_channel_handler::new_channel),
         )
-        .route(
-            "/:channel_id/delete",
-            post(user_channels_handlers::delete_channel_handler::delete_channel_by_id),
-        )
-        .layer(middleware::from_fn_with_state(
-            client.clone(),
-            verify_channel_owner_middleware::verify_channel_owner,
-        ))
-        .layer(middleware::from_fn_with_state(
-            client,
-            |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
-        ))
+        .layer(middleware::from_fn_with_state(state, |state, req, next| {
+            auth_middleware::auth(state, req, next, Some(false))
+        }))
         .layer(RequestBodyLimitLayer::new(1024))
 }

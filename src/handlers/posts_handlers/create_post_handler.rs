@@ -6,20 +6,20 @@ use axum::{
 };
 use bson::oid::ObjectId;
 use chrono::Utc;
-use mongodb::Client;
 use validator::Validate;
 
-use crate::models::post_model::{Post, PostPayload};
 use crate::responses::bool_response::BoolResponse;
+use crate::{
+    models::post_model::{Post, PostPayload},
+    AppState,
+};
 
 pub async fn create_post(
-    State(client): State<Client>,
+    State(state): State<AppState>,
     Extension(user_id): Extension<ObjectId>,
     Path(channel_id): Path<String>,
     Json(payload): Json<PostPayload>,
 ) -> impl IntoResponse {
-    let post_collection = client.database("Merume").collection::<Post>("posts");
-
     // Validate the payload
     match payload.validate() {
         Ok(()) => {} // Validation successful, do nothing
@@ -47,7 +47,7 @@ pub async fn create_post(
         updated_at: now,
     };
 
-    let result = post_collection.insert_one(post, None).await;
+    let result = state.db.posts_collection.insert_one(post, None).await;
 
     match result {
         Ok(_) => {
