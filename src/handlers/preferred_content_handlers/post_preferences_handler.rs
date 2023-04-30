@@ -3,9 +3,7 @@ use bson::{doc, oid::ObjectId};
 use mongodb::options::UpdateOptions;
 use validator::Validate;
 
-use crate::{
-    models::user_model::UserPreferencesPayload, responses::bool_response::BoolResponse, AppState,
-};
+use crate::{models::user_model::UserPreferencesPayload, responses::BoolResponse, AppState};
 
 pub async fn post_preferences(
     State(state): State<AppState>,

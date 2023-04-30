@@ -3,7 +3,7 @@ use crate::{
         channel_model::{Channel, ChannelPayload, Subscriptions},
         user_channel_model::UserChannel,
     },
-    responses::main_response::MainResponse,
+    responses::MainResponse,
     AppState,
 };
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, Json};

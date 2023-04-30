@@ -2,7 +2,7 @@ use crate::{
     models::{
         channel_model::Channel, post_model::Post, user_channel_model::UserChannel, user_model::User,
     },
-    responses::bool_response::BoolResponse,
+    responses::BoolResponse,
 };
 
 use axum::{http::StatusCode, Json};

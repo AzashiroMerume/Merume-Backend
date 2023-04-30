@@ -5,7 +5,7 @@ use mongodb::options::FindOptions;
 
 use crate::{
     models::{channel_model::Channel, user_model::User},
-    responses::main_response::MainResponse,
+    responses::MainResponse,
     AppState,
 };
 

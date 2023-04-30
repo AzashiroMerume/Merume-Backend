@@ -1,4 +1,4 @@
-use crate::{responses::bool_response::BoolResponse, AppState};
+use crate::{responses::BoolResponse, AppState};
 use axum::{
     extract::{Path, State},
     http::StatusCode,

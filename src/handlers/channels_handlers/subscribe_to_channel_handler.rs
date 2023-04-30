@@ -1,6 +1,4 @@
-use crate::{
-    models::user_channel_model::UserChannel, responses::bool_response::BoolResponse, AppState,
-};
+use crate::{models::user_channel_model::UserChannel, responses::BoolResponse, AppState};
 use axum::{
     extract::{Path, State},
     http::StatusCode,

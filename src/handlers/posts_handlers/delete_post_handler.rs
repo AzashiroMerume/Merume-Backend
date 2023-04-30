@@ -6,7 +6,7 @@ use axum::{
 };
 use bson::{doc, oid::ObjectId};
 
-use crate::responses::bool_response::BoolResponse;
+use crate::responses::BoolResponse;
 use crate::AppState;
 
 pub async fn delete_post_by_id(

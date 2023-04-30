@@ -8,7 +8,7 @@ use bson::oid::ObjectId;
 use chrono::Utc;
 use validator::Validate;
 
-use crate::responses::bool_response::BoolResponse;
+use crate::responses::BoolResponse;
 use crate::{
     models::post_model::{Post, PostPayload},
     AppState,

@@ -1,5 +1,5 @@
 use crate::models::auth_model::LoginPayload;
-use crate::responses::main_response::MainResponse;
+use crate::responses::MainResponse;
 use crate::utils::jwt::generate_jwt_token;
 use crate::AppState;
 

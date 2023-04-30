@@ -1,4 +1,4 @@
-use crate::{responses::main_response::MainResponse, AppState};
+use crate::{responses::MainResponse, AppState};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
