@@ -1,5 +1,5 @@
 use crate::models::auth_model::LoginPayload;
-use crate::responses::MainResponse;
+use crate::responses::AuthResponse;
 use crate::utils::jwt::generate_jwt_token;
 use crate::AppState;
 
@@ -20,9 +20,9 @@ pub async fn login(
         Err(err) => {
             return (
                 StatusCode::UNPROCESSABLE_ENTITY,
-                Json(MainResponse {
+                Json(AuthResponse {
                     success: false,
-                    data: None,
+                    token: None,
                     error_message: Some(err.to_string()),
                 }),
             );
@@ -38,9 +38,9 @@ pub async fn login(
     {
         Ok(Some(user)) => user,
         Ok(None) => {
-            let main_response = MainResponse {
+            let main_response = AuthResponse {
                 success: false,
-                data: None,
+                token: None,
                 error_message: Some(
                     "Email or password are incorrect, please try a different email or sign up for a new account."
                         .to_string(),
@@ -50,9 +50,9 @@ pub async fn login(
         }
         Err(err) => {
             eprintln!("Error finding user: {:?}", err);
-            let main_response = MainResponse {
+            let main_response = AuthResponse {
                 success: false,
-                data: None,
+                token: None,
                 error_message: Some(
                     "There was an error on the server side, try again later.".to_string(),
                 ),
@@ -65,9 +65,9 @@ pub async fn login(
     let parsed_hash = match PasswordHash::new(&user.password) {
         Ok(hash) => hash,
         Err(_) => {
-            let main_response = MainResponse {
+            let main_response = AuthResponse {
                 success: false,
-                data: None,
+                token: None,
                 error_message: Some("Email or password are incorrect, please try a different email or sign up for a new account.".to_string()),
             };
             return (StatusCode::UNAUTHORIZED, Json(main_response));
@@ -79,9 +79,9 @@ pub async fn login(
         .verify_password(payload.password.as_bytes(), &parsed_hash)
         .is_err()
     {
-        let main_response = MainResponse {
+        let main_response = AuthResponse {
             success: false,
-            data: None,
+            token: None,
             error_message: Some("Email or password are incorrect, please try a different email or sign up for a new account.".to_string()),
         };
         return (StatusCode::UNAUTHORIZED, Json(main_response));
@@ -93,9 +93,9 @@ pub async fn login(
         Ok(token) => token,
         Err(err) => {
             eprintln!("Error while matching token: {:?}", err);
-            let main_response = MainResponse {
+            let main_response = AuthResponse {
                 success: false,
-                data: None,
+                token: None,
                 error_message: Some(
                     "There was an error on the server side, try again later.".to_string(),
                 ),
@@ -104,9 +104,9 @@ pub async fn login(
         }
     };
 
-    let main_response = MainResponse {
+    let main_response = AuthResponse {
         success: true,
-        data: Some(vec![token]),
+        token: Some(token),
         error_message: None,
     };
     (StatusCode::OK, Json(main_response))
