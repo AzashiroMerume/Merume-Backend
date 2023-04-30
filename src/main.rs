@@ -34,7 +34,9 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let db = DB::init().await.unwrap();
+    let db = DB::init()
+        .await
+        .expect("The Database initialization failed..");
 
     // router creation
     let app = create_router(State(AppState { db: db.clone() }));

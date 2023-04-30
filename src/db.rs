@@ -55,6 +55,7 @@ impl DB {
             .expect("Failed to load `DB_POSTS_TABLE` environement variable.");
 
         let mut client_options = ClientOptions::parse(mongo_uri).await.map_err(|err| {
+            eprintln!("Failed to parse MongoDB URI: {}", err.to_string());
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(BoolResponse {
