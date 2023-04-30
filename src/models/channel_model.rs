@@ -30,7 +30,7 @@ pub struct Subscriptions {
     pub last_updated: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Validate)]
+#[derive(Debug, Clone, Deserialize, Validate)]
 #[serde(rename_all = "snake_case")]
 pub struct ChannelPayload {
     #[validate(length(min = 1))]

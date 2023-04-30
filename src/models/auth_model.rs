@@ -1,7 +1,7 @@
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use validator::Validate;
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Validate)]
+#[derive(Debug, Clone, Deserialize, Validate)]
 #[serde(rename_all = "snake_case")]
 pub struct RegisterPayload {
     #[validate(length(min = 1, max = 255))]
@@ -13,7 +13,7 @@ pub struct RegisterPayload {
     pub password: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Validate)]
+#[derive(Debug, Clone, Deserialize, Validate)]
 #[serde(rename_all = "snake_case")]
 pub struct LoginPayload {
     pub email: String,
