@@ -19,13 +19,13 @@ pub async fn register(
     // Validate the payload
     match payload.validate() {
         Ok(()) => {} // Validation successful, do nothing
-        Err(e) => {
+        Err(err) => {
             return (
                 StatusCode::UNPROCESSABLE_ENTITY,
                 Json(MainResponse {
                     success: false,
                     data: None,
-                    error_message: Some(e.to_string()),
+                    error_message: Some(err.to_string()),
                 }),
             );
         }
@@ -35,49 +35,26 @@ pub async fn register(
     match state
         .db
         .users_collection
-        .find_one(doc! {"email": payload.email.clone()}, None)
+        .find_one(
+            doc! {
+                "$or": [{"email": payload.email.clone()}, {"nickname": payload.nickname.clone()}]
+            },
+            None,
+        )
         .await
     {
         Ok(Some(_)) => {
             let main_response = MainResponse {
                 success: false,
                 data: None,
-                error_message: Some("Email already in use. Please try to sign in.".to_string()),
+                error_message: Some(
+                    "Email or nickname already in use. Please try again.".to_string(),
+                ),
             };
             return (StatusCode::BAD_REQUEST, Json(main_response));
         }
-        Err(e) => {
-            eprintln!("Error checking email: {:?}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(MainResponse {
-                    success: false,
-                    data: None,
-                    error_message: Some(
-                        "There was an error on the server side, try again later.".to_string(),
-                    ),
-                }),
-            );
-        }
-        _ => {} // continue checking for nickname
-    }
-
-    match state
-        .db
-        .users_collection
-        .find_one(doc! {"nickname": payload.nickname.clone()}, None)
-        .await
-    {
-        Ok(Some(_)) => {
-            let main_response = MainResponse {
-                success: false,
-                data: None,
-                error_message: Some("Nickname already in use. Please choose another.".to_string()),
-            };
-            return (StatusCode::BAD_REQUEST, Json(main_response));
-        }
-        Err(e) => {
-            eprintln!("Error checking nickname: {:?}", e);
+        Err(err) => {
+            eprintln!("Error checking email and nickname: {:?}", err);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(MainResponse {
@@ -97,8 +74,8 @@ pub async fn register(
     let argon2 = Argon2::default();
     let hashed_password = match argon2.hash_password(payload.password.as_bytes(), &salt) {
         Ok(hash) => hash.to_string(),
-        Err(e) => {
-            eprintln!("Error hashing password: {:?}", e);
+        Err(err) => {
+            eprintln!("Error hashing password: {:?}", err);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(MainResponse {
@@ -147,8 +124,8 @@ pub async fn register(
                 }),
             );
         }
-        Err(e) => {
-            eprintln!("Error inserting user: {:?}", e);
+        Err(err) => {
+            eprintln!("Error inserting user: {:?}", err);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(MainResponse {
