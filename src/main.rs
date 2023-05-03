@@ -38,6 +38,11 @@ async fn main() {
         .await
         .expect("The Database initialization failed..");
 
+    //redis initialization
+    let redis_uri =
+        std::env::var("REDIS_URI").expect("Failed to load `REDIS_URI` environment variable.");
+    let redis_client = redis::Client::open(redis_uri).expect("Failed to create redis_client");
+
     // router creation
     let app = create_router(State(AppState { db: db.clone() }));
 
