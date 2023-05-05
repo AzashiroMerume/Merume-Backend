@@ -1,5 +1,5 @@
 use crate::models::{auth_model::RegisterPayload, user_model::User};
-use crate::responses::MainResponse;
+use crate::responses::AuthResponse;
 use crate::utils::jwt::generate_jwt_token;
 use crate::AppState;
 
@@ -22,9 +22,9 @@ pub async fn register(
         Err(err) => {
             return (
                 StatusCode::UNPROCESSABLE_ENTITY,
-                Json(MainResponse {
+                Json(AuthResponse {
                     success: false,
-                    data: None,
+                    token: None,
                     error_message: Some(err.to_string()),
                 }),
             );
@@ -44,9 +44,9 @@ pub async fn register(
         .await
     {
         Ok(Some(_)) => {
-            let main_response = MainResponse {
+            let main_response = AuthResponse {
                 success: false,
-                data: None,
+                token: None,
                 error_message: Some(
                     "Email or nickname already in use. Please try again.".to_string(),
                 ),
@@ -57,9 +57,9 @@ pub async fn register(
             eprintln!("Error checking email and nickname: {:?}", err);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(MainResponse {
+                Json(AuthResponse {
                     success: false,
-                    data: None,
+                    token: None,
                     error_message: Some(
                         "There was an error on the server side, try again later.".to_string(),
                     ),
@@ -78,9 +78,9 @@ pub async fn register(
             eprintln!("Error hashing password: {:?}", err);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(MainResponse {
+                Json(AuthResponse {
                     success: false,
-                    data: None,
+                    token: None,
                     error_message: Some(
                         "There was an error on the server side, try again later.".to_string(),
                     ),
@@ -117,9 +117,9 @@ pub async fn register(
             let token = generate_jwt_token(&user.id.to_string(), &jwt_secret.unwrap()).unwrap();
             return (
                 StatusCode::CREATED,
-                Json(MainResponse {
+                Json(AuthResponse {
                     success: true,
-                    data: Some(vec![token]),
+                    token: Some(token),
                     error_message: None,
                 }),
             );
@@ -128,9 +128,9 @@ pub async fn register(
             eprintln!("Error inserting user: {:?}", err);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(MainResponse {
+                Json(AuthResponse {
                     success: false,
-                    data: None,
+                    token: None,
                     error_message: Some(
                         "There was an error on the server side, try again later.".to_string(),
                     ),
