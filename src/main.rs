@@ -18,6 +18,8 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 #[derive(Clone)]
 pub struct AppState {
     db: DB,
+    //Use Redis
+    // _redis_client: redis::Client,
 }
 
 #[tokio::main]
@@ -39,12 +41,15 @@ async fn main() {
         .expect("The Database initialization failed..");
 
     //redis initialization
-    let redis_uri =
-        std::env::var("REDIS_URI").expect("Failed to load `REDIS_URI` environment variable.");
-    let redis_client = redis::Client::open(redis_uri).expect("Failed to create redis_client");
+    // let redis_uri =
+    //     std::env::var("REDIS_URI").expect("Failed to load `REDIS_URI` environment variable.");
+    // let redis_client = redis::Client::open(redis_uri).expect("Failed to create redis_client");
 
     // router creation
-    let app = create_router(State(AppState { db: db.clone() }));
+    let app = create_router(State(AppState {
+        db: db.clone(),
+        // _redis_client: redis_client.clone(),
+    }));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 8081));
     tracing::debug!("listening on {}", addr);
