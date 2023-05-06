@@ -12,7 +12,7 @@ pub async fn verify_channel_owner<B>(
     State(state): State<AppState>,
     Extension(user_id): Extension<ObjectId>,
     Path(channel_id): Path<String>,
-    req: Request<B>,
+    mut req: Request<B>,
     next: Next<B>,
 ) -> Result<Response, (StatusCode, Json<BoolResponse>)> {
     let channel = state
@@ -43,7 +43,10 @@ pub async fn verify_channel_owner<B>(
     ))?;
 
     match channel.owner_id == user_id {
-        true => Ok(next.run(req).await),
+        true => {
+            req.extensions_mut().insert(channel.current_challenge_day);
+            return Ok(next.run(req).await);
+        }
         false => Err((
             StatusCode::UNAUTHORIZED,
             Json(BoolResponse {

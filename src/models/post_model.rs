@@ -12,6 +12,9 @@ pub struct Post {
     pub channel_id: String,
     pub body: String,
     pub images: Option<String>,
+    pub written_challenge_day: usize,
+    pub likes: usize,
+    pub dislikes: usize,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }

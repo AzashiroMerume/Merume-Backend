@@ -16,6 +16,7 @@ pub struct Channel {
     pub description: String,
     pub categories: Vec<String>,
     pub subscriptions: Subscriptions,
+    pub current_challenge_day: usize,
     pub base_image: Option<String>,
     pub created_at: DateTime<Utc>,
 }
@@ -45,7 +46,6 @@ pub struct ChannelPayload {
 }
 
 fn validate_channel_type(channel_type: &str) -> Result<(), ValidationError> {
-    println!("{}", channel_type);
     if channel_type == "Public" || channel_type == "Private" {
         return Ok(());
     }

@@ -2,7 +2,6 @@ use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, 
 use bson::doc;
 use futures::stream::TryStreamExt;
 use mongodb::options::FindOptions;
-use serde::Deserialize;
 
 use crate::{
     models::{channel_model::Channel, user_model::User},
