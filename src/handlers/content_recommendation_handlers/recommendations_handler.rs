@@ -2,6 +2,7 @@ use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, 
 use bson::doc;
 use futures::stream::TryStreamExt;
 use mongodb::options::FindOptions;
+use serde::Deserialize;
 
 use crate::{
     models::{channel_model::Channel, user_model::User},
@@ -12,7 +13,12 @@ use crate::{
 pub async fn recommendations(
     State(state): State<AppState>,
     Extension(user): Extension<User>,
+    Json(filter): Json<String>,
 ) -> impl IntoResponse {
+    all_content_filter(State(state), user).await
+}
+
+pub async fn all_content_filter(State(state): State<AppState>, user: User) -> impl IntoResponse {
     let user_preferences = user.preferences.unwrap();
 
     let options = FindOptions::builder().limit(20).build();
@@ -30,13 +36,14 @@ pub async fn recommendations(
                 channels.push(channel);
             }
         }
-        Err(_) => {
+        Err(err) => {
+            eprintln!("Cursor error: {}", err);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(MainResponse {
                     success: false,
                     data: None,
-                    error_message: Some(format!("Failed to find recomendations")),
+                    error_message: Some("Failed to find recomendations".to_string()),
                 }),
             );
         }
