@@ -84,7 +84,7 @@ pub async fn new_channel(
         channel_id: channel_id.unwrap(),
         is_owner: true,
         subscribed_at: None,
-        created_at: Some(Utc::now()),
+        created_at: Some(now),
     };
 
     let user_channel_result = state

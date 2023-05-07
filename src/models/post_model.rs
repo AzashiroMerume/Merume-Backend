@@ -11,6 +11,7 @@ pub struct Post {
     pub owner_id: ObjectId,
     pub channel_id: String,
     pub body: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub images: Option<String>,
     pub written_challenge_day: usize,
     pub likes: usize,

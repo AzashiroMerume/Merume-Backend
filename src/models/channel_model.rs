@@ -17,6 +17,7 @@ pub struct Channel {
     pub categories: Vec<String>,
     pub subscriptions: Subscriptions,
     pub current_challenge_day: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub base_image: Option<String>,
     pub created_at: DateTime<Utc>,
 }

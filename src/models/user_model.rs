@@ -12,8 +12,11 @@ pub struct User {
     pub nickname: String,
     pub email: String,
     pub password: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub preferences: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub liked: Option<Vec<ObjectId>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub bookmarks: Option<Vec<ObjectId>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,

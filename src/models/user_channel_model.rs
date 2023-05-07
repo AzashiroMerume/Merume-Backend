@@ -10,6 +10,7 @@ pub struct UserChannel {
     pub user_id: ObjectId,
     pub channel_id: ObjectId,
     pub is_owner: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub subscribed_at: Option<DateTime<Utc>>,
     pub created_at: Option<DateTime<Utc>>,
 }

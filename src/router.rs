@@ -1,7 +1,7 @@
 use crate::{
     handlers::common_handler,
     routes::{
-        auth_routes, channel_system_routes, preferred_content_routes, recommendation_routes,
+        auth_routes, channel_system_routes, content_routes, preferred_content_routes,
         user_channels_routes,
     },
     AppState,
@@ -35,7 +35,7 @@ pub fn create_router(State(state): State<AppState>) -> Router {
     let auth_routes = auth_routes::auth_routes(State(state.clone()));
     let user_channels_routes = user_channels_routes::user_channels_routes(State(state.clone()));
     let channel_system = channel_system_routes::channel_system(State(state.clone()));
-    let recomendations_routes = recommendation_routes::recomendations_routes(State(state.clone()));
+    let content_routes = content_routes::content_routes(State(state.clone()));
     let preferred_content_routes =
         preferred_content_routes::preferred_content_routes(State(state.clone()));
 
@@ -46,7 +46,7 @@ pub fn create_router(State(state): State<AppState>) -> Router {
         //     |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
         // ))
         .nest("/users/channels", user_channels_routes)
-        .nest("/users/recomendations", recomendations_routes)
+        .nest("/users/recomendations", content_routes)
         .nest("/auth", auth_routes)
         .nest("/channels", channel_system)
         .nest("/preferences", preferred_content_routes)
