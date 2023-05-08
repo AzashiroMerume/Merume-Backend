@@ -1,7 +1,10 @@
 use crate::{
-    models::channel_model::Channel, responses::MainResponse, utils::pagination::Pagination,
+    models::{channel_model::Channel, post_model::Post},
+    responses::RecommendedContentResponse,
+    utils::pagination::Pagination,
     AppState,
 };
+
 use axum::{
     extract::{Query, State},
     http::StatusCode,
@@ -10,6 +13,7 @@ use axum::{
 };
 use bson::doc;
 use futures::StreamExt;
+use mongodb::options::FindOneOptions;
 
 pub async fn trendings(
     State(state): State<AppState>,
@@ -23,6 +27,10 @@ pub async fn trendings(
             "$match": {
                 "subscriptions.two_week_subscribers.1": { "$exists": true }
             }
+        },
+        // Skip the first n documents
+        doc! {
+            "$skip": skip
         },
         // Project the last two entries in the two_week_subscribers array and calculate percentage increase
         doc! {
@@ -55,12 +63,9 @@ pub async fn trendings(
                 "percentage_increase": -1
             }
         },
-        // Limit the result based on pagination
+        // Limit the result to 20 channels
         doc! {
-            "$skip": skip
-        },
-        doc! {
-            "$limit": pagination.limit
+            "$limit": 20
         },
         // Replace the channel field with the full channel document
         doc! {
@@ -72,37 +77,55 @@ pub async fn trendings(
 
     let cursor = state.db.channels_collection.aggregate(pipeline, None).await;
 
-    match cursor {
-        Ok(cursor) => {
-            let channels = cursor
-                .map(|doc| {
-                    let channel = bson::from_bson(bson::Bson::Document(doc.unwrap())).unwrap();
-                    channel
-                })
-                .collect::<Vec<Channel>>()
-                .await;
+    let mut channel_post_vec = Vec::<(Channel, Post)>::default();
 
-            (
+    match cursor {
+        Ok(mut cursor) => {
+            while let Some(channel_doc) = cursor.next().await {
+                let channel: Channel =
+                    bson::from_bson(bson::Bson::Document(channel_doc.unwrap())).unwrap();
+
+                let latest_post = state
+                    .db
+                    .posts_collection
+                    .find_one(
+                        doc! {
+                            "channel_id": channel.id
+                        },
+                        FindOneOptions::builder()
+                            .sort(doc! {"created_at": -1})
+                            .build(),
+                    )
+                    .await;
+
+                if let Ok(Some(post)) = latest_post {
+                    channel_post_vec.push((channel, post));
+                } else if let Err(err) = latest_post {
+                    eprintln!("Failed to find latest post: {}", err);
+                }
+            }
+
+            return (
                 StatusCode::OK,
-                Json(MainResponse {
+                Json(RecommendedContentResponse {
                     success: true,
-                    data: Some(vec![channels]),
-                    page: Some(pagination.limit),
+                    data: Some(channel_post_vec),
+                    page: Some(pagination.page),
                     error_message: None,
                 }),
-            )
+            );
         }
         Err(err) => {
             eprintln!("Cursor error: {}", err);
-            (
+            return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(MainResponse {
+                Json(RecommendedContentResponse {
                     success: false,
                     data: None,
-                    page: Some(pagination.limit),
-                    error_message: Some("Failed to find recomendations".to_string()),
+                    page: None,
+                    error_message: Some("Failed to find recommendations".to_string()),
                 }),
-            )
+            );
         }
     }
 }
