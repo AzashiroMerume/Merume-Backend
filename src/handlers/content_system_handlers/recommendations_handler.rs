@@ -1,18 +1,27 @@
 use crate::{
     models::{channel_model::Channel, user_model::User},
     responses::MainResponse,
+    utils::pagination::Pagination,
     AppState,
 };
 
-use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, Json};
+use axum::{
+    extract::{Query, State},
+    http::StatusCode,
+    response::IntoResponse,
+    Extension, Json,
+};
 use bson::doc;
 use futures::StreamExt;
 
 pub async fn recommendations(
     State(state): State<AppState>,
     Extension(user): Extension<User>,
+    Query(pagination): Query<Pagination>,
 ) -> impl IntoResponse {
     let user_preferences = user.preferences.unwrap();
+
+    let skip = pagination.page * pagination.limit;
 
     let pipeline = vec![
         // Filter channels based on user preferences
@@ -62,9 +71,12 @@ pub async fn recommendations(
                 "percentage_increase": -1
             }
         },
-        // Limit the result to 20 channels
+        // Skip the first N channels based on the page number and limit to the next N channels
         doc! {
-            "$limit": 20
+            "$skip": skip
+        },
+        doc! {
+            "$limit": pagination.limit
         },
     ];
 
@@ -85,6 +97,7 @@ pub async fn recommendations(
                 Json(MainResponse {
                     success: true,
                     data: Some(vec![channels]),
+                    page: Some(pagination.page),
                     error_message: None,
                 }),
             )
@@ -96,7 +109,8 @@ pub async fn recommendations(
                 Json(MainResponse {
                     success: false,
                     data: None,
-                    error_message: Some("Failed to find recomendations".to_string()),
+                    page: None,
+                    error_message: Some("Failed to find recommendations".to_string()),
                 }),
             )
         }

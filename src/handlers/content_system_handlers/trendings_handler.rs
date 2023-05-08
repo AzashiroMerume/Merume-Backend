@@ -1,10 +1,22 @@
-use crate::{models::channel_model::Channel, responses::MainResponse, AppState};
-
-use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
+use crate::{
+    models::channel_model::Channel, responses::MainResponse, utils::pagination::Pagination,
+    AppState,
+};
+use axum::{
+    extract::{Query, State},
+    http::StatusCode,
+    response::IntoResponse,
+    Json,
+};
 use bson::doc;
 use futures::StreamExt;
 
-pub async fn trendings(State(state): State<AppState>) -> impl IntoResponse {
+pub async fn trendings(
+    State(state): State<AppState>,
+    Query(pagination): Query<Pagination>,
+) -> impl IntoResponse {
+    let skip = pagination.page * pagination.limit;
+
     let pipeline = vec![
         // Filter channels to only those with at least two entries in the two_week_subscribers array
         doc! {
@@ -43,9 +55,12 @@ pub async fn trendings(State(state): State<AppState>) -> impl IntoResponse {
                 "percentage_increase": -1
             }
         },
-        // Limit the result to 20 channels
+        // Limit the result based on pagination
         doc! {
-            "$limit": 20
+            "$skip": skip
+        },
+        doc! {
+            "$limit": pagination.limit
         },
         // Replace the channel field with the full channel document
         doc! {
@@ -72,6 +87,7 @@ pub async fn trendings(State(state): State<AppState>) -> impl IntoResponse {
                 Json(MainResponse {
                     success: true,
                     data: Some(vec![channels]),
+                    page: Some(pagination.limit),
                     error_message: None,
                 }),
             )
@@ -83,6 +99,7 @@ pub async fn trendings(State(state): State<AppState>) -> impl IntoResponse {
                 Json(MainResponse {
                     success: false,
                     data: None,
+                    page: Some(pagination.limit),
                     error_message: Some("Failed to find recomendations".to_string()),
                 }),
             )
