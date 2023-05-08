@@ -6,7 +6,7 @@ use axum::{
 };
 use bson::{doc, oid::ObjectId};
 
-use crate::responses::BoolResponse;
+use crate::responses::OperationStatusResponse;
 use crate::AppState;
 
 pub async fn delete_post_by_id(
@@ -19,7 +19,7 @@ pub async fn delete_post_by_id(
             eprintln!("Error parsing channel_id: {:?}", err);
             return (
                 StatusCode::BAD_REQUEST,
-                Json(BoolResponse {
+                Json(OperationStatusResponse {
                     success: false,
                     error_message: Some("Invalid channel ID".to_string()),
                 }),
@@ -33,7 +33,7 @@ pub async fn delete_post_by_id(
             eprintln!("Error parsing post_id: {:?}", err);
             return (
                 StatusCode::BAD_REQUEST,
-                Json(BoolResponse {
+                Json(OperationStatusResponse {
                     success: false,
                     error_message: Some("Invalid post ID".to_string()),
                 }),
@@ -49,7 +49,7 @@ pub async fn delete_post_by_id(
         .await
     {
         Ok(None) => {
-            let main_response = BoolResponse {
+            let main_response = OperationStatusResponse {
                 success: false,
                 error_message: Some("Channel does not exist.".to_string()),
             };
@@ -59,7 +59,7 @@ pub async fn delete_post_by_id(
             eprintln!("Error checking channel: {:?}", err);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(BoolResponse {
+                Json(OperationStatusResponse {
                     success: false,
                     error_message: Some(
                         "There was an error on the server side, try again later.".to_string(),
@@ -81,7 +81,7 @@ pub async fn delete_post_by_id(
             if result.deleted_count == 1 {
                 (
                     StatusCode::OK,
-                    Json(BoolResponse {
+                    Json(OperationStatusResponse {
                         success: true,
                         error_message: None,
                     }),
@@ -89,7 +89,7 @@ pub async fn delete_post_by_id(
             } else {
                 (
                     StatusCode::NOT_FOUND,
-                    Json(BoolResponse {
+                    Json(OperationStatusResponse {
                         success: false,
                         error_message: Some("Channel not found".to_string()),
                     }),
@@ -100,7 +100,7 @@ pub async fn delete_post_by_id(
             eprintln!("Error deleting post: {:?}", err);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(BoolResponse {
+                Json(OperationStatusResponse {
                     success: false,
                     error_message: Some(format!("Failed to delete channel: {}", err.to_string())),
                 }),

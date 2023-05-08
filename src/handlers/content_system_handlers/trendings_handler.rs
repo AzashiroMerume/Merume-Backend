@@ -29,9 +29,6 @@ pub async fn trendings(
             }
         },
         // Skip the first n documents
-        doc! {
-            "$skip": skip
-        },
         // Project the last two entries in the two_week_subscribers array and calculate percentage increase
         doc! {
             "$project": {
@@ -65,7 +62,7 @@ pub async fn trendings(
         },
         // Limit the result to 20 channels
         doc! {
-            "$limit": 20
+            "$skip": skip
         },
         // Replace the channel field with the full channel document
         doc! {

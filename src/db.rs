@@ -2,7 +2,7 @@ use crate::{
     models::{
         channel_model::Channel, post_model::Post, user_channel_model::UserChannel, user_model::User,
     },
-    responses::BoolResponse,
+    responses::OperationStatusResponse,
 };
 
 use axum::{http::StatusCode, Json};
@@ -22,7 +22,7 @@ pub struct DB {
 }
 
 impl DB {
-    pub async fn init() -> Result<Self, (StatusCode, Json<BoolResponse>)> {
+    pub async fn init() -> Result<Self, (StatusCode, Json<OperationStatusResponse>)> {
         let mongo_uri: String =
             std::env::var("MONGO_URI").expect("Failed to load `MONGO_URI` environment variable.");
         let mongo_connection_timeout: u64 = match std::env::var("MONGO_CONNECTION_TIMEOUT") {
@@ -58,7 +58,7 @@ impl DB {
             eprintln!("Failed to parse MongoDB URI: {}", err.to_string());
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(BoolResponse {
+                Json(OperationStatusResponse {
                     success: false,
                     error_message: Some(format!(
                         "Failed to parse MongoDB URI: {}",
@@ -87,7 +87,7 @@ impl DB {
             eprintln!("Error applying options to client: {}", err);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(BoolResponse {
+                Json(OperationStatusResponse {
                     success: false,
                     error_message: Some(format!(
                         "Failed to create MongoDB client: {}",

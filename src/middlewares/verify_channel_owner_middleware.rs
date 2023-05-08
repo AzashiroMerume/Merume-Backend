@@ -1,4 +1,4 @@
-use crate::{responses::BoolResponse, AppState};
+use crate::{responses::OperationStatusResponse, AppState};
 use axum::{
     extract::{Path, State},
     http::{Request, StatusCode},
@@ -14,7 +14,7 @@ pub async fn verify_channel_owner<B>(
     Path(channel_id): Path<String>,
     mut req: Request<B>,
     next: Next<B>,
-) -> Result<Response, (StatusCode, Json<BoolResponse>)> {
+) -> Result<Response, (StatusCode, Json<OperationStatusResponse>)> {
     let channel = state
         .db
         .channels_collection
@@ -27,7 +27,7 @@ pub async fn verify_channel_owner<B>(
             eprintln!("The database error: {}", err);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(BoolResponse {
+                Json(OperationStatusResponse {
                     success: false,
                     error_message: Some("Internal server error".to_string()),
                 }),
@@ -36,7 +36,7 @@ pub async fn verify_channel_owner<B>(
 
     let channel = channel.ok_or((
         StatusCode::NOT_FOUND,
-        Json(BoolResponse {
+        Json(OperationStatusResponse {
             success: false,
             error_message: Some("Channel not found".to_string()),
         }),
@@ -49,7 +49,7 @@ pub async fn verify_channel_owner<B>(
         }
         false => Err((
             StatusCode::UNAUTHORIZED,
-            Json(BoolResponse {
+            Json(OperationStatusResponse {
                 success: false,
                 error_message: Some("Unauthorized".to_string()),
             }),

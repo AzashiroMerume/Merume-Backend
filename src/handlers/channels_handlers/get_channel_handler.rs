@@ -1,4 +1,4 @@
-use crate::{responses::MainResponse, AppState};
+use crate::{responses::ChannelResponse, AppState};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -16,7 +16,7 @@ pub async fn get_channel_by_id(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(MainResponse {
+                Json(ChannelResponse {
                     success: false,
                     data: None,
                     error_message: Some("Invalid channel ID".to_string()),
@@ -35,7 +35,7 @@ pub async fn get_channel_by_id(
         Err(err) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(MainResponse {
+                Json(ChannelResponse {
                     success: false,
                     data: None,
                     error_message: Some(format!("Failed to retrieve channel: {}", err.to_string())),
@@ -49,7 +49,7 @@ pub async fn get_channel_by_id(
         None => {
             return (
                 StatusCode::NOT_FOUND,
-                Json(MainResponse {
+                Json(ChannelResponse {
                     success: false,
                     data: None,
                     error_message: Some("Channel not found".to_string()),
@@ -60,9 +60,9 @@ pub async fn get_channel_by_id(
 
     (
         StatusCode::OK,
-        Json(MainResponse {
+        Json(ChannelResponse {
             success: true,
-            data: Some(vec![channel]),
+            data: Some(channel),
             error_message: None,
         }),
     )

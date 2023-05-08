@@ -8,7 +8,7 @@ use bson::oid::ObjectId;
 use chrono::Utc;
 use validator::Validate;
 
-use crate::responses::BoolResponse;
+use crate::responses::OperationStatusResponse;
 use crate::{
     models::post_model::{Post, PostPayload},
     AppState,
@@ -29,7 +29,7 @@ pub async fn create_post(
             eprintln!("Error validating payload: {:?}", err);
             return (
                 StatusCode::UNPROCESSABLE_ENTITY,
-                Json(BoolResponse {
+                Json(OperationStatusResponse {
                     success: false,
                     error_message: Some(err.to_string()),
                 }),
@@ -58,7 +58,7 @@ pub async fn create_post(
         Ok(_) => {
             return (
                 StatusCode::CREATED,
-                Json(BoolResponse {
+                Json(OperationStatusResponse {
                     success: true,
                     error_message: None,
                 }),
@@ -68,7 +68,7 @@ pub async fn create_post(
             eprintln!("Error inserting user: {:?}", err);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(BoolResponse {
+                Json(OperationStatusResponse {
                     success: false,
                     error_message: Some("Failed to insert user".to_string()),
                 }),

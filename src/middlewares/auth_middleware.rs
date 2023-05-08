@@ -1,4 +1,4 @@
-use crate::{responses::BoolResponse, utils::jwt::verify_token, AppState};
+use crate::{responses::OperationStatusResponse, utils::jwt::verify_token, AppState};
 
 use axum::{
     extract::State,
@@ -14,7 +14,7 @@ pub async fn auth<B>(
     mut req: Request<B>,
     next: Next<B>,
     pass_full_user: Option<bool>,
-) -> Result<Response, (StatusCode, Json<BoolResponse>)> {
+) -> Result<Response, (StatusCode, Json<OperationStatusResponse>)> {
     let auth_header = match req.headers().get(http::header::AUTHORIZATION) {
         Some(header) => header.to_str().ok(),
         None => None,
@@ -23,7 +23,7 @@ pub async fn auth<B>(
     let jwt_secret = std::env::var("JWT_SECRET").map_err(|_| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(BoolResponse {
+            Json(OperationStatusResponse {
                 success: false,
                 error_message: Some("JWT_SECRET environment variable not set".to_string()),
             }),
@@ -35,7 +35,7 @@ pub async fn auth<B>(
         None => {
             return Err((
                 StatusCode::UNAUTHORIZED,
-                Json(BoolResponse {
+                Json(OperationStatusResponse {
                     success: false,
                     error_message: Some("Authorization header missing".to_string()),
                 }),
@@ -46,7 +46,7 @@ pub async fn auth<B>(
     let token_claims = verify_token(token, &jwt_secret).map_err(|_| {
         (
             StatusCode::UNAUTHORIZED,
-            Json(BoolResponse {
+            Json(OperationStatusResponse {
                 success: false,
                 error_message: Some("Invalid token".to_string()),
             }),
@@ -56,7 +56,7 @@ pub async fn auth<B>(
     let user_id = ObjectId::parse_str(&token_claims.sub).map_err(|_| {
         (
             StatusCode::UNAUTHORIZED,
-            Json(BoolResponse {
+            Json(OperationStatusResponse {
                 success: false,
                 error_message: Some("Invalid user ID in token".to_string()),
             }),
@@ -73,7 +73,7 @@ pub async fn auth<B>(
         Ok(None) => {
             return Err((
                 StatusCode::UNAUTHORIZED,
-                Json(BoolResponse {
+                Json(OperationStatusResponse {
                     success: false,
                     error_message: Some("User not found".to_string()),
                 }),
@@ -83,7 +83,7 @@ pub async fn auth<B>(
             eprintln!("The database error: {}", err);
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(BoolResponse {
+                Json(OperationStatusResponse {
                     success: false,
                     error_message: Some("Database error".to_string()),
                 }),

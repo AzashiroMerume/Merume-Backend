@@ -3,7 +3,9 @@ use bson::{doc, oid::ObjectId};
 use mongodb::options::UpdateOptions;
 use validator::Validate;
 
-use crate::{models::user_model::UserPreferencesPayload, responses::BoolResponse, AppState};
+use crate::{
+    models::user_model::UserPreferencesPayload, responses::OperationStatusResponse, AppState,
+};
 
 pub async fn post_preferences(
     State(state): State<AppState>,
@@ -16,7 +18,7 @@ pub async fn post_preferences(
         Err(err) => {
             return (
                 StatusCode::UNPROCESSABLE_ENTITY,
-                Json(BoolResponse {
+                Json(OperationStatusResponse {
                     success: false,
                     error_message: Some(err.to_string()),
                 }),
@@ -36,7 +38,7 @@ pub async fn post_preferences(
     match result {
         Ok(_) => (
             StatusCode::OK,
-            Json(BoolResponse {
+            Json(OperationStatusResponse {
                 success: true,
                 error_message: None,
             }),
@@ -45,7 +47,7 @@ pub async fn post_preferences(
             eprintln!("Failed to update preferences: {}", err);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(BoolResponse {
+                Json(OperationStatusResponse {
                     success: false,
                     error_message: Some(
                         "There was an error on server side. Please try again later.".to_string(),

@@ -1,4 +1,4 @@
-use crate::{responses::BoolResponse, AppState};
+use crate::{responses::OperationStatusResponse, AppState};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -17,7 +17,7 @@ pub async fn delete_channel_by_id(
             eprintln!("Error parsing channel_id: {:?}", err);
             return (
                 StatusCode::BAD_REQUEST,
-                Json(BoolResponse {
+                Json(OperationStatusResponse {
                     success: false,
                     error_message: Some("Invalid channel ID".to_string()),
                 }),
@@ -36,7 +36,7 @@ pub async fn delete_channel_by_id(
             if result.deleted_count == 1 {
                 (
                     StatusCode::OK,
-                    Json(BoolResponse {
+                    Json(OperationStatusResponse {
                         success: true,
                         error_message: None,
                     }),
@@ -44,7 +44,7 @@ pub async fn delete_channel_by_id(
             } else {
                 (
                     StatusCode::NOT_FOUND,
-                    Json(BoolResponse {
+                    Json(OperationStatusResponse {
                         success: false,
                         error_message: Some("Channel not found".to_string()),
                     }),
@@ -55,7 +55,7 @@ pub async fn delete_channel_by_id(
             eprintln!("Error deleting post: {:?}", err);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(BoolResponse {
+                Json(OperationStatusResponse {
                     success: false,
                     error_message: Some(format!("Failed to delete channel: {}", err.to_string())),
                 }),

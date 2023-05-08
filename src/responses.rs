@@ -1,14 +1,12 @@
 use crate::models::{channel_model::Channel, post_model::Post};
 
 use serde::Serialize;
-use std::collections::HashMap;
 
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub struct MainResponse<T> {
     pub success: bool,
     pub data: Option<Vec<T>>,
-    pub page: Option<i32>,
     pub error_message: Option<String>,
 }
 
@@ -21,9 +19,9 @@ pub struct ChannelResponse {
 }
 
 #[derive(Clone, Debug, Serialize)]
-pub struct RecomendedContentResponse {
+pub struct RecommendedContentResponse {
     pub success: bool,
-    pub data: Option<HashMap<Channel, Post>>,
+    pub data: Option<Vec<(Channel, Post)>>,
     pub page: Option<i32>,
     pub error_message: Option<String>,
 }

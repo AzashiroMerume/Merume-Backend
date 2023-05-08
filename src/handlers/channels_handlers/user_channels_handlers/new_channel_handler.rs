@@ -3,11 +3,12 @@ use crate::{
         channel_model::{Channel, ChannelPayload, Subscriptions},
         user_channel_model::UserChannel,
     },
-    responses::MainResponse,
+    responses::OperationStatusResponse,
     AppState,
 };
+
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, Json};
-use bson::{doc, oid::ObjectId};
+use bson::oid::ObjectId;
 use chrono::Utc;
 use validator::Validate;
 
@@ -22,9 +23,8 @@ pub async fn new_channel(
         Err(err) => {
             return (
                 StatusCode::UNPROCESSABLE_ENTITY,
-                Json(MainResponse {
+                Json(OperationStatusResponse {
                     success: false,
-                    data: None,
                     error_message: Some(err.to_string()),
                 }),
             );
@@ -66,9 +66,8 @@ pub async fn new_channel(
 
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(MainResponse {
+            Json(OperationStatusResponse {
                 success: false,
-                data: None,
                 error_message: Some(
                     "There was an error on the server side, try again later.".to_string(),
                 ),
@@ -100,9 +99,8 @@ pub async fn new_channel(
         );
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(MainResponse {
+            Json(OperationStatusResponse {
                 success: false,
-                data: None,
                 error_message: Some(
                     "There was an error on the server side, try again later.".to_string(),
                 ),
@@ -110,36 +108,11 @@ pub async fn new_channel(
         );
     }
 
-    let response_data = state
-        .db
-        .channels_collection
-        .find_one(doc! { "_id": channel_id.unwrap() }, None)
-        .await;
-
-    match response_data {
-        Ok(channel) => (
-            StatusCode::CREATED,
-            Json(MainResponse {
-                success: true,
-                data: Some(vec![channel]),
-                error_message: None,
-            }),
-        ),
-        Err(err) => {
-            eprintln!(
-                "Failed to retrieve newly created channel: {}",
-                err.to_string()
-            );
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(MainResponse {
-                    success: false,
-                    data: None,
-                    error_message: Some(
-                        "There was an error on the server side, try again later.".to_string(),
-                    ),
-                }),
-            );
-        }
-    }
+    (
+        StatusCode::CREATED,
+        Json(OperationStatusResponse {
+            success: true,
+            error_message: None,
+        }),
+    )
 }
