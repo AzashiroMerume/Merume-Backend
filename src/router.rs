@@ -1,7 +1,7 @@
 use crate::{
     handlers::common_handler,
     routes::{
-        auth_routes, channel_system_routes, content_routes, preferred_content_routes,
+        auth_routes, channel_system_routes, content_routes, preferences_routes,
         user_channels_routes,
     },
     AppState,
@@ -37,7 +37,7 @@ pub fn create_router(State(state): State<AppState>) -> Router {
     let channel_system = channel_system_routes::channel_system(State(state.clone()));
     let content_routes = content_routes::content_routes(State(state.clone()));
     let preferred_content_routes =
-        preferred_content_routes::preferred_content_routes(State(state.clone()));
+        preferences_routes::preferences_routes(State(state.clone()));
 
     let app = Router::new()
         // .route("/test", get(common_handler::_test_handler))

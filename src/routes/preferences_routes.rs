@@ -10,7 +10,7 @@ use axum::{
 };
 use tower_http::limit::RequestBodyLimitLayer;
 
-pub fn preferred_content_routes(State(state): State<AppState>) -> Router<AppState> {
+pub fn preferences_routes(State(state): State<AppState>) -> Router<AppState> {
     Router::new()
         .route(
             "/",
