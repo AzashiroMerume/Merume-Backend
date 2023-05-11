@@ -9,22 +9,8 @@ use bson::{doc, oid::ObjectId};
 
 pub async fn get_channel_by_id(
     State(state): State<AppState>,
-    Path(channel_id): Path<String>,
+    Path(channel_id): Path<ObjectId>,
 ) -> impl IntoResponse {
-    let channel_id = match ObjectId::parse_str(&channel_id) {
-        Ok(channel_id) => channel_id,
-        Err(_) => {
-            return (
-                StatusCode::BAD_REQUEST,
-                Json(ChannelResponse {
-                    success: false,
-                    data: None,
-                    error_message: Some("Invalid channel ID".to_string()),
-                }),
-            )
-        }
-    };
-
     let channel = match state
         .db
         .channels_collection

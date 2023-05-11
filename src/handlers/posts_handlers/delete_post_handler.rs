@@ -11,36 +11,8 @@ use crate::AppState;
 
 pub async fn delete_post_by_id(
     State(state): State<AppState>,
-    Path((channel_id, post_id)): Path<(String, String)>,
+    Path((channel_id, post_id)): Path<(ObjectId, ObjectId)>,
 ) -> impl IntoResponse {
-    let channel_id = match ObjectId::parse_str(&channel_id) {
-        Ok(channel_id) => channel_id,
-        Err(err) => {
-            eprintln!("Error parsing channel_id: {:?}", err);
-            return (
-                StatusCode::BAD_REQUEST,
-                Json(OperationStatusResponse {
-                    success: false,
-                    error_message: Some("Invalid channel ID".to_string()),
-                }),
-            );
-        }
-    };
-
-    let post_id = match ObjectId::parse_str(&post_id) {
-        Ok(post_id) => post_id,
-        Err(err) => {
-            eprintln!("Error parsing post_id: {:?}", err);
-            return (
-                StatusCode::BAD_REQUEST,
-                Json(OperationStatusResponse {
-                    success: false,
-                    error_message: Some("Invalid post ID".to_string()),
-                }),
-            );
-        }
-    };
-
     //check the channel for existence
     match state
         .db

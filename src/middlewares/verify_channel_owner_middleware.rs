@@ -11,17 +11,14 @@ use bson::{doc, oid::ObjectId};
 pub async fn verify_channel_owner<B>(
     State(state): State<AppState>,
     Extension(user_id): Extension<ObjectId>,
-    Path(channel_id): Path<String>,
+    Path(channel_id): Path<ObjectId>,
     mut req: Request<B>,
     next: Next<B>,
 ) -> Result<Response, (StatusCode, Json<OperationStatusResponse>)> {
     let channel = state
         .db
         .channels_collection
-        .find_one(
-            doc! {"_id": ObjectId::parse_str(&channel_id).unwrap()},
-            None,
-        )
+        .find_one(doc! {"_id": channel_id}, None)
         .await
         .map_err(|err| {
             eprintln!("The database error: {}", err);

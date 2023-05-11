@@ -18,7 +18,7 @@ pub async fn create_post(
     State(state): State<AppState>,
     Extension(user_id): Extension<ObjectId>,
     Extension(current_challenge_day): Extension<usize>,
-    Path(channel_id): Path<String>,
+    Path(channel_id): Path<ObjectId>,
     Json(payload): Json<PostPayload>,
 ) -> impl IntoResponse {
     println!("CURRENT CHALLENGE DAY: {}", current_challenge_day);

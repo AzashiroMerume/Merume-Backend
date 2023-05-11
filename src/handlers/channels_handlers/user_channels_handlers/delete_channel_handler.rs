@@ -9,22 +9,8 @@ use bson::{doc, oid::ObjectId};
 
 pub async fn delete_channel_by_id(
     State(state): State<AppState>,
-    Path(channel_id): Path<String>,
+    Path(channel_id): Path<ObjectId>,
 ) -> impl IntoResponse {
-    let channel_id = match ObjectId::parse_str(&channel_id) {
-        Ok(channel_id) => channel_id,
-        Err(err) => {
-            eprintln!("Error parsing channel_id: {:?}", err);
-            return (
-                StatusCode::BAD_REQUEST,
-                Json(OperationStatusResponse {
-                    success: false,
-                    error_message: Some("Invalid channel ID".to_string()),
-                }),
-            );
-        }
-    };
-
     let deletion_result = state
         .db
         .channels_collection

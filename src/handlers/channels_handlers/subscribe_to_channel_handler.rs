@@ -13,15 +13,12 @@ use chrono::Utc;
 pub async fn subscribe_to_channel(
     State(state): State<AppState>,
     Extension(user_id): Extension<ObjectId>,
-    Path(channel_id): Path<String>,
+    Path(channel_id): Path<ObjectId>,
 ) -> impl IntoResponse {
     let channel = match state
         .db
         .channels_collection
-        .find_one(
-            doc! { "_id": ObjectId::parse_str(&channel_id).unwrap() },
-            None,
-        )
+        .find_one(doc! { "_id": channel_id }, None)
         .await
     {
         Ok(channel) => channel,
