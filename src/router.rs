@@ -36,8 +36,7 @@ pub fn create_router(State(state): State<AppState>) -> Router {
     let user_channels_routes = user_channels_routes::user_channels_routes(State(state.clone()));
     let channel_system = channel_system_routes::channel_system(State(state.clone()));
     let content_routes = content_routes::content_routes(State(state.clone()));
-    let preferred_content_routes =
-        preferences_routes::preferences_routes(State(state.clone()));
+    let preferences_routes = preferences_routes::preferences_routes(State(state.clone()));
 
     let app = Router::new()
         // .route("/test", get(common_handler::_test_handler))
@@ -46,10 +45,10 @@ pub fn create_router(State(state): State<AppState>) -> Router {
         //     |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
         // ))
         .nest("/users/channels", user_channels_routes)
-        .nest("/users/recomendations", content_routes)
+        .nest("/users/recommendations", content_routes)
         .nest("/auth", auth_routes)
         .nest("/channels", channel_system)
-        .nest("/preferences", preferred_content_routes)
+        .nest("/preferences", preferences_routes)
         .layer(
             ServiceBuilder::new()
                 //sensetive header authorization from request
