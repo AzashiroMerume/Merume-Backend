@@ -33,20 +33,20 @@ pub async fn recommendations(
                 }
             }
         },
-        // Project two_week_subscribers field and percentage increase
+        // Project channel fields, two_week_subscribers field, and percentage increase
         doc! {
             "$project": {
+                "channel": "$$ROOT",
                 "two_week_subscribers": 1,
                 "percentage_increase": {
                     "$cond": {
                         "if": {
-                            "$eq": [
-                                { "$arrayElemAt": ["$two_week_subscribers", -2] },
-                                0
+                            "$and": [
+                                { "$isArray": "$two_week_subscribers" },
+                                { "$gte": [ { "$size": "$two_week_subscribers" }, 2 ] }
                             ]
                         },
-                        "then": 0,
-                        "else": {
+                        "then": {
                             "$multiply": [
                                 {
                                     "$divide": [
@@ -61,7 +61,8 @@ pub async fn recommendations(
                                 },
                                 100
                             ]
-                        }
+                        },
+                        "else": 0
                     }
                 }
             }
@@ -79,6 +80,34 @@ pub async fn recommendations(
         doc! {
             "$limit": pagination.limit
         },
+        // Replace the channel document with its fields
+        doc! {
+            "$replaceRoot": {
+                "newRoot": "$channel"
+            }
+        },
+        // Lookup the latest post for each channel
+        doc! {
+            "$lookup": {
+                "from": "posts",
+                "localField": "_id",
+                "foreignField": "channel_id",
+                "as": "latest_post"
+            }
+        },
+        // Unwind the "latest_post" array
+        doc! {
+            "$unwind": {
+                "path": "$latest_post",
+                "preserveNullAndEmptyArrays": true
+            }
+        },
+        // Sort the channels again by percentage increase after the lookup
+        doc! {
+            "$sort": {
+                "percentage_increase": -1
+            }
+        },
     ];
 
     let cursor = state.db.channels_collection.aggregate(pipeline, None).await;
@@ -88,6 +117,7 @@ pub async fn recommendations(
     match cursor {
         Ok(mut cursor) => {
             while let Some(channel_doc) = cursor.next().await {
+                println!("Channel doc: {:?}", channel_doc);
                 let channel: Channel =
                     bson::from_bson(bson::Bson::Document(channel_doc.unwrap())).unwrap();
 

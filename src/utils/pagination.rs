@@ -9,7 +9,7 @@ pub struct Pagination {
 }
 
 fn default_page() -> i32 {
-    1
+    0
 }
 
 fn default_limit() -> i32 {
