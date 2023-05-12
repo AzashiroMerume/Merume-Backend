@@ -117,7 +117,6 @@ pub async fn recommendations(
     match cursor {
         Ok(mut cursor) => {
             while let Some(channel_doc) = cursor.next().await {
-                println!("Channel doc: {:?}", channel_doc);
                 let channel: Channel =
                     bson::from_bson(bson::Bson::Document(channel_doc.unwrap())).unwrap();
 
