@@ -110,46 +110,8 @@ pub async fn recommendations(
         },
     ];
 
-    let cursor = state.db.channels_collection.aggregate(pipeline, None).await;
-
-    let mut channel_post_vec = Vec::<(Channel, Post)>::default();
-
-    match cursor {
-        Ok(mut cursor) => {
-            while let Some(channel_doc) = cursor.next().await {
-                let channel: Channel =
-                    bson::from_bson(bson::Bson::Document(channel_doc.unwrap())).unwrap();
-
-                let latest_post = state
-                    .db
-                    .posts_collection
-                    .find_one(
-                        doc! {
-                            "channel_id": channel.id
-                        },
-                        FindOneOptions::builder()
-                            .sort(doc! {"created_at": -1})
-                            .build(),
-                    )
-                    .await;
-
-                if let Ok(Some(post)) = latest_post {
-                    channel_post_vec.push((channel, post));
-                } else if let Err(err) = latest_post {
-                    eprintln!("Failed to find latest post: {}", err);
-                }
-            }
-
-            return (
-                StatusCode::OK,
-                Json(RecommendedContentResponse {
-                    success: true,
-                    data: Some(channel_post_vec),
-                    page: Some(pagination.page),
-                    error_message: None,
-                }),
-            );
-        }
+    let mut cursor = match state.db.channels_collection.aggregate(pipeline, None).await {
+        Ok(cursor) => cursor,
         Err(err) => {
             eprintln!("Cursor error: {}", err);
             return (
@@ -162,5 +124,50 @@ pub async fn recommendations(
                 }),
             );
         }
+    };
+
+    let mut channel_post_vec = Vec::<(Channel, Post)>::default();
+
+    while let Some(channel_doc) = cursor.next().await {
+        let channel: Channel = match bson::from_bson(bson::Bson::Document(channel_doc.unwrap())) {
+            Ok(channel) => channel,
+            Err(err) => {
+                eprintln!("Failed to deserialize channel: {}", err);
+                continue;
+            }
+        };
+
+        let latest_post = match state
+            .db
+            .posts_collection
+            .find_one(
+                doc! {
+                    "channel_id": channel.id
+                },
+                FindOneOptions::builder()
+                    .sort(doc! {"created_at": -1})
+                    .build(),
+            )
+            .await
+        {
+            Ok(Some(post)) => post,
+            Err(err) => {
+                eprintln!("Failed to find latest post: {}", err);
+                continue;
+            }
+            _ => continue,
+        };
+
+        channel_post_vec.push((channel, latest_post));
     }
+
+    (
+        StatusCode::OK,
+        Json(RecommendedContentResponse {
+            success: true,
+            data: Some(channel_post_vec),
+            page: Some(pagination.page),
+            error_message: None,
+        }),
+    )
 }
