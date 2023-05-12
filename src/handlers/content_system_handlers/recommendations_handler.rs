@@ -126,7 +126,7 @@ pub async fn recommendations(
         }
     };
 
-    let mut channel_post_vec = Vec::<(Channel, Post)>::default();
+    let mut result = Vec::<(Channel, Post)>::default();
 
     while let Some(channel_doc) = cursor.next().await {
         let channel: Channel = match bson::from_bson(bson::Bson::Document(channel_doc.unwrap())) {
@@ -158,14 +158,14 @@ pub async fn recommendations(
             _ => continue,
         };
 
-        channel_post_vec.push((channel, latest_post));
+        result.push((channel, latest_post));
     }
 
     (
         StatusCode::OK,
         Json(RecommendedContentResponse {
             success: true,
-            data: Some(channel_post_vec),
+            data: Some(result),
             page: Some(pagination.page),
             error_message: None,
         }),
