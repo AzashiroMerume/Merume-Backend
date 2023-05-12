@@ -22,35 +22,37 @@ pub async fn trendings(
     let skip = pagination.page * pagination.limit;
 
     let pipeline = vec![
-        // Filter channels to only those with at least two entries in the two_week_subscribers array
-        doc! {
-            "$match": {
-                "subscriptions.two_week_subscribers.1": { "$exists": true }
-            }
-        },
-        // Skip the first n documents
-        // Project the last two entries in the two_week_subscribers array and calculate percentage increase
+        // Project channel fields, two_week_subscribers field, and percentage increase
         doc! {
             "$project": {
                 "channel": "$$ROOT",
-                "two_week_subscribers": {
-                    "$slice": ["$subscriptions.two_week_subscribers", -2]
-                },
+                "two_week_subscribers": 1,
                 "percentage_increase": {
-                    "$multiply": [
-                        {
-                            "$divide": [
-                                {
-                                    "$subtract": [
-                                        { "$arrayElemAt": ["$subscriptions.two_week_subscribers", -1] },
-                                        { "$arrayElemAt": ["$subscriptions.two_week_subscribers", -2] }
-                                    ]
-                                },
-                                { "$arrayElemAt": ["$subscriptions.two_week_subscribers", -2] }
+                    "$cond": {
+                        "if": {
+                            "$and": [
+                                { "$isArray": "$two_week_subscribers" },
+                                { "$gte": [ { "$size": "$two_week_subscribers" }, 2 ] }
                             ]
                         },
-                        100
-                    ]
+                        "then": {
+                            "$multiply": [
+                                {
+                                    "$divide": [
+                                        {
+                                            "$subtract": [
+                                                { "$arrayElemAt": ["$two_week_subscribers", -1] },
+                                                { "$arrayElemAt": ["$two_week_subscribers", -2] }
+                                            ]
+                                        },
+                                        { "$arrayElemAt": ["$two_week_subscribers", -2] }
+                                    ]
+                                },
+                                100
+                            ]
+                        },
+                        "else": 0
+                    }
                 }
             }
         },
@@ -60,58 +62,45 @@ pub async fn trendings(
                 "percentage_increase": -1
             }
         },
-        // Limit the result to 20 channels
+        // Skip the first N channels based on the page number and limit to the next N channels
         doc! {
             "$skip": skip
         },
-        // Replace the channel field with the full channel document
+        doc! {
+            "$limit": pagination.limit
+        },
+        // Replace the channel document with its fields
         doc! {
             "$replaceRoot": {
                 "newRoot": "$channel"
             }
         },
+        // Lookup the latest post for each channel
+        doc! {
+            "$lookup": {
+                "from": "posts",
+                "localField": "_id",
+                "foreignField": "channel_id",
+                "as": "latest_post"
+            }
+        },
+        // Unwind the "latest_post" array
+        doc! {
+            "$unwind": {
+                "path": "$latest_post",
+                "preserveNullAndEmptyArrays": true
+            }
+        },
+        // Sort the channels again by percentage increase after the lookup
+        doc! {
+            "$sort": {
+                "percentage_increase": -1
+            }
+        },
     ];
 
-    let cursor = state.db.channels_collection.aggregate(pipeline, None).await;
-
-    let mut channel_post_vec = Vec::<(Channel, Post)>::default();
-
-    match cursor {
-        Ok(mut cursor) => {
-            while let Some(channel_doc) = cursor.next().await {
-                let channel: Channel =
-                    bson::from_bson(bson::Bson::Document(channel_doc.unwrap())).unwrap();
-
-                let latest_post = state
-                    .db
-                    .posts_collection
-                    .find_one(
-                        doc! {
-                            "channel_id": channel.id
-                        },
-                        FindOneOptions::builder()
-                            .sort(doc! {"created_at": -1})
-                            .build(),
-                    )
-                    .await;
-
-                if let Ok(Some(post)) = latest_post {
-                    channel_post_vec.push((channel, post));
-                } else if let Err(err) = latest_post {
-                    eprintln!("Failed to find latest post: {}", err);
-                }
-            }
-
-            return (
-                StatusCode::OK,
-                Json(RecommendedContentResponse {
-                    success: true,
-                    data: Some(channel_post_vec),
-                    page: Some(pagination.page),
-                    error_message: None,
-                }),
-            );
-        }
+    let mut cursor = match state.db.channels_collection.aggregate(pipeline, None).await {
+        Ok(cursor) => cursor,
         Err(err) => {
             eprintln!("Cursor error: {}", err);
             return (
@@ -120,9 +109,54 @@ pub async fn trendings(
                     success: false,
                     data: None,
                     page: None,
-                    error_message: Some("Failed to find recommendations".to_string()),
+                    error_message: Some("Failed to find trendings".to_string()),
                 }),
             );
         }
+    };
+
+    let mut result = Vec::<(Channel, Post)>::default();
+
+    while let Some(channel_doc) = cursor.next().await {
+        let channel: Channel = match bson::from_bson(bson::Bson::Document(channel_doc.unwrap())) {
+            Ok(channel) => channel,
+            Err(err) => {
+                eprintln!("Failed to deserialize channel: {}", err);
+                continue;
+            }
+        };
+
+        let latest_post = match state
+            .db
+            .posts_collection
+            .find_one(
+                doc! {
+                    "channel_id": channel.id
+                },
+                FindOneOptions::builder()
+                    .sort(doc! {"created_at": -1})
+                    .build(),
+            )
+            .await
+        {
+            Ok(Some(post)) => post,
+            Err(err) => {
+                eprintln!("Failed to find latest post: {}", err);
+                continue;
+            }
+            _ => continue,
+        };
+
+        result.push((channel, latest_post));
     }
+
+    (
+        StatusCode::OK,
+        Json(RecommendedContentResponse {
+            success: true,
+            data: Some(result),
+            page: Some(pagination.page),
+            error_message: None,
+        }),
+    )
 }
