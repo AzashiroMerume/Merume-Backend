@@ -32,6 +32,20 @@ pub struct Subscriptions {
     pub last_updated: DateTime<Utc>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+#[serde(rename_all = "snake_case")]
+pub struct UpdateChannelModel {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[validate(custom = "validate_channel_type")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub channel_type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub base_image: Option<String>,
+}
+
 #[derive(Debug, Clone, Deserialize, Validate)]
 #[serde(rename_all = "snake_case")]
 pub struct ChannelPayload {
