@@ -1,6 +1,4 @@
-use crate::{
-    models::channel_model::UpdateChannelModel, responses::OperationStatusResponse, AppState,
-};
+use crate::{models::channel_model::UpdateChannel, responses::OperationStatusResponse, AppState};
 
 use axum::{
     extract::{Path, State},
@@ -14,7 +12,7 @@ use bson::{doc, oid::ObjectId};
 pub async fn update_channel_by_id(
     State(state): State<AppState>,
     Path(channel_id): Path<ObjectId>,
-    Json(payload): Json<UpdateChannelModel>,
+    Json(payload): Json<UpdateChannel>,
 ) -> impl IntoResponse {
     let serialized_data = match bson::to_bson(&payload) {
         Ok(data) => data,

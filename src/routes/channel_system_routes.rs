@@ -35,6 +35,10 @@ pub fn post_routes(State(state): State<AppState>) -> Router<AppState> {
             "/:channel_id/:post_id/delete",
             post(posts_handlers::delete_post_handler::delete_post_by_id),
         )
+        .route(
+            "/:channel_id/:post_id/update",
+            post(posts_handlers::update_post_handler::update_post_by_id),
+        )
         .layer(middleware::from_fn_with_state(
             state.clone(),
             verify_channel_owner_middleware::verify_channel_owner,

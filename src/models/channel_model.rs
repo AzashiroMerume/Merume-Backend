@@ -34,7 +34,7 @@ pub struct Subscriptions {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 #[serde(rename_all = "snake_case")]
-pub struct UpdateChannelModel {
+pub struct UpdateChannel {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
     #[validate(custom = "validate_channel_type")]

@@ -48,6 +48,7 @@ pub async fn create_post(
         written_challenge_day: current_challenge_day,
         likes: 0,
         dislikes: 0,
+        already_changed: false,
         created_at: now,
         updated_at: now,
     };
