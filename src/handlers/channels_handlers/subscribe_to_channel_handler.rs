@@ -90,7 +90,7 @@ pub async fn subscribe_to_channel(
         Ok(_) => {
             match state
                 .db
-                .channels_collection_bson
+                .channels_collection
                 .update_one(
                     doc! {"_id": channel.id},
                     doc! {"$inc": {"subscriptions.current_subscriptions": 1}},
