@@ -15,25 +15,24 @@ pub async fn subscribe_to_channel(
     Extension(user_id): Extension<ObjectId>,
     Path(channel_id): Path<ObjectId>,
 ) -> impl IntoResponse {
-    let channel = match state
+    let channel = state
         .db
         .channels_collection
         .find_one(doc! { "_id": channel_id }, None)
-        .await
-    {
-        Ok(channel) => channel,
-        Err(err) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(OperationStatusResponse {
-                    success: false,
-                    error_message: Some(format!("Failed to retrieve channel: {}", err.to_string())),
-                }),
-            )
-        }
-    };
+        .await;
 
-    let channel = match channel {
+    if let Err(err) = channel {
+        eprintln!("Failed to retrieve channel: {}", err.to_string());
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(OperationStatusResponse {
+                success: false,
+                error_message: Some("Failed to retrieve channel".to_string()),
+            }),
+        );
+    }
+
+    let channel = match channel.unwrap() {
         Some(channel) => channel,
         None => {
             return (
@@ -42,7 +41,7 @@ pub async fn subscribe_to_channel(
                     success: false,
                     error_message: Some("Channel not found".to_string()),
                 }),
-            )
+            );
         }
     };
 
@@ -76,7 +75,7 @@ pub async fn subscribe_to_channel(
     let user_channel = UserChannel {
         id: ObjectId::new(),
         user_id,
-        channel_id: channel.id.clone(),
+        channel_id: channel.id,
         is_owner: false,
         subscribed_at: Some(Utc::now()),
         created_at: None,
@@ -89,25 +88,49 @@ pub async fn subscribe_to_channel(
         .await
     {
         Ok(_) => {
-            return (
-                StatusCode::OK,
-                Json(OperationStatusResponse {
-                    success: true,
-                    error_message: None,
-                }),
-            )
+            match state
+                .db
+                .channels_collection_bson
+                .update_one(
+                    doc! {"_id": channel.id},
+                    doc! {"$inc": {"subscriptions.current_subscriptions": 1}},
+                    None,
+                )
+                .await
+            {
+                Ok(_) => {
+                    return (
+                        StatusCode::OK,
+                        Json(OperationStatusResponse {
+                            success: true,
+                            error_message: None,
+                        }),
+                    )
+                }
+                Err(err) => {
+                    eprintln!(
+                        "Failed to update channel subscription field: {}",
+                        err.to_string()
+                    );
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(OperationStatusResponse {
+                            success: false,
+                            error_message: Some("Failed to update channel".to_string()),
+                        }),
+                    );
+                }
+            }
         }
         Err(err) => {
+            eprintln!("Failed to insert user channel: {}", err.to_string());
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(OperationStatusResponse {
                     success: false,
-                    error_message: Some(format!(
-                        "Failed to insert user channel: {}",
-                        err.to_string()
-                    )),
+                    error_message: Some("Failed to insert user channel".to_string()),
                 }),
-            )
+            );
         }
     }
 }
