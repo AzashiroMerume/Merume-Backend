@@ -4,9 +4,8 @@ use serde::Serialize;
 
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
-pub struct MainResponse<T> {
+pub struct OperationStatusResponse {
     pub success: bool,
-    pub data: Option<Vec<T>>,
     pub error_message: Option<String>,
 }
 
@@ -36,7 +35,8 @@ pub struct AuthResponse {
 
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
-pub struct OperationStatusResponse {
+pub struct PreferencesResponse<String> {
     pub success: bool,
+    pub data: Option<Vec<String>>,
     pub error_message: Option<String>,
 }
