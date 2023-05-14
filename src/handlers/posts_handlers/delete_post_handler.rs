@@ -11,37 +11,8 @@ use crate::AppState;
 
 pub async fn delete_post_by_id(
     State(state): State<AppState>,
-    Path((channel_id, post_id)): Path<(ObjectId, ObjectId)>,
+    Path((_channel_id, post_id)): Path<(ObjectId, ObjectId)>,
 ) -> impl IntoResponse {
-    //check the channel for existence
-    match state
-        .db
-        .channels_collection
-        .find_one(doc! {"_id": channel_id}, None)
-        .await
-    {
-        Ok(None) => {
-            let main_response = OperationStatusResponse {
-                success: false,
-                error_message: Some("Channel does not exist.".to_string()),
-            };
-            return (StatusCode::BAD_REQUEST, Json(main_response));
-        }
-        Err(err) => {
-            eprintln!("Error checking channel: {:?}", err);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(OperationStatusResponse {
-                    success: false,
-                    error_message: Some(
-                        "There was an error on the server side, try again later.".to_string(),
-                    ),
-                }),
-            );
-        }
-        _ => {} // continue checking for nickname
-    }
-
     let deletion_result = state
         .db
         .posts_collection
@@ -63,7 +34,7 @@ pub async fn delete_post_by_id(
                     StatusCode::NOT_FOUND,
                     Json(OperationStatusResponse {
                         success: false,
-                        error_message: Some("Channel not found".to_string()),
+                        error_message: Some("Post not found".to_string()),
                     }),
                 )
             }
@@ -74,7 +45,9 @@ pub async fn delete_post_by_id(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(OperationStatusResponse {
                     success: false,
-                    error_message: Some(format!("Failed to delete channel: {}", err.to_string())),
+                    error_message: Some(
+                        "There was an error on the server side, try again later.".to_string(),
+                    ),
                 }),
             )
         }
