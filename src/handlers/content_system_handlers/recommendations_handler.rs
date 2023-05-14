@@ -20,7 +20,22 @@ pub async fn recommendations(
     Extension(user): Extension<User>,
     Query(pagination): Query<Pagination>,
 ) -> impl IntoResponse {
-    let user_preferences = user.preferences.unwrap();
+    let user_preferences = match user.preferences {
+        Some(preferences) => preferences,
+        None => {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(RecommendedContentResponse {
+                    success: false,
+                    data: None,
+                    page: None,
+                    error_message: Some(
+                        "User does not have any preferences, try to add preferences".to_string(),
+                    ),
+                }),
+            )
+        }
+    };
 
     let skip = pagination.page * pagination.limit;
 
