@@ -120,7 +120,9 @@ pub async fn recommendations(
                     success: false,
                     data: None,
                     page: None,
-                    error_message: Some("Failed to find recommendations".to_string()),
+                    error_message: Some(
+                        "There was an error on the server side, try again later.".to_string(),
+                    ),
                 }),
             );
         }

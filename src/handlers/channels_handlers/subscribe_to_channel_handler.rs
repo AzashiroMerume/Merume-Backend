@@ -27,7 +27,9 @@ pub async fn subscribe_to_channel(
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(OperationStatusResponse {
                 success: false,
-                error_message: Some("Failed to retrieve channel".to_string()),
+                error_message: Some(
+                    "There was an error on the server side, try again later.".to_string(),
+                ),
             }),
         );
     }
@@ -116,7 +118,10 @@ pub async fn subscribe_to_channel(
                         StatusCode::INTERNAL_SERVER_ERROR,
                         Json(OperationStatusResponse {
                             success: false,
-                            error_message: Some("Failed to update channel".to_string()),
+                            error_message: Some(
+                                "There was an error on the server side, try again later."
+                                    .to_string(),
+                            ),
                         }),
                     );
                 }
@@ -128,7 +133,9 @@ pub async fn subscribe_to_channel(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(OperationStatusResponse {
                     success: false,
-                    error_message: Some("Failed to insert user channel".to_string()),
+                    error_message: Some(
+                        "There was an error on the server side, try again later.".to_string(),
+                    ),
                 }),
             );
         }

@@ -48,7 +48,9 @@ pub async fn update_post_by_id(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(OperationStatusResponse {
                     success: false,
-                    error_message: Some("Failed to update post".to_string()),
+                    error_message: Some(
+                        "There was an error on the server side, try again later.".to_string(),
+                    ),
                 }),
             );
         }
@@ -67,7 +69,9 @@ pub async fn update_post_by_id(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(OperationStatusResponse {
                     success: false,
-                    error_message: Some("Failed to serialize payload".to_string()),
+                    error_message: Some(
+                        "There was an error on the server side, try again later.".to_string(),
+                    ),
                 }),
             );
         }
@@ -82,7 +86,7 @@ pub async fn update_post_by_id(
                 Json(OperationStatusResponse {
                     success: false,
                     error_message: Some(
-                        "Failed to convert serialized data to document".to_string(),
+                        "There was an error on the server side, try again later.".to_string(),
                     ),
                 }),
             );
@@ -108,7 +112,9 @@ pub async fn update_post_by_id(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(OperationStatusResponse {
                     success: false,
-                    error_message: Some("Failed to update post".to_string()),
+                    error_message: Some(
+                        "There was an error on the server side, try again later.".to_string(),
+                    ),
                 }),
             )
         }

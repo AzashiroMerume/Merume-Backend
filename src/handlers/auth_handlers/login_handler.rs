@@ -38,26 +38,27 @@ pub async fn login(
     {
         Ok(Some(user)) => user,
         Ok(None) => {
-            let main_response = AuthResponse {
+            return (StatusCode::NOT_FOUND, Json(AuthResponse {
                 success: false,
                 token: None,
                 error_message: Some(
                     "Email or password are incorrect, please try a different email or sign up for a new account."
                         .to_string(),
                 ),
-            };
-            return (StatusCode::NOT_FOUND, Json(main_response));
+            }));
         }
         Err(err) => {
             eprintln!("Error finding user: {:?}", err);
-            let main_response = AuthResponse {
-                success: false,
-                token: None,
-                error_message: Some(
-                    "There was an error on the server side, try again later.".to_string(),
-                ),
-            };
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(main_response));
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(AuthResponse {
+                    success: false,
+                    token: None,
+                    error_message: Some(
+                        "There was an error on the server side, try again later.".to_string(),
+                    ),
+                }),
+            );
         }
     };
 
@@ -65,12 +66,11 @@ pub async fn login(
     let parsed_hash = match PasswordHash::new(&user.password) {
         Ok(hash) => hash,
         Err(_) => {
-            let main_response = AuthResponse {
+            return (StatusCode::UNAUTHORIZED, Json(AuthResponse {
                 success: false,
                 token: None,
                 error_message: Some("Email or password are incorrect, please try a different email or sign up for a new account.".to_string()),
-            };
-            return (StatusCode::UNAUTHORIZED, Json(main_response));
+            }));
         }
     };
 
@@ -79,12 +79,11 @@ pub async fn login(
         .verify_password(payload.password.as_bytes(), &parsed_hash)
         .is_err()
     {
-        let main_response = AuthResponse {
+        return (StatusCode::UNAUTHORIZED, Json(AuthResponse {
             success: false,
             token: None,
             error_message: Some("Email or password are incorrect, please try a different email or sign up for a new account.".to_string()),
-        };
-        return (StatusCode::UNAUTHORIZED, Json(main_response));
+        }));
     }
 
     let jwt_secret = std::env::var("JWT_SECRET");
@@ -93,21 +92,25 @@ pub async fn login(
         Ok(token) => token,
         Err(err) => {
             eprintln!("Error while matching token: {:?}", err);
-            let main_response = AuthResponse {
-                success: false,
-                token: None,
-                error_message: Some(
-                    "There was an error on the server side, try again later.".to_string(),
-                ),
-            };
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(main_response));
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(AuthResponse {
+                    success: false,
+                    token: None,
+                    error_message: Some(
+                        "There was an error on the server side, try again later.".to_string(),
+                    ),
+                }),
+            );
         }
     };
 
-    let main_response = AuthResponse {
-        success: true,
-        token: Some(token),
-        error_message: None,
-    };
-    (StatusCode::OK, Json(main_response))
+    (
+        StatusCode::OK,
+        Json(AuthResponse {
+            success: true,
+            token: Some(token),
+            error_message: None,
+        }),
+    )
 }

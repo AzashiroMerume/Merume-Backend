@@ -43,7 +43,9 @@ pub async fn delete_channel_by_id(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(OperationStatusResponse {
                     success: false,
-                    error_message: Some(format!("Failed to delete channel: {}", err.to_string())),
+                    error_message: Some(
+                        "There was an error on the server side, try again later.".to_string(),
+                    ),
                 }),
             )
         }

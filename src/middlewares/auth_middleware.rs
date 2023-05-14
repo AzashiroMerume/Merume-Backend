@@ -20,12 +20,15 @@ pub async fn auth<B>(
         None => None,
     };
 
-    let jwt_secret = std::env::var("JWT_SECRET").map_err(|_| {
+    let jwt_secret = std::env::var("JWT_SECRET").map_err(|err| {
+        eprintln!("There is an error with `JWT_SECRET`: {}", err);
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(OperationStatusResponse {
                 success: false,
-                error_message: Some("JWT_SECRET environment variable not set".to_string()),
+                error_message: Some(
+                    "There was an error on the server side, try again later.".to_string(),
+                ),
             }),
         )
     })?;
@@ -85,7 +88,9 @@ pub async fn auth<B>(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(OperationStatusResponse {
                     success: false,
-                    error_message: Some("Database error".to_string()),
+                    error_message: Some(
+                        "There was an error on the server side, try again later.".to_string(),
+                    ),
                 }),
             ));
         }

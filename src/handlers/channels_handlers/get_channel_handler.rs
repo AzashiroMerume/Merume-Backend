@@ -19,14 +19,17 @@ pub async fn get_channel_by_id(
     {
         Ok(channel) => channel,
         Err(err) => {
+            eprintln!("Failed to retrieve channel: {}", err.to_string());
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ChannelResponse {
                     success: false,
                     data: None,
-                    error_message: Some(format!("Failed to retrieve channel: {}", err.to_string())),
+                    error_message: Some(
+                        "There was an error on the server side, try again later.".to_string(),
+                    ),
                 }),
-            )
+            );
         }
     };
 
