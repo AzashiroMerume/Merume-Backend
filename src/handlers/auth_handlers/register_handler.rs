@@ -43,15 +43,19 @@ pub async fn register(
         )
         .await
     {
-        Ok(Some(_)) => {
+        Ok(Some(existing_user)) => {
+            let error_message = if existing_user.nickname == payload.nickname {
+                "Nickname already in use. Please try sign in."
+            } else {
+                "Email already in use. Please try sign in."
+            };
+
             let main_response = AuthResponse {
                 success: false,
                 token: None,
-                error_message: Some(
-                    "Email or nickname already in use. Please try again.".to_string(),
-                ),
+                error_message: Some(error_message.to_string()),
             };
-            return (StatusCode::BAD_REQUEST, Json(main_response));
+            return (StatusCode::CONFLICT, Json(main_response));
         }
         Err(err) => {
             eprintln!("Error checking email and nickname: {:?}", err);
