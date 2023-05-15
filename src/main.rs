@@ -7,8 +7,8 @@ mod router;
 mod routes;
 mod utils;
 
-use crate::db::DB;
 use axum::extract::State;
+use db::DB;
 use router::create_router;
 
 use dotenv::dotenv;

@@ -1,4 +1,5 @@
 use crate::{
+    handlers::content_system_handlers::ChannelWithLatestPost,
     models::{channel_model::Channel, post_model::Post},
     responses::RecommendedContentResponse,
     utils::pagination::Pagination,
@@ -13,7 +14,6 @@ use axum::{
 };
 use bson::doc;
 use futures::StreamExt;
-use mongodb::options::FindOneOptions;
 
 pub async fn trendings(
     State(state): State<AppState>,
@@ -25,7 +25,9 @@ pub async fn trendings(
         // Project channel fields, two_week_subscribers field, and percentage increase
         doc! {
             "$project": {
+                // "_id": 0,  // Exclude the _id field from the root document
                 "channel": "$$ROOT",
+                "latest_post": 1,
                 "two_week_subscribers": 1,
                 "percentage_increase": {
                     "$cond": {
@@ -69,12 +71,6 @@ pub async fn trendings(
         doc! {
             "$limit": pagination.limit
         },
-        // Replace the channel document with its fields
-        doc! {
-            "$replaceRoot": {
-                "newRoot": "$channel"
-            }
-        },
         // Lookup the latest post for each channel
         doc! {
             "$lookup": {
@@ -89,6 +85,28 @@ pub async fn trendings(
             "$unwind": {
                 "path": "$latest_post",
                 "preserveNullAndEmptyArrays": true
+            }
+        },
+        // Exclude channels without posts
+        doc! {
+            "$match": {
+                "latest_post": {
+                    "$ne": null
+                }
+            }
+        },
+        // Create a new field called "channel" and assign the existing root document to it
+        doc! {
+            "$addFields": {
+                "channel": "$channel"
+            }
+        },
+        // Exclude the _id field from the projection
+        doc! {
+            "$project": {
+                "_id": 0,
+                "channel": 1,
+                "latest_post": 1
             }
         },
         // Sort the channels again by percentage increase after the lookup
@@ -109,9 +127,7 @@ pub async fn trendings(
                     success: false,
                     data: None,
                     page: None,
-                    error_message: Some(
-                        "There was an error on the server side, try again later.".to_string(),
-                    ),
+                    error_message: Some("There was an error on the server".to_string()),
                 }),
             );
         }
@@ -120,36 +136,24 @@ pub async fn trendings(
     let mut result = Vec::<(Channel, Post)>::default();
 
     while let Some(channel_doc) = cursor.next().await {
-        let channel: Channel = match bson::from_bson(bson::Bson::Document(channel_doc.unwrap())) {
-            Ok(channel) => channel,
+        let channel_with_latest_post: ChannelWithLatestPost = match channel_doc {
+            Ok(channel_doc) => match bson::from_bson(bson::Bson::Document(channel_doc)) {
+                Ok(channel_with_latest_post) => channel_with_latest_post,
+                Err(err) => {
+                    eprintln!("Failed to deserialize channel with latest post: {}", err);
+                    continue;
+                }
+            },
             Err(err) => {
-                eprintln!("Failed to deserialize channel: {}", err);
+                eprintln!("Error retrieving channel document: {}", err);
                 continue;
             }
         };
 
-        let latest_post = match state
-            .db
-            .posts_collection
-            .find_one(
-                doc! {
-                    "channel_id": channel.id
-                },
-                FindOneOptions::builder()
-                    .sort(doc! {"created_at": -1})
-                    .build(),
-            )
-            .await
-        {
-            Ok(Some(post)) => post,
-            Err(err) => {
-                eprintln!("Failed to find latest post: {}", err);
-                continue;
-            }
-            _ => continue,
-        };
-
-        result.push((channel, latest_post));
+        result.push((
+            channel_with_latest_post.channel,
+            channel_with_latest_post.latest_post,
+        ));
     }
 
     (
