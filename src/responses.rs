@@ -35,7 +35,7 @@ pub struct AuthResponse {
 
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
-pub struct PreferencesResponse<String> {
+pub struct PreferencesResponse {
     pub success: bool,
     pub data: Option<Vec<String>>,
     pub error_message: Option<String>,
