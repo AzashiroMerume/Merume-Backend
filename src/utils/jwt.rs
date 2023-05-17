@@ -22,7 +22,7 @@ pub fn generate_jwt_token(user_id: &str, jwt_secret: &str) -> Result<String, Str
     let encoding_key = EncodingKey::from_secret(jwt_secret.as_ref());
     match encode(&Header::default(), &claims, &encoding_key) {
         Ok(token) => Ok(token),
-        Err(e) => Err(format!("Error generating JWT token: {:?}", e)),
+        Err(err) => Err(format!("Error generating JWT token: {:?}", err)),
     }
 }
 
@@ -30,6 +30,6 @@ pub fn verify_token(token: &str, jwt_secret: &str) -> Result<Claims, String> {
     let decoding_key = DecodingKey::from_secret(jwt_secret.as_ref());
     match decode::<Claims>(token, &decoding_key, &Validation::default()) {
         Ok(decoded) => Ok(decoded.claims),
-        Err(e) => Err(format!("Error verifying JWT token: {:?}", e)),
+        Err(err) => Err(format!("Error verifying JWT token: {:?}", err)),
     }
 }
