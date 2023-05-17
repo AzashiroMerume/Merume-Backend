@@ -1,6 +1,7 @@
 use crate::{
     models::{
-        channel_model::Channel, post_model::Post, user_channel_model::UserChannel, user_model::User,
+        channel_model::Channel, post_actioned_model::ReadPost, post_model::Post,
+        user_channel_model::UserChannel, user_model::User,
     },
     responses::OperationStatusResponse,
 };
@@ -19,6 +20,8 @@ pub struct DB {
     pub user_channels_collection_bson: Collection<Document>,
     pub posts_collection: Collection<Post>,
     pub posts_collection_bson: Collection<Document>,
+    pub read_posts_collection: Collection<ReadPost>,
+    pub read_posts_collection_bson: Collection<Document>,
 }
 
 impl DB {
@@ -53,6 +56,8 @@ impl DB {
             .expect("Failed to load `DB_USER_CHANNELS_TABLE` environement variable.");
         let posts_collection_name: String = std::env::var("DB_POSTS_TABLE")
             .expect("Failed to load `DB_POSTS_TABLE` environement variable.");
+        let read_posts_collection_name: String = std::env::var("DB_READ_POSTS_TABLE")
+            .expect("Failed to load `DB_READ_POSTS_TABLE` environment variable.");
 
         let mut client_options = ClientOptions::parse(mongo_uri).await.map_err(|err| {
             eprintln!("Failed to parse MongoDB URI: {}", err.to_string());
@@ -113,6 +118,10 @@ impl DB {
         let posts_collection = database.collection::<Post>(&posts_collection_name);
         let posts_collection_bson = database.collection::<Document>(&posts_collection_name);
 
+        let read_posts_collection = database.collection::<ReadPost>(&read_posts_collection_name);
+        let read_posts_collection_bson =
+            database.collection::<Document>(&read_posts_collection_name);
+
         Ok(Self {
             users_collection,
             users_collection_bson,
@@ -122,6 +131,8 @@ impl DB {
             user_channels_collection_bson,
             posts_collection,
             posts_collection_bson,
+            read_posts_collection,
+            read_posts_collection_bson,
         })
     }
 }
