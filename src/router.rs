@@ -1,8 +1,8 @@
 use crate::{
     handlers::common_handler,
     routes::{
-        auth_routes, channel_system_routes, content_routes, preferences_routes,
-        user_channels_routes,
+        auth_routes, channel_system_routes, content_routes, mark_as_read_posts_routes,
+        preferences_routes, user_channels_routes,
     },
     AppState,
 };
@@ -35,6 +35,7 @@ pub fn create_router(State(state): State<AppState>) -> Router {
     let auth_routes = auth_routes::auth_routes(State(state.clone()));
     let user_channels_routes = user_channels_routes::user_channels_routes(State(state.clone()));
     let channel_system = channel_system_routes::channel_system(State(state.clone()));
+    let read_post_routes = mark_as_read_posts_routes::read_posts_routes(State(state.clone()));
     let content_routes = content_routes::content_routes(State(state.clone()));
     let preferences_routes = preferences_routes::preferences_routes(State(state.clone()));
 
@@ -48,6 +49,7 @@ pub fn create_router(State(state): State<AppState>) -> Router {
         .nest("/users/recommendations", content_routes)
         .nest("/auth", auth_routes)
         .nest("/channels", channel_system)
+        .nest("/mark", read_post_routes)
         .nest("/preferences", preferences_routes)
         .layer(
             ServiceBuilder::new()
