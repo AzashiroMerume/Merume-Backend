@@ -40,6 +40,32 @@ pub async fn recommendations(
     let skip = pagination.page * pagination.limit;
 
     let pipeline = vec![
+        doc! {
+            "$lookup": {
+                "from": "read_posts",
+                "let": { "channelId": "$channel._id" },
+                "pipeline": [
+                    {
+                        "$match": {
+                            "$expr": {
+                                "$and": [
+                                    { "$eq": ["$post_owner_id", "$$channelId"] },
+                                    { "$eq": ["$user_id_who_read", user.id] }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "as": "read_posts"
+            }
+        },
+        doc! {
+            "$match": {
+                "read_posts": {
+                    "$size": 0
+                }
+            }
+        },
         // Filter channels based on user preferences
         doc! {
             "$match": {
