@@ -21,7 +21,6 @@ pub async fn create_post(
     Path(channel_id): Path<ObjectId>,
     Json(payload): Json<PostPayload>,
 ) -> impl IntoResponse {
-    println!("CURRENT CHALLENGE DAY: {}", current_challenge_day);
     // Validate the payload
     match payload.validate() {
         Ok(()) => {} // Validation successful, do nothing
