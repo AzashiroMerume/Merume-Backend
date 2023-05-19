@@ -7,7 +7,7 @@ use axum::{extract::State, middleware, routing::post, Router};
 pub fn read_posts_routes(State(state): State<AppState>) -> Router<AppState> {
     Router::new()
         .route(
-            "/:post_id",
+            "/",
             post(posts_handlers::mark_as_read_post_handler::mark_as_read),
         )
         .layer(middleware::from_fn_with_state(state, |state, req, next| {

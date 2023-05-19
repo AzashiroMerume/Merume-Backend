@@ -5,8 +5,10 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "snake_case")]
 pub struct ReadPost {
     #[serde(rename = "_id")]
+    #[serde(skip_deserializing)]
     pub id: ObjectId,
-    pub post_owner_id: ObjectId,
+    pub post_id: ObjectId,
+    #[serde(skip_deserializing)]
     pub user_id_who_read: ObjectId,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub liked: Option<bool>,
