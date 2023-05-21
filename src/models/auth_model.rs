@@ -16,7 +16,8 @@ pub struct RegisterPayload {
 #[derive(Debug, Clone, Deserialize, Validate)]
 #[serde(rename_all = "snake_case")]
 pub struct LoginPayload {
-    pub email: String,
+    pub identifier: String,
     #[validate(length(min = 8))]
     pub password: String,
+    pub by_email: bool,
 }

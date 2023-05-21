@@ -29,40 +29,75 @@ pub async fn login(
         }
     }
 
-    // Find the user with the given email
-    let user = match state
-        .db
-        .users_collection
-        .find_one(doc! {"email": &payload.email}, None)
-        .await
-    {
-        Ok(Some(user)) => user,
-        Ok(None) => {
-            return (StatusCode::NOT_FOUND, Json(AuthResponse {
-                success: false,
-                token: None,
-                error_message: Some(
-                    "Email or password are incorrect, please try a different email or sign up for a new account."
-                        .to_string(),
-                ),
-            }));
-        }
-        Err(err) => {
-            eprintln!("Error finding user: {:?}", err);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(AuthResponse {
+    let user = if payload.by_email {
+        // Find the user with the given email
+        match state
+            .db
+            .users_collection
+            .find_one(doc! {"email": &payload.identifier}, None)
+            .await
+        {
+            Ok(Some(user)) => user,
+            Ok(None) => {
+                return (StatusCode::NOT_FOUND, Json(AuthResponse {
                     success: false,
                     token: None,
                     error_message: Some(
-                        "There was an error on the server side, try again later.".to_string(),
+                        "Email or password are incorrect, please try a different email or sign up for a new account."
+                            .to_string(),
                     ),
-                }),
-            );
+                }));
+            }
+            Err(err) => {
+                eprintln!("Error finding user: {:?}", err);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(AuthResponse {
+                        success: false,
+                        token: None,
+                        error_message: Some(
+                            "There was an error on the server side, try again later.".to_string(),
+                        ),
+                    }),
+                );
+            }
+        }
+    } else {
+        // Find the user with the given nickname
+        match state
+            .db
+            .users_collection
+            .find_one(doc! {"nickname": &payload.identifier}, None)
+            .await
+        {
+            Ok(Some(user)) => user,
+            Ok(None) => {
+                return (StatusCode::NOT_FOUND, Json(AuthResponse {
+                    success: false,
+                    token: None,
+                    error_message: Some(
+                        "Nickname or password are incorrect, please try a different nickname or sign up for a new account."
+                            .to_string(),
+                    ),
+                }));
+            }
+            Err(err) => {
+                eprintln!("Error finding user: {:?}", err);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(AuthResponse {
+                        success: false,
+                        token: None,
+                        error_message: Some(
+                            "There was an error on the server side, try again later.".to_string(),
+                        ),
+                    }),
+                );
+            }
         }
     };
 
-    //check hash_represantation of string
+    // Check hash_representation of the password
     let parsed_hash = match PasswordHash::new(&user.password) {
         Ok(hash) => hash,
         Err(_) => {
@@ -74,7 +109,7 @@ pub async fn login(
         }
     };
 
-    //verify password using argon2 verifier
+    // Verify the password using the argon2 verifier
     if Argon2::default()
         .verify_password(payload.password.as_bytes(), &parsed_hash)
         .is_err()
@@ -91,7 +126,7 @@ pub async fn login(
     let token = match generate_jwt_token(&user.id.to_string(), &jwt_secret.unwrap()) {
         Ok(token) => token,
         Err(err) => {
-            eprintln!("Error while matching token: {:?}", err);
+            eprintln!("Error while generating token: {:?}", err);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(AuthResponse {
