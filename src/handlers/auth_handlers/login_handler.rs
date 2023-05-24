@@ -150,5 +150,13 @@ pub async fn login(
             }),
         )
     } else {
+        (
+            StatusCode::OK,
+            Json(AuthResponse {
+                success: true,
+                token: Some(token),
+                error_message: None,
+            }),
+        )
     }
 }
