@@ -7,9 +7,9 @@ pub async fn verify_auth(Extension(user): Extension<User>) -> impl IntoResponse 
         (
             StatusCode::OK,
             Json(AuthResponse {
-                success: false,
+                success: true,
                 token: None,
-                error_message: Some("User does not have preferences".to_string()),
+                error_message: Some("The user has no preferences".to_string()),
             }),
         )
     } else {
