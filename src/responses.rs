@@ -18,6 +18,15 @@ pub struct ChannelResponse {
 }
 
 #[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub struct ChannelPostResponse {
+    success: bool,
+    data: Option<Vec<Post>>,
+    error_message: Option<String>,
+    is_previous: bool,
+}
+
+#[derive(Clone, Debug, Serialize)]
 pub struct RecommendedContentResponse {
     pub success: bool,
     pub data: Option<Vec<(Channel, Post)>>,
