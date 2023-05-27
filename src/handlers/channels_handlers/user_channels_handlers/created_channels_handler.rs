@@ -41,7 +41,7 @@ async fn websocket(mut _socket: WebSocket, state: State<AppState>, user_id: Obje
     let change_stream = state
         .db
         .channels_collection
-        .watch(None, None)
+        .watch(Some(doc! {"owner_id": user_id}), None)
         .await
         .map_err(|err| {
             eprintln!("Error creating change stream: {:?}", err);
