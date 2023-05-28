@@ -8,6 +8,8 @@ use axum::{
 };
 use bson::{doc, oid::ObjectId};
 use futures::{SinkExt, StreamExt, TryStreamExt};
+use mongodb::options::{ChangeStreamOptions, FullDocumentType};
+
 use serde_json::json;
 
 pub async fn channel_posts(
@@ -38,11 +40,21 @@ async fn websocket(mut _socket: WebSocket, state: State<AppState>, channel_id: O
         }
     }
 
+    let pipeline = vec![doc! {
+        "$match": {
+            "channel_id": channel_id
+        }
+    }];
+
+    let options = ChangeStreamOptions::builder()
+        .full_document(Some(FullDocumentType::UpdateLookup))
+        .build();
+
     // Listen for changes in channel posts
     let change_stream = state
         .db
         .posts_collection
-        .watch(Some(doc! {"channel_id": channel_id}), None)
+        .watch(pipeline, None)
         .await
         .map_err(|err| {
             eprintln!("Error creating change stream: {:?}", err);
