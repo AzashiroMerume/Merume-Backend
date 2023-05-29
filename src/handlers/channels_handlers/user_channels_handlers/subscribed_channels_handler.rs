@@ -59,7 +59,9 @@ async fn websocket(mut _socket: WebSocket, state: State<AppState>, user_id: Obje
     let mut change_stream = state
         .db
         .user_channels_collection
-        .watch(vec![doc! {"$match": {"user_id": user_id}}], None)
+        .watch(
+            /* vec![doc! {"$match": {"user_id": user_id}}] */ None, None,
+        )
         .await
         .unwrap();
 
