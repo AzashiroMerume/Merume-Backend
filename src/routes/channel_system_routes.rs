@@ -26,7 +26,7 @@ pub fn channels_routes(State(state): State<AppState>) -> Router<AppState> {
 }
 
 pub fn post_routes(State(state): State<AppState>) -> Router<AppState> {
-    Router::new()
+    let without_post_id = Router::new()
         .route(
             "/:channel_id/content",
             get(channels_handlers::get_channel_posts_handler::channel_posts),
@@ -35,6 +35,12 @@ pub fn post_routes(State(state): State<AppState>) -> Router<AppState> {
             "/:channel_id/post",
             post(posts_handlers::create_post_handler::create_post),
         )
+        .route_layer(middleware::from_fn_with_state(
+            state.clone(),
+            verify_channel_owner_middleware::verify_channel_owner,
+        ));
+
+    let with_post_id = Router::new()
         .route(
             "/:channel_id/:post_id/delete",
             post(posts_handlers::delete_post_handler::delete_post_by_id),
@@ -43,10 +49,14 @@ pub fn post_routes(State(state): State<AppState>) -> Router<AppState> {
             "/:channel_id/:post_id/update",
             post(posts_handlers::update_post_handler::update_post_by_id),
         )
-        .layer(middleware::from_fn_with_state(
+        .route_layer(middleware::from_fn_with_state(
             state.clone(),
-            verify_channel_owner_middleware::verify_channel_owner,
-        ))
+            verify_channel_owner_middleware::verify_channel_owner_with_post_id,
+        ));
+
+    Router::new()
+        .merge(without_post_id)
+        .merge(with_post_id)
         .layer(middleware::from_fn_with_state(state, |state, req, next| {
             auth_middleware::auth(state, req, next, Some(false))
         }))

@@ -12,9 +12,10 @@ use chrono::Utc;
 
 pub async fn update_post_by_id(
     State(state): State<AppState>,
-    Path(post_id): Path<ObjectId>,
+    Path((_channel_id, post_id)): Path<(ObjectId, ObjectId)>,
     Json(payload): Json<UpdatePost>,
 ) -> impl IntoResponse {
+    println!("Wtf");
     //check if post already changed once
     match state
         .db
