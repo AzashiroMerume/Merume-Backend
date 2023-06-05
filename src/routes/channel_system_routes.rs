@@ -32,6 +32,10 @@ pub fn post_routes(State(state): State<AppState>) -> Router<AppState> {
             get(channels_handlers::get_channel_posts_handler::channel_posts),
         )
         .route(
+            "/:channel_id/more_content",
+            get(channels_handlers::get_more_channel_posts_handler::more_channel_posts),
+        )
+        .route(
             "/:channel_id/post",
             post(posts_handlers::create_post_handler::create_post),
         )
