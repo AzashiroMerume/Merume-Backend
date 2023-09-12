@@ -26,9 +26,9 @@ pub struct ChannelPostResponse {
 }
 
 #[derive(Clone, Debug, Serialize)]
-pub struct RecommendedContentResponse {
+pub struct RecommendedChannelResponse {
     pub success: bool,
-    pub data: Option<Vec<(Channel, Post)>>,
+    pub data: Option<Vec<Channel>>,
     pub page: Option<i32>,
     pub error_message: Option<String>,
 }

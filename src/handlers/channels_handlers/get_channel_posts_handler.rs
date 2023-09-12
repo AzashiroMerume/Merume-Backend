@@ -65,11 +65,17 @@ async fn websocket(
     //     .full_document(Some(FullDocumentType::UpdateLookup))
     //     .build();
 
+    let pipeline = vec![doc! {
+        "$match": {
+            "channel_id": channel_id
+        }
+    }];
+
     // Listen for changes in channel posts
     let change_stream = state
         .db
         .posts_collection
-        .watch(None, None)
+        .watch(pipeline, None)
         .await
         .map_err(|err| {
             eprintln!("Error creating change stream: {:?}", err);

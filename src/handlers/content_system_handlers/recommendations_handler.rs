@@ -1,7 +1,6 @@
 use crate::{
-    handlers::content_system_handlers::ChannelWithLatestPost,
-    models::{channel_model::Channel, post_model::Post, user_model::User},
-    responses::RecommendedContentResponse,
+    models::{channel_model::Channel, user_model::User},
+    responses::RecommendedChannelResponse,
     utils::pagination::Pagination,
     AppState,
 };
@@ -25,7 +24,7 @@ pub async fn recommendations(
         None => {
             return (
                 StatusCode::NOT_FOUND,
-                Json(RecommendedContentResponse {
+                Json(RecommendedChannelResponse {
                     success: false,
                     data: None,
                     page: None,
@@ -74,12 +73,11 @@ pub async fn recommendations(
                 }
             }
         },
-        // Project channel fields, two_week_subscribers field, and percentage increase
+        // Project channel fields and percentage increase
         doc! {
             "$project": {
                 // "_id": 0,  // Exclude the _id field from the root document
                 "channel": "$$ROOT",
-                "latest_post": 1,
                 "two_week_subscribers": 1,
                 "percentage_increase": {
                     "$cond": {
@@ -123,30 +121,6 @@ pub async fn recommendations(
         doc! {
             "$limit": pagination.limit
         },
-        // Lookup the latest post for each channel
-        doc! {
-            "$lookup": {
-                "from": "posts",
-                "localField": "_id",
-                "foreignField": "channel_id",
-                "as": "latest_post"
-            }
-        },
-        // Unwind the "latest_post" array
-        doc! {
-            "$unwind": {
-                "path": "$latest_post",
-                "preserveNullAndEmptyArrays": true
-            }
-        },
-        // Exclude channels without posts
-        doc! {
-            "$match": {
-                "latest_post": {
-                    "$ne": null
-                }
-            }
-        },
         // Create a new field called "channel" and assign the existing root document to it
         doc! {
             "$addFields": {
@@ -158,7 +132,6 @@ pub async fn recommendations(
             "$project": {
                 "_id": 0,
                 "channel": 1,
-                "latest_post": 1
             }
         },
         // Sort the channels again by percentage increase after the lookup
@@ -175,7 +148,7 @@ pub async fn recommendations(
             eprintln!("Cursor error: {}", err);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(RecommendedContentResponse {
+                Json(RecommendedChannelResponse {
                     success: false,
                     data: None,
                     page: None,
@@ -185,12 +158,12 @@ pub async fn recommendations(
         }
     };
 
-    let mut result = Vec::<(Channel, Post)>::default();
+    let mut result = Vec::<Channel>::default(); // Change the type to Vec<Channel>
 
     while let Some(channel_doc) = cursor.next().await {
-        let channel_with_latest_post: ChannelWithLatestPost = match channel_doc {
+        let recommended_channel: Channel = match channel_doc {
             Ok(channel_doc) => match bson::from_bson(bson::Bson::Document(channel_doc)) {
-                Ok(channel_with_latest_post) => channel_with_latest_post,
+                Ok(recommended_channel) => recommended_channel,
                 Err(err) => {
                     eprintln!("Failed to deserialize channel with latest post: {}", err);
                     continue;
@@ -202,15 +175,12 @@ pub async fn recommendations(
             }
         };
 
-        result.push((
-            channel_with_latest_post.channel,
-            channel_with_latest_post.latest_post,
-        ));
+        result.push(recommended_channel); // Only add the channel data
     }
 
     (
         StatusCode::OK,
-        Json(RecommendedContentResponse {
+        Json(RecommendedChannelResponse {
             success: true,
             data: Some(result),
             page: Some(pagination.page),
