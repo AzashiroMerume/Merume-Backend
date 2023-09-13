@@ -22,7 +22,7 @@ pub async fn trendings(
         // Project channel fields and percentage increase
         doc! {
             "$project": {
-                // "_id": 0,  // Exclude the _id field from the root document
+                "_id": 0,
                 "channel": "$$ROOT",
                 "two_week_subscribers": 1,
                 "percentage_increase": {
@@ -66,25 +66,6 @@ pub async fn trendings(
         },
         doc! {
             "$limit": pagination.limit
-        },
-        // Create a new field called "channel" and assign the existing root document to it
-        doc! {
-            "$addFields": {
-                "channel": "$channel"
-            }
-        },
-        // Exclude the _id field from the projection
-        doc! {
-            "$project": {
-                "_id": 0,
-                "channel": 1,
-            }
-        },
-        // Sort the channels again by percentage increase after the lookup
-        doc! {
-            "$sort": {
-                "percentage_increase": -1
-            }
         },
     ];
 

@@ -73,41 +73,6 @@ pub async fn recommendations(
                 }
             }
         },
-        // Project channel fields and percentage increase
-        doc! {
-            "$project": {
-                // "_id": 0,  // Exclude the _id field from the root document
-                "channel": "$$ROOT",
-                "two_week_subscribers": 1,
-                "percentage_increase": {
-                    "$cond": {
-                        "if": {
-                            "$and": [
-                                { "$isArray": "$two_week_subscribers" },
-                                { "$gte": [ { "$size": "$two_week_subscribers" }, 2 ] }
-                            ]
-                        },
-                        "then": {
-                            "$multiply": [
-                                {
-                                    "$divide": [
-                                        {
-                                            "$subtract": [
-                                                { "$arrayElemAt": ["$two_week_subscribers", -1] },
-                                                { "$arrayElemAt": ["$two_week_subscribers", -2] }
-                                            ]
-                                        },
-                                        { "$arrayElemAt": ["$two_week_subscribers", -2] }
-                                    ]
-                                },
-                                100
-                            ]
-                        },
-                        "else": 0
-                    }
-                }
-            }
-        },
         // Sort channels by percentage increase in two-week subscribers in descending order
         doc! {
             "$sort": {
@@ -120,25 +85,6 @@ pub async fn recommendations(
         },
         doc! {
             "$limit": pagination.limit
-        },
-        // Create a new field called "channel" and assign the existing root document to it
-        doc! {
-            "$addFields": {
-                "channel": "$channel"
-            }
-        },
-        // Exclude the _id field from the projection
-        doc! {
-            "$project": {
-                "_id": 0,
-                "channel": 1,
-            }
-        },
-        // Sort the channels again by percentage increase after the lookup
-        doc! {
-            "$sort": {
-                "percentage_increase": -1
-            }
         },
     ];
 
@@ -158,14 +104,14 @@ pub async fn recommendations(
         }
     };
 
-    let mut result = Vec::<Channel>::default(); // Change the type to Vec<Channel>
+    let mut result = Vec::<Channel>::default();
 
     while let Some(channel_doc) = cursor.next().await {
         let recommended_channel: Channel = match channel_doc {
             Ok(channel_doc) => match bson::from_bson(bson::Bson::Document(channel_doc)) {
                 Ok(recommended_channel) => recommended_channel,
                 Err(err) => {
-                    eprintln!("Failed to deserialize channel with latest post: {}", err);
+                    eprintln!("Failed to deserialize channel: {}", err);
                     continue;
                 }
             },
@@ -175,7 +121,7 @@ pub async fn recommendations(
             }
         };
 
-        result.push(recommended_channel); // Only add the channel data
+        result.push(recommended_channel);
     }
 
     (
