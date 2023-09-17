@@ -140,23 +140,12 @@ pub async fn login(
         }
     };
 
-    if user.preferences.is_none() {
-        (
-            StatusCode::OK,
-            Json(AuthResponse {
-                success: true,
-                token: Some(token),
-                error_message: Some("The user has no preferences".to_string()),
-            }),
-        )
-    } else {
-        (
-            StatusCode::OK,
-            Json(AuthResponse {
-                success: true,
-                token: Some(token),
-                error_message: None,
-            }),
-        )
-    }
+    (
+        StatusCode::OK,
+        Json(AuthResponse {
+            success: true,
+            token: Some(token),
+            error_message: None,
+        }),
+    )
 }
