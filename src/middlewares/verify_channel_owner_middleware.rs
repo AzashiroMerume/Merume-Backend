@@ -47,10 +47,10 @@ pub async fn verify_channel_owner<B>(
             return Ok(next.run(req).await);
         }
         false => Err((
-            StatusCode::UNAUTHORIZED,
+            StatusCode::CONFLICT,
             Json(OperationStatusResponse {
                 success: false,
-                error_message: Some("Unauthorized".to_string()),
+                error_message: Some("CONFLICT".to_string()),
             }),
         )),
     }
@@ -95,10 +95,10 @@ pub async fn verify_channel_owner_with_post_id<B>(
             return Ok(next.run(req).await);
         }
         false => Err((
-            StatusCode::UNAUTHORIZED,
+            StatusCode::CONFLICT,
             Json(OperationStatusResponse {
                 success: false,
-                error_message: Some("Unauthorized".to_string()),
+                error_message: Some("CONFLICT".to_string()),
             }),
         )),
     }
