@@ -67,7 +67,7 @@ pub async fn login(
         match state
             .db
             .users_collection
-            .find_one(doc! {"nickname": &payload.identifier}, None)
+            .find_one(doc! {"nickname": &payload.identifier.to_lowercase()}, None)
             .await
         {
             Ok(Some(user)) => user,

@@ -37,14 +37,14 @@ pub async fn register(
         .users_collection
         .find_one(
             doc! {
-                "$or": [{"email": payload.email.clone()}, {"nickname": payload.nickname.clone()}]
+                "$or": [{"email": payload.email.clone()}, {"nickname": payload.nickname.clone().to_lowercase()}]
             },
             None,
         )
         .await
     {
         Ok(Some(existing_user)) => {
-            let error_message = if existing_user.nickname == payload.nickname {
+            let error_message = if existing_user.nickname == payload.nickname.to_lowercase() {
                 "Nickname already in use. Please try sign in."
             } else {
                 "Email already in use. Please try sign in."
@@ -98,7 +98,7 @@ pub async fn register(
     let user = User {
         id: ObjectId::new(),
         username: payload.username,
-        nickname: payload.nickname,
+        nickname: payload.nickname.to_lowercase(),
         email: payload.email,
         password: hashed_password,
         preferences: None,
