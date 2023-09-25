@@ -15,6 +15,7 @@ use validator::Validate;
 pub async fn new_channel(
     State(state): State<AppState>,
     Extension(user_id): Extension<ObjectId>,
+    Extension(nickname): Extension<String>,
     Json(payload): Json<ChannelPayload>,
 ) -> impl IntoResponse {
     // Validate the payload
@@ -45,6 +46,7 @@ pub async fn new_channel(
     let channel = Channel {
         id: ObjectId::new(),
         owner_id: user_id,
+        owner_nickname: nickname,
         name: payload.name,
         channel_type: payload.channel_type,
         description: payload.description,

@@ -100,6 +100,7 @@ pub async fn auth<B>(
         req.extensions_mut().insert(user);
     } else {
         req.extensions_mut().insert(user_id);
+        req.extensions_mut().insert(user.nickname);
     }
 
     Ok(next.run(req).await)

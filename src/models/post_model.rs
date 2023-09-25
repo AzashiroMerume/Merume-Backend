@@ -9,6 +9,7 @@ pub struct Post {
     #[serde(rename = "_id")]
     pub id: ObjectId,
     pub owner_id: ObjectId,
+    pub owner_nickname: String,
     pub channel_id: ObjectId,
     pub body: String,
     #[serde(skip_serializing_if = "Option::is_none")]

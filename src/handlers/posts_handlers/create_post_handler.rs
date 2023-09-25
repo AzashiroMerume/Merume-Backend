@@ -17,6 +17,7 @@ use crate::{
 pub async fn create_post(
     State(state): State<AppState>,
     Extension(user_id): Extension<ObjectId>,
+    Extension(nickname): Extension<String>,
     Extension(current_challenge_day): Extension<usize>,
     Path(channel_id): Path<ObjectId>,
     Json(payload): Json<PostPayload>,
@@ -41,6 +42,7 @@ pub async fn create_post(
     let post = Post {
         id: ObjectId::new(),
         owner_id: user_id,
+        owner_nickname: nickname,
         channel_id,
         body: payload.body,
         images: payload.images,

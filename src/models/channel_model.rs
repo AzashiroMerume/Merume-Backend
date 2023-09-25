@@ -11,6 +11,7 @@ pub struct Channel {
     #[serde(rename = "_id")]
     pub id: ObjectId,
     pub owner_id: ObjectId,
+    pub owner_nickname: String,
     pub name: String,
     pub channel_type: String,
     pub description: String,
