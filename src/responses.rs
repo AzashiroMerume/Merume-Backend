@@ -1,5 +1,6 @@
 use crate::models::{channel_model::Channel, post_model::Post};
 
+use bson::oid::ObjectId;
 use serde::Serialize;
 
 #[derive(Clone, Debug, Serialize)]
@@ -38,6 +39,7 @@ pub struct RecommendedChannelResponse {
 pub struct AuthResponse {
     pub success: bool,
     pub token: Option<String>,
+    pub inserted_id: Option<ObjectId>,
     pub error_message: Option<String>,
 }
 

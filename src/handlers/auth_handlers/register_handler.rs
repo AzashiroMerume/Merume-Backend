@@ -25,6 +25,7 @@ pub async fn register(
                 Json(AuthResponse {
                     success: false,
                     token: None,
+                    inserted_id: None,
                     error_message: Some(err.to_string()),
                 }),
             );
@@ -53,6 +54,7 @@ pub async fn register(
             let main_response = AuthResponse {
                 success: false,
                 token: None,
+                inserted_id: None,
                 error_message: Some(error_message.to_string()),
             };
             return (StatusCode::CONFLICT, Json(main_response));
@@ -64,6 +66,7 @@ pub async fn register(
                 Json(AuthResponse {
                     success: false,
                     token: None,
+                    inserted_id: None,
                     error_message: Some(
                         "There was an error on the server side, try again later.".to_string(),
                     ),
@@ -85,6 +88,7 @@ pub async fn register(
                 Json(AuthResponse {
                     success: false,
                     token: None,
+                    inserted_id: None,
                     error_message: Some(
                         "There was an error on the server side, try again later.".to_string(),
                     ),
@@ -115,7 +119,7 @@ pub async fn register(
         .await;
 
     match result {
-        Ok(_) => {
+        Ok(inserted) => {
             let jwt_secret = std::env::var("JWT_SECRET");
 
             let token = generate_jwt_token(&user.id.to_string(), &jwt_secret.unwrap()).unwrap();
@@ -124,6 +128,7 @@ pub async fn register(
                 Json(AuthResponse {
                     success: true,
                     token: Some(token),
+                    inserted_id: inserted.inserted_id.as_object_id(),
                     error_message: None,
                 }),
             );
@@ -135,6 +140,7 @@ pub async fn register(
                 Json(AuthResponse {
                     success: false,
                     token: None,
+                    inserted_id: None,
                     error_message: Some(
                         "There was an error on the server side, try again later.".to_string(),
                     ),

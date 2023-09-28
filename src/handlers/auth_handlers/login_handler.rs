@@ -23,6 +23,7 @@ pub async fn login(
                 Json(AuthResponse {
                     success: false,
                     token: None,
+                    inserted_id: None,
                     error_message: Some(err.to_string()),
                 }),
             );
@@ -42,6 +43,7 @@ pub async fn login(
                 return (StatusCode::NOT_FOUND, Json(AuthResponse {
                     success: false,
                     token: None,
+                    inserted_id: None,
                     error_message: Some(
                         "Email or password are incorrect, please try a different email or sign up for a new account."
                             .to_string(),
@@ -55,6 +57,7 @@ pub async fn login(
                     Json(AuthResponse {
                         success: false,
                         token: None,
+                        inserted_id: None,
                         error_message: Some(
                             "There was an error on the server side, try again later.".to_string(),
                         ),
@@ -75,6 +78,7 @@ pub async fn login(
                 return (StatusCode::NOT_FOUND, Json(AuthResponse {
                     success: false,
                     token: None,
+                    inserted_id: None,
                     error_message: Some(
                         "Nickname or password are incorrect, please try a different nickname or sign up for a new account."
                             .to_string(),
@@ -88,6 +92,7 @@ pub async fn login(
                     Json(AuthResponse {
                         success: false,
                         token: None,
+                        inserted_id: None,
                         error_message: Some(
                             "There was an error on the server side, try again later.".to_string(),
                         ),
@@ -104,6 +109,7 @@ pub async fn login(
             return (StatusCode::UNAUTHORIZED, Json(AuthResponse {
                 success: false,
                 token: None,
+                inserted_id: None,
                 error_message: Some("Email or password are incorrect, please try a different email or sign up for a new account.".to_string()),
             }));
         }
@@ -117,6 +123,7 @@ pub async fn login(
         return (StatusCode::UNAUTHORIZED, Json(AuthResponse {
             success: false,
             token: None,
+            inserted_id: None,
             error_message: Some("Email or password are incorrect, please try a different email or sign up for a new account.".to_string()),
         }));
     }
@@ -132,6 +139,7 @@ pub async fn login(
                 Json(AuthResponse {
                     success: false,
                     token: None,
+                    inserted_id: None,
                     error_message: Some(
                         "There was an error on the server side, try again later.".to_string(),
                     ),
@@ -145,6 +153,7 @@ pub async fn login(
         Json(AuthResponse {
             success: true,
             token: Some(token),
+            inserted_id: Some(user.id),
             error_message: None,
         }),
     )
