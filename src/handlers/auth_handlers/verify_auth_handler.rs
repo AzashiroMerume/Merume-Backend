@@ -9,7 +9,7 @@ pub async fn verify_auth(Extension(user): Extension<User>) -> impl IntoResponse 
             Json(AuthResponse {
                 success: true,
                 token: None,
-                inserted_id: Some(user.id),
+                user_id: Some(user.id),
                 error_message: Some("The user has no preferences".to_string()),
             }),
         )
@@ -19,7 +19,7 @@ pub async fn verify_auth(Extension(user): Extension<User>) -> impl IntoResponse 
             Json(AuthResponse {
                 success: true,
                 token: None,
-                inserted_id: None,
+                user_id: None,
                 error_message: None,
             }),
         )

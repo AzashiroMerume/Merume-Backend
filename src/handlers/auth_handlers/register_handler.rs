@@ -25,7 +25,7 @@ pub async fn register(
                 Json(AuthResponse {
                     success: false,
                     token: None,
-                    inserted_id: None,
+                    user_id: None,
                     error_message: Some(err.to_string()),
                 }),
             );
@@ -54,7 +54,7 @@ pub async fn register(
             let main_response = AuthResponse {
                 success: false,
                 token: None,
-                inserted_id: None,
+                user_id: None,
                 error_message: Some(error_message.to_string()),
             };
             return (StatusCode::CONFLICT, Json(main_response));
@@ -66,7 +66,7 @@ pub async fn register(
                 Json(AuthResponse {
                     success: false,
                     token: None,
-                    inserted_id: None,
+                    user_id: None,
                     error_message: Some(
                         "There was an error on the server side, try again later.".to_string(),
                     ),
@@ -88,7 +88,7 @@ pub async fn register(
                 Json(AuthResponse {
                     success: false,
                     token: None,
-                    inserted_id: None,
+                    user_id: None,
                     error_message: Some(
                         "There was an error on the server side, try again later.".to_string(),
                     ),
@@ -128,7 +128,7 @@ pub async fn register(
                 Json(AuthResponse {
                     success: true,
                     token: Some(token),
-                    inserted_id: inserted.inserted_id.as_object_id(),
+                    user_id: inserted.inserted_id.as_object_id(),
                     error_message: None,
                 }),
             );
@@ -140,7 +140,7 @@ pub async fn register(
                 Json(AuthResponse {
                     success: false,
                     token: None,
-                    inserted_id: None,
+                    user_id: None,
                     error_message: Some(
                         "There was an error on the server side, try again later.".to_string(),
                     ),

@@ -39,7 +39,7 @@ pub struct RecommendedChannelResponse {
 pub struct AuthResponse {
     pub success: bool,
     pub token: Option<String>,
-    pub inserted_id: Option<ObjectId>,
+    pub user_id: Option<ObjectId>,
     pub error_message: Option<String>,
 }
 
