@@ -20,13 +20,6 @@ pub fn channels_routes(State(state): State<AppState>) -> Router<AppState> {
             "/:channel_id/subscribe",
             get(channels_handlers::subscribe_to_channel_handler::subscribe_to_channel),
         )
-        .layer(middleware::from_fn_with_state(state, |state, req, next| {
-            auth_middleware::auth(state, req, next, Some(false))
-        }))
-}
-
-pub fn post_routes(State(state): State<AppState>) -> Router<AppState> {
-    let without_post_id = Router::new()
         .route(
             "/:channel_id/content",
             get(channels_handlers::get_channel_posts_handler::channel_posts),
@@ -35,6 +28,13 @@ pub fn post_routes(State(state): State<AppState>) -> Router<AppState> {
             "/:channel_id/more_content",
             get(channels_handlers::get_more_channel_posts_handler::more_channel_posts),
         )
+        .layer(middleware::from_fn_with_state(state, |state, req, next| {
+            auth_middleware::auth(state, req, next, Some(false))
+        }))
+}
+
+pub fn post_routes(State(state): State<AppState>) -> Router<AppState> {
+    let without_post_id = Router::new()
         .route(
             "/:channel_id/post",
             post(posts_handlers::create_post_handler::create_post),
