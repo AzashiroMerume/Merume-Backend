@@ -41,9 +41,7 @@ async fn websocket(mut _socket: WebSocket, state: State<AppState>, user_id: Obje
     let change_stream = state
         .db
         .channels_collection
-        .watch(
-            /* vec![doc! {"$match": {"owner_id": user_id}}] */ None, None,
-        )
+        .watch(/* vec![doc! {"$match": {"owner_id": user_id}}] */None, None)
         .await
         .map_err(|err| {
             eprintln!("Error creating change stream: {:?}", err);
