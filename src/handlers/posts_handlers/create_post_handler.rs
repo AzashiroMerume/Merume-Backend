@@ -40,7 +40,7 @@ pub async fn create_post(
     let now = Utc::now();
 
     let post = Post {
-        id: ObjectId::new(),
+        id: payload.id,
         owner_id: user_id,
         owner_nickname: nickname,
         channel_id,
