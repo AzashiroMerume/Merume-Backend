@@ -1,7 +1,7 @@
 use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use validator::Validate;
+use validator::{Validate, ValidationError};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -11,7 +11,7 @@ pub struct Post {
     pub owner_id: ObjectId,
     pub owner_nickname: String,
     pub channel_id: ObjectId,
-    pub body: String,
+    pub body: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub images: Option<Vec<String>>,
     pub written_challenge_day: usize,
@@ -32,10 +32,21 @@ pub struct UpdatePost {
 }
 
 #[derive(Debug, Clone, Deserialize, Validate)]
+#[validate(schema(function = "check_both_none", skip_on_field_errors = false))]
 #[serde(rename_all = "snake_case")]
 pub struct PostPayload {
-    #[validate(length(min = 1))]
-    pub body: String,
+    pub id: ObjectId,
+    pub body: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub images: Option<Vec<String>>,
+}
+
+fn check_both_none(post: &PostPayload) -> Result<(), ValidationError> {
+    if post.body.is_none() && post.images.is_none() {
+        return Err(ValidationError::new(
+            "Post's body and images field cannot be both none",
+        ));
+    }
+
+    Ok(())
 }
