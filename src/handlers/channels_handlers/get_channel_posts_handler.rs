@@ -9,10 +9,7 @@ use axum::{
 };
 use bson::{doc, oid::ObjectId};
 use futures::{SinkExt, StreamExt, TryStreamExt};
-use mongodb::{
-    change_stream::event::ChangeStreamEvent,
-    options::{ChangeStreamOptions, FindOptions, FullDocumentType},
-};
+use mongodb::options::FindOptions;
 
 pub async fn channel_posts(
     ws: WebSocketUpgrade,
@@ -34,23 +31,30 @@ async fn websocket(
     // Retrieve initial posts
     let initial_posts = fetch_posts(state.clone(), channel_id).await;
 
-    if let Ok(json) = serde_json::to_string(&initial_posts) {
-        if let Err(err) = sender.send(Message::Text(json)).await {
-            eprintln!("Error sending message to websocket client: {:?}", err);
-            return;
+    let initial_json = match initial_posts {
+        Some(posts) => {
+            if let Ok(json) = serde_json::to_string(&posts) {
+                json
+            } else {
+                eprintln!("Error serializing posts to JSON");
+                return;
+            }
         }
-    } else {
-        eprintln!("Error serializing posts to JSON");
+        None => "[]".to_string(), // Send an empty array if there are no initial posts
+    };
+
+    if let Err(err) = sender.send(Message::Text(initial_json)).await {
+        eprintln!("Error sending message to websocket client: {:?}", err);
         return;
     }
 
-    // if !is_channel_public(channel_id, &state).await
-    //     && !is_user_subscribed(user_id, channel_id, &state).await
-    // {
-    //     return;
-    // }
+    if !is_channel_public(channel_id, &state).await
+        && !is_user_subscribed(user_id, channel_id, &state).await
+    {
+        return;
+    }
 
-    let pipeline = [doc! {"$match": {"channel_id": channel_id}}];
+    // let pipeline = [doc! {"$match": {"channel_id": channel_id}}];
 
     // Listen for changes in channel posts
     let change_stream = state
@@ -64,7 +68,6 @@ async fn websocket(
         });
 
     if let Ok(mut change_stream) = change_stream {
-        println!("Changed");
         loop {
             match change_stream.try_next().await {
                 Ok(Some(_)) => {
@@ -77,6 +80,7 @@ async fn websocket(
                         });
 
                         if let Ok(json) = json {
+                            println!("Sending updated message: {}", json);
                             if let Err(err) = sender.send(Message::Text(json)).await {
                                 eprintln!("Error sending message to websocket client: {:?}", err);
                                 break;
