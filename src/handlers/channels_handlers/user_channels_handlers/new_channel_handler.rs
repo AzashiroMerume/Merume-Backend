@@ -1,6 +1,6 @@
 use crate::{
     models::{
-        channel_model::{Channel, ChannelPayload, Subscriptions},
+        channel_model::{Channel, ChannelPayload, Followers},
         user_channel_model::UserChannel,
     },
     responses::OperationStatusResponse,
@@ -34,12 +34,12 @@ pub async fn new_channel(
 
     let now = Utc::now();
 
-    //init subscriptions for channel
-    let subscriptions = Subscriptions {
-        current_subscriptions: 0,
-        monthly_subscribers: vec![0],
-        yearly_subscribers: vec![0],
-        two_week_subscribers: vec![0],
+    //init followers for channel
+    let followers = Followers {
+        current_following: 0,
+        monthly_followers: vec![0],
+        yearly_followers: vec![0],
+        two_week_followers: vec![0],
         last_updated: now,
     };
 
@@ -51,7 +51,7 @@ pub async fn new_channel(
         channel_type: payload.channel_type,
         description: payload.description,
         categories: payload.categories,
-        subscriptions,
+        followers,
         current_challenge_day: 1,
         base_image: payload.base_image,
         created_at: now,

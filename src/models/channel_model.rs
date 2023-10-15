@@ -16,7 +16,7 @@ pub struct Channel {
     pub channel_type: String,
     pub description: String,
     pub categories: Vec<String>,
-    pub subscriptions: Subscriptions,
+    pub followers: Followers,
     pub current_challenge_day: usize,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub base_image: Option<String>,
@@ -25,11 +25,11 @@ pub struct Channel {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub struct Subscriptions {
-    pub current_subscriptions: usize,
-    pub monthly_subscribers: Vec<usize>,
-    pub yearly_subscribers: Vec<usize>,
-    pub two_week_subscribers: Vec<usize>,
+pub struct Followers {
+    pub current_following: usize,
+    pub monthly_followers: Vec<usize>,
+    pub yearly_followers: Vec<usize>,
+    pub two_week_followers: Vec<usize>,
     pub last_updated: DateTime<Utc>,
 }
 
