@@ -59,6 +59,7 @@ pub struct ChannelPayload {
     pub description: String,
     #[validate(length(min = 1))]
     pub categories: Vec<String>,
+    pub participants: Option<Vec<ObjectId>>,
     pub base_image: Option<String>,
 }
 

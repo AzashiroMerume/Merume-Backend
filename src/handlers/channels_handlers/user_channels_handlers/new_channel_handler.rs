@@ -51,7 +51,7 @@ pub async fn new_channel(
         channel_type: payload.channel_type,
         description: payload.description,
         categories: payload.categories,
-        participants: None,
+        participants: payload.participants,
         followers,
         current_challenge_day: 1,
         base_image: payload.base_image,
