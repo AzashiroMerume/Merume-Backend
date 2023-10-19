@@ -20,7 +20,7 @@ pub struct Channel {
     pub followers: Followers,
     pub current_challenge_day: usize,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub base_image: Option<String>,
+    pub channel_profile_picture_url: Option<String>,
     pub created_at: DateTime<Utc>,
 }
 
@@ -45,7 +45,7 @@ pub struct UpdateChannel {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub base_image: Option<String>,
+    pub channel_profile_picture_url: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Validate)]
@@ -60,7 +60,7 @@ pub struct ChannelPayload {
     #[validate(length(min = 1))]
     pub categories: Vec<String>,
     pub participants: Option<Vec<ObjectId>>,
-    pub base_image: Option<String>,
+    pub channel_profile_picture_url: Option<String>,
 }
 
 fn validate_channel_type(channel_type: &str) -> Result<(), ValidationError> {
