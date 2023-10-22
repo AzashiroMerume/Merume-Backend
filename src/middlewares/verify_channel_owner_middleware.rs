@@ -41,7 +41,7 @@ pub async fn verify_channel_owner<B>(
         }),
     ))?;
 
-    match channel.owner_id == user_id {
+    match channel.author.id == user_id {
         true => {
             req.extensions_mut().insert(channel.current_challenge_day);
             return Ok(next.run(req).await);
@@ -89,7 +89,7 @@ pub async fn verify_channel_owner_with_post_id<B>(
         }),
     ))?;
 
-    match channel.owner_id == user_id {
+    match channel.author.id == user_id {
         true => {
             req.extensions_mut().insert(channel.current_challenge_day);
             return Ok(next.run(req).await);

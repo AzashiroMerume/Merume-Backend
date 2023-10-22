@@ -1,6 +1,6 @@
 use crate::{
     models::{
-        channel_model::{Channel, ChannelPayload, Followers},
+        channel_model::{Author, Channel, ChannelPayload, Followers},
         user_channel_model::UserChannel,
     },
     responses::OperationStatusResponse,
@@ -43,10 +43,14 @@ pub async fn new_channel(
         last_updated: now,
     };
 
+    let author = Author {
+        id: user_id,
+        nickname,
+    };
+
     let channel = Channel {
         id: ObjectId::new(),
-        owner_id: user_id,
-        owner_nickname: nickname,
+        author,
         name: payload.name,
         channel_type: payload.channel_type,
         description: payload.description,

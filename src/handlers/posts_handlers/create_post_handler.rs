@@ -40,8 +40,8 @@ pub async fn create_post(
     let now = Utc::now();
 
     let author = Author {
-        author_id: user_id,
-        author_nickname: nickname,
+        id: user_id,
+        nickname,
     };
 
     let post = Post {

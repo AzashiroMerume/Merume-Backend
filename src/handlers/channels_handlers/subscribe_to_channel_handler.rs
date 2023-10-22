@@ -48,7 +48,7 @@ pub async fn subscribe_to_channel(
     };
 
     // Check if the channel belongs to the user trying to subscribe
-    if channel.owner_id == user_id {
+    if channel.author.id == user_id {
         return (
             StatusCode::BAD_REQUEST,
             Json(OperationStatusResponse {

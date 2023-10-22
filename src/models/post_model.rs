@@ -6,8 +6,8 @@ use validator::{Validate, ValidationError};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct Author {
-    pub author_id: ObjectId,
-    pub author_nickname: String,
+    pub id: ObjectId,
+    pub nickname: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
