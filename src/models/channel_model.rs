@@ -16,6 +16,7 @@ pub struct Channel {
     pub channel_type: String,
     pub description: String,
     pub categories: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub participants: Option<Vec<ObjectId>>,
     pub followers: Followers,
     pub current_challenge_day: usize,

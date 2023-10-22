@@ -8,7 +8,7 @@ use bson::oid::ObjectId;
 use chrono::Utc;
 use validator::Validate;
 
-use crate::responses::OperationStatusResponse;
+use crate::{models::post_model::Author, responses::OperationStatusResponse};
 use crate::{
     models::post_model::{Post, PostPayload},
     AppState,
@@ -39,10 +39,14 @@ pub async fn create_post(
 
     let now = Utc::now();
 
+    let author = Author {
+        author_id: user_id,
+        author_nickname: nickname,
+    };
+
     let post = Post {
         id: payload.id,
-        owner_id: user_id,
-        owner_nickname: nickname,
+        author: author,
         channel_id,
         body: payload.body,
         images: payload.images,
