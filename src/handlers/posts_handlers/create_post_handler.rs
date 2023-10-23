@@ -8,7 +8,7 @@ use bson::oid::ObjectId;
 use chrono::Utc;
 use validator::Validate;
 
-use crate::{models::post_model::Author, responses::OperationStatusResponse};
+use crate::{models::author_model::Author, responses::OperationStatusResponse};
 use crate::{
     models::post_model::{Post, PostPayload},
     AppState,
@@ -16,8 +16,7 @@ use crate::{
 
 pub async fn create_post(
     State(state): State<AppState>,
-    Extension(user_id): Extension<ObjectId>,
-    Extension(nickname): Extension<String>,
+    Extension(author): Extension<Author>,
     Extension(current_challenge_day): Extension<usize>,
     Path(channel_id): Path<ObjectId>,
     Json(payload): Json<PostPayload>,
@@ -40,13 +39,14 @@ pub async fn create_post(
     let now = Utc::now();
 
     let author = Author {
-        id: user_id,
-        nickname,
+        id: author.id,
+        nickname: author.nickname,
+        username: author.username,
     };
 
     let post = Post {
         id: payload.id,
-        author: author,
+        author,
         channel_id,
         body: payload.body,
         images: payload.images,

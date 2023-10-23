@@ -1,15 +1,17 @@
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, Json};
-use bson::{doc, oid::ObjectId};
+use bson::doc;
 use mongodb::options::UpdateOptions;
 use validator::Validate;
 
 use crate::{
-    models::user_model::UserPreferencesPayload, responses::OperationStatusResponse, AppState,
+    models::{author_model::Author, user_model::UserPreferencesPayload},
+    responses::OperationStatusResponse,
+    AppState,
 };
 
 pub async fn post_preferences(
     State(state): State<AppState>,
-    Extension(user_id): Extension<ObjectId>,
+    Extension(author): Extension<Author>,
     Json(payload): Json<UserPreferencesPayload>,
 ) -> impl IntoResponse {
     // Validate the payload
@@ -26,7 +28,7 @@ pub async fn post_preferences(
         }
     }
 
-    let filter = doc! {"_id": user_id};
+    let filter = doc! {"_id": author.id};
     let update = doc! {"$set": {"preferences": payload.preferences}};
     let options = UpdateOptions::builder().upsert(false).build();
     let result = state

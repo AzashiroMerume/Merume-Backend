@@ -1,4 +1,7 @@
-use crate::{responses::OperationStatusResponse, utils::jwt::verify_token, AppState};
+use crate::{
+    models::author_model::Author, responses::OperationStatusResponse, utils::jwt::verify_token,
+    AppState,
+};
 
 use axum::{
     extract::State,
@@ -96,11 +99,16 @@ pub async fn auth<B>(
         }
     };
 
+    let author_info = Author {
+        id: user_id,
+        nickname: user.nickname.clone(),
+        username: user.username.clone(),
+    };
+
     if let Some(true) = pass_full_user {
         req.extensions_mut().insert(user);
     } else {
-        req.extensions_mut().insert(user_id);
-        req.extensions_mut().insert(user.nickname);
+        req.extensions_mut().insert(author_info);
     }
 
     Ok(next.run(req).await)

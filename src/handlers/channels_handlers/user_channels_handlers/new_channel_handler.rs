@@ -1,6 +1,7 @@
 use crate::{
     models::{
-        channel_model::{Author, Channel, ChannelPayload, Followers},
+        author_model::Author,
+        channel_model::{Channel, ChannelPayload, Followers},
         user_channel_model::UserChannel,
     },
     responses::OperationStatusResponse,
@@ -14,8 +15,7 @@ use validator::Validate;
 
 pub async fn new_channel(
     State(state): State<AppState>,
-    Extension(user_id): Extension<ObjectId>,
-    Extension(nickname): Extension<String>,
+    Extension(author): Extension<Author>,
     Json(payload): Json<ChannelPayload>,
 ) -> impl IntoResponse {
     // Validate the payload
@@ -44,13 +44,14 @@ pub async fn new_channel(
     };
 
     let author = Author {
-        id: user_id,
-        nickname,
+        id: author.id,
+        nickname: author.nickname,
+        username: author.username,
     };
 
     let channel = Channel {
         id: ObjectId::new(),
-        author,
+        author: author.to_owned(),
         name: payload.name,
         channel_type: payload.channel_type,
         description: payload.description,
@@ -86,7 +87,7 @@ pub async fn new_channel(
 
     let user_channel = UserChannel {
         id: ObjectId::new(),
-        user_id,
+        user_id: author.id,
         channel_id: channel_id.unwrap(),
         is_owner: true,
         subscribed_at: None,

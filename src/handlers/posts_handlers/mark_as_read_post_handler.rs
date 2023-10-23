@@ -1,3 +1,4 @@
+use crate::models::author_model::Author;
 use crate::AppState;
 use crate::{models::post_actioned_model::ReadPost, responses::OperationStatusResponse};
 
@@ -7,14 +8,14 @@ use bson::oid::ObjectId;
 
 pub async fn mark_as_read(
     State(state): State<AppState>,
-    Extension(user_id): Extension<ObjectId>,
+    Extension(author): Extension<Author>,
     Json(payload): Json<Vec<ReadPost>>,
 ) -> impl IntoResponse {
     let read_posts: Vec<ReadPost> = payload
         .into_iter()
         .map(|mut post| {
             post.id = ObjectId::new(); // Generate a new ObjectId for the read post
-            post.user_id_who_read = user_id;
+            post.user_id_who_read = author.id;
             post
         })
         .collect();

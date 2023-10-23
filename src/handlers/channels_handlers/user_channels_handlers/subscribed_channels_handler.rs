@@ -1,5 +1,5 @@
 use crate::{
-    models::{channel_model::Channel, user_channel_model::UserChannel},
+    models::{author_model::Author, channel_model::Channel, user_channel_model::UserChannel},
     AppState,
 };
 use axum::{
@@ -16,9 +16,9 @@ use futures::{SinkExt, StreamExt, TryStreamExt};
 pub async fn subscribed_channels(
     ws: WebSocketUpgrade,
     State(state): State<AppState>,
-    Extension(user_id): Extension<ObjectId>,
+    Extension(author): Extension<Author>,
 ) -> impl IntoResponse {
-    ws.on_upgrade(move |socket| websocket(socket, State(state), user_id))
+    ws.on_upgrade(move |socket| websocket(socket, State(state), author.id))
 }
 
 async fn websocket(mut _socket: WebSocket, state: State<AppState>, user_id: ObjectId) {

@@ -1,5 +1,7 @@
 use crate::{
-    models::user_channel_model::UserChannel, responses::OperationStatusResponse, AppState,
+    models::{author_model::Author, user_channel_model::UserChannel},
+    responses::OperationStatusResponse,
+    AppState,
 };
 use axum::{
     extract::{Path, State},
@@ -12,7 +14,7 @@ use chrono::Utc;
 
 pub async fn subscribe_to_channel(
     State(state): State<AppState>,
-    Extension(user_id): Extension<ObjectId>,
+    Extension(author): Extension<Author>,
     Path(channel_id): Path<ObjectId>,
 ) -> impl IntoResponse {
     let channel = state
@@ -48,7 +50,7 @@ pub async fn subscribe_to_channel(
     };
 
     // Check if the channel belongs to the user trying to subscribe
-    if channel.author.id == user_id {
+    if channel.author.id == author.id {
         return (
             StatusCode::BAD_REQUEST,
             Json(OperationStatusResponse {
@@ -62,7 +64,7 @@ pub async fn subscribe_to_channel(
     if let Ok(Some(_)) = state
         .db
         .user_channels_collection
-        .find_one(doc! {"user_id": user_id, "channel_id": channel.id}, None)
+        .find_one(doc! {"user_id": author.id, "channel_id": channel.id}, None)
         .await
     {
         return (
@@ -76,7 +78,7 @@ pub async fn subscribe_to_channel(
 
     let user_channel = UserChannel {
         id: ObjectId::new(),
-        user_id,
+        user_id: author.id,
         channel_id: channel.id,
         is_owner: false,
         subscribed_at: Some(Utc::now()),

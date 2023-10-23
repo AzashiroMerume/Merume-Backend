@@ -1,4 +1,7 @@
-use crate::{models::post_model::Post, AppState};
+use crate::{
+    models::{author_model::Author, post_model::Post},
+    AppState,
+};
 use axum::{
     extract::{
         ws::{Message, WebSocket, WebSocketUpgrade},
@@ -14,10 +17,10 @@ use mongodb::options::FindOptions;
 pub async fn channel_posts(
     ws: WebSocketUpgrade,
     State(state): State<AppState>,
-    Extension(user_id): Extension<ObjectId>,
+    Extension(author): Extension<Author>,
     Path(channel_id): Path<ObjectId>,
 ) -> impl IntoResponse {
-    ws.on_upgrade(move |socket| websocket(socket, State(state), channel_id, user_id))
+    ws.on_upgrade(move |socket| websocket(socket, State(state), channel_id, author.id))
 }
 
 async fn websocket(

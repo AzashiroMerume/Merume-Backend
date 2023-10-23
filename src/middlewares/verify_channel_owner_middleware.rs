@@ -1,4 +1,4 @@
-use crate::{responses::OperationStatusResponse, AppState};
+use crate::{models::author_model::Author, responses::OperationStatusResponse, AppState};
 use axum::{
     extract::{Path, State},
     http::{Request, StatusCode},
@@ -10,7 +10,7 @@ use bson::{doc, oid::ObjectId};
 
 pub async fn verify_channel_owner<B>(
     State(state): State<AppState>,
-    Extension(user_id): Extension<ObjectId>,
+    Extension(author): Extension<Author>,
     Path(channel_id): Path<ObjectId>,
     mut req: Request<B>,
     next: Next<B>,
@@ -41,7 +41,7 @@ pub async fn verify_channel_owner<B>(
         }),
     ))?;
 
-    match channel.author.id == user_id {
+    match channel.author.id == author.id {
         true => {
             req.extensions_mut().insert(channel.current_challenge_day);
             return Ok(next.run(req).await);
@@ -58,7 +58,7 @@ pub async fn verify_channel_owner<B>(
 
 pub async fn verify_channel_owner_with_post_id<B>(
     State(state): State<AppState>,
-    Extension(user_id): Extension<ObjectId>,
+    Extension(author): Extension<Author>,
     Path((channel_id, _post_id)): Path<(ObjectId, ObjectId)>,
     mut req: Request<B>,
     next: Next<B>,
@@ -89,7 +89,7 @@ pub async fn verify_channel_owner_with_post_id<B>(
         }),
     ))?;
 
-    match channel.author.id == user_id {
+    match channel.author.id == author.id {
         true => {
             req.extensions_mut().insert(channel.current_challenge_day);
             return Ok(next.run(req).await);
