@@ -85,7 +85,7 @@ async fn websocket(mut _socket: WebSocket, state: State<AppState>, user_id: Obje
 }
 
 async fn fetch_channels(state: State<AppState>, user_id: ObjectId) -> Option<Vec<Channel>> {
-    let filter = doc! {"owner_id": user_id};
+    let filter = doc! {"author.id": user_id};
 
     let channels_result = state
         .db
