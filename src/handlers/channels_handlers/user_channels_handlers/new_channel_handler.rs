@@ -53,6 +53,7 @@ pub async fn new_channel(
         id: ObjectId::new(),
         author: author.to_owned(),
         name: payload.name,
+        goal: payload.goal,
         channel_type: payload.channel_type,
         description: payload.description,
         categories: payload.categories,

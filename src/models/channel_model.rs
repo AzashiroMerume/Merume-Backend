@@ -14,6 +14,7 @@ pub struct Channel {
     pub id: ObjectId,
     pub author: Author,
     pub name: String,
+    pub goal: u32,
     pub channel_type: String,
     pub description: String,
     pub categories: Vec<String>,
@@ -41,6 +42,8 @@ pub struct Followers {
 pub struct UpdateChannel {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub goal: Option<String>,
     #[validate(custom = "validate_channel_type")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub channel_type: Option<String>,
@@ -55,6 +58,8 @@ pub struct UpdateChannel {
 pub struct ChannelPayload {
     #[validate(length(min = 1))]
     pub name: String,
+    #[validate(range(min = 1000, max = 2000))]
+    pub goal: u32,
     #[validate(custom = "validate_channel_type")]
     pub channel_type: String,
     #[validate(length(min = 1))]
