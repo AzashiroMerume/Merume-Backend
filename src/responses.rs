@@ -1,4 +1,4 @@
-use crate::models::{channel_model::Channel, post_model::Post};
+use crate::models::{channel_model::Channel, post_model::Post, user_info_model::UserInfo};
 
 use bson::oid::ObjectId;
 use serde::Serialize;
@@ -39,7 +39,7 @@ pub struct RecommendedChannelResponse {
 pub struct AuthResponse {
     pub success: bool,
     pub token: Option<String>,
-    pub user_id: Option<ObjectId>,
+    pub user_info: Option<UserInfo>,
     pub error_message: Option<String>,
 }
 

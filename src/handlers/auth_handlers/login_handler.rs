@@ -1,4 +1,4 @@
-use crate::models::auth_model::LoginPayload;
+use crate::models::{auth_model::LoginPayload, user_info_model::UserInfo};
 use crate::responses::AuthResponse;
 use crate::utils::jwt::generate_jwt_token;
 use crate::AppState;
@@ -23,7 +23,7 @@ pub async fn login(
                 Json(AuthResponse {
                     success: false,
                     token: None,
-                    user_id: None,
+                    user_info: None,
                     error_message: Some(err.to_string()),
                 }),
             );
@@ -43,7 +43,7 @@ pub async fn login(
                 return (StatusCode::NOT_FOUND, Json(AuthResponse {
                     success: false,
                     token: None,
-                    user_id: None,
+                    user_info: None,
                     error_message: Some(
                         "Email or password are incorrect, please try a different email or sign up for a new account."
                             .to_string(),
@@ -57,7 +57,7 @@ pub async fn login(
                     Json(AuthResponse {
                         success: false,
                         token: None,
-                        user_id: None,
+                        user_info: None,
                         error_message: Some(
                             "There was an error on the server side, try again later.".to_string(),
                         ),
@@ -78,7 +78,7 @@ pub async fn login(
                 return (StatusCode::NOT_FOUND, Json(AuthResponse {
                     success: false,
                     token: None,
-                    user_id: None,
+                    user_info: None,
                     error_message: Some(
                         "Nickname or password are incorrect, please try a different nickname or sign up for a new account."
                             .to_string(),
@@ -92,7 +92,7 @@ pub async fn login(
                     Json(AuthResponse {
                         success: false,
                         token: None,
-                        user_id: None,
+                        user_info: None,
                         error_message: Some(
                             "There was an error on the server side, try again later.".to_string(),
                         ),
@@ -109,7 +109,7 @@ pub async fn login(
             return (StatusCode::UNAUTHORIZED, Json(AuthResponse {
                 success: false,
                 token: None,
-                user_id: None,
+                user_info: None,
                 error_message: Some("Email or password are incorrect, please try a different email or sign up for a new account.".to_string()),
             }));
         }
@@ -123,7 +123,7 @@ pub async fn login(
         return (StatusCode::UNAUTHORIZED, Json(AuthResponse {
             success: false,
             token: None,
-            user_id: None,
+            user_info: None,
             error_message: Some("Email or password are incorrect, please try a different email or sign up for a new account.".to_string()),
         }));
     }
@@ -139,7 +139,7 @@ pub async fn login(
                 Json(AuthResponse {
                     success: false,
                     token: None,
-                    user_id: None,
+                    user_info: None,
                     error_message: Some(
                         "There was an error on the server side, try again later.".to_string(),
                     ),
@@ -148,12 +148,20 @@ pub async fn login(
         }
     };
 
+    let user_info = UserInfo {
+        id: user.id,
+        nickname: user.nickname,
+        username: user.username,
+        email: user.email,
+        preferences: user.preferences,
+    };
+
     (
         StatusCode::OK,
         Json(AuthResponse {
             success: true,
             token: Some(token),
-            user_id: Some(user.id),
+            user_info: Some(user_info),
             error_message: None,
         }),
     )

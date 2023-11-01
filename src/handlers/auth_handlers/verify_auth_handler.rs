@@ -1,27 +1,26 @@
 use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
 
-use crate::{models::user_model::User, responses::AuthResponse};
+use crate::{
+    models::{user_info_model::UserInfo, user_model::User},
+    responses::AuthResponse,
+};
 
 pub async fn verify_auth(Extension(user): Extension<User>) -> impl IntoResponse {
-    if user.preferences.is_none() {
-        (
-            StatusCode::OK,
-            Json(AuthResponse {
-                success: true,
-                token: None,
-                user_id: Some(user.id),
-                error_message: Some("The user has no preferences".to_string()),
-            }),
-        )
-    } else {
-        (
-            StatusCode::OK,
-            Json(AuthResponse {
-                success: true,
-                token: None,
-                user_id: None,
-                error_message: None,
-            }),
-        )
-    }
+    let user_info = UserInfo {
+        id: user.id,
+        nickname: user.nickname,
+        username: user.username,
+        email: user.email,
+        preferences: user.preferences,
+    };
+
+    (
+        StatusCode::OK,
+        Json(AuthResponse {
+            success: true,
+            token: None,
+            user_info: Some(user_info),
+            error_message: None,
+        }),
+    )
 }

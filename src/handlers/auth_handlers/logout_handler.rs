@@ -8,7 +8,7 @@ pub async fn logout() -> impl IntoResponse {
         Json(AuthResponse {
             success: true,
             token: None,
-            user_id: None,
+            user_info: None,
             error_message: None,
         }),
     )

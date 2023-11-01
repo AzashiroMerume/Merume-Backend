@@ -1,3 +1,4 @@
+use crate::models::user_info_model::UserInfo;
 use crate::models::{auth_model::RegisterPayload, user_model::User};
 use crate::responses::AuthResponse;
 use crate::utils::jwt::generate_jwt_token;
@@ -25,7 +26,7 @@ pub async fn register(
                 Json(AuthResponse {
                     success: false,
                     token: None,
-                    user_id: None,
+                    user_info: None,
                     error_message: Some(err.to_string()),
                 }),
             );
@@ -54,7 +55,7 @@ pub async fn register(
             let main_response = AuthResponse {
                 success: false,
                 token: None,
-                user_id: None,
+                user_info: None,
                 error_message: Some(error_message.to_string()),
             };
             return (StatusCode::CONFLICT, Json(main_response));
@@ -66,7 +67,7 @@ pub async fn register(
                 Json(AuthResponse {
                     success: false,
                     token: None,
-                    user_id: None,
+                    user_info: None,
                     error_message: Some(
                         "There was an error on the server side, try again later.".to_string(),
                     ),
@@ -88,7 +89,7 @@ pub async fn register(
                 Json(AuthResponse {
                     success: false,
                     token: None,
-                    user_id: None,
+                    user_info: None,
                     error_message: Some(
                         "There was an error on the server side, try again later.".to_string(),
                     ),
@@ -123,12 +124,19 @@ pub async fn register(
             let jwt_secret = std::env::var("JWT_SECRET");
 
             let token = generate_jwt_token(&user.id.to_string(), &jwt_secret.unwrap()).unwrap();
+            let user_info = UserInfo {
+                id: inserted.inserted_id.as_object_id().unwrap(),
+                nickname: user.nickname,
+                username: user.username,
+                email: user.email,
+                preferences: user.preferences,
+            };
             return (
                 StatusCode::CREATED,
                 Json(AuthResponse {
                     success: true,
                     token: Some(token),
-                    user_id: inserted.inserted_id.as_object_id(),
+                    user_info: Some(user_info),
                     error_message: None,
                 }),
             );
@@ -140,7 +148,7 @@ pub async fn register(
                 Json(AuthResponse {
                     success: false,
                     token: None,
-                    user_id: None,
+                    user_info: None,
                     error_message: Some(
                         "There was an error on the server side, try again later.".to_string(),
                     ),
