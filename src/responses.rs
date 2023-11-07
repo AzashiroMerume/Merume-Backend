@@ -1,6 +1,4 @@
 use crate::models::{channel_model::Channel, post_model::Post, user_info_model::UserInfo};
-
-use bson::oid::ObjectId;
 use serde::Serialize;
 
 #[derive(Clone, Debug, Serialize)]
