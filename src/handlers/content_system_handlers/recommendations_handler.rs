@@ -1,15 +1,13 @@
 use crate::{
-    models::{channel_model::Channel, user_model::User},
-    responses::RecommendedChannelResponse,
-    utils::pagination::Pagination,
-    AppState,
+    models::channel_model::Channel, models::user_model::User,
+    responses::RecommendedChannelResponse, utils::pagination::Pagination, AppState,
 };
 
 use axum::{
-    extract::{Query, State},
+    extract::{Extension, Query, State},
     http::StatusCode,
     response::IntoResponse,
-    Extension, Json,
+    Json,
 };
 use bson::doc;
 use futures::StreamExt;
@@ -39,33 +37,7 @@ pub async fn recommendations(
     let skip = pagination.page * pagination.limit;
 
     let pipeline = vec![
-        doc! {
-            "$lookup": {
-                "from": "read_posts",
-                "let": { "channelId": "$channel._id" },
-                "pipeline": [
-                    {
-                        "$match": {
-                            "$expr": {
-                                "$and": [
-                                    { "$eq": ["$post_owner_id", "$$channelId"] },
-                                    { "$eq": ["$user_id_who_read", user.id] }
-                                ]
-                            }
-                        }
-                    }
-                ],
-                "as": "read_posts"
-            }
-        },
-        doc! {
-            "$match": {
-                "read_posts": {
-                    "$size": 0
-                }
-            }
-        },
-        // Filter channels based on user preferences
+        // Match channels based on user preferences
         doc! {
             "$match": {
                 "categories": {
@@ -73,10 +45,27 @@ pub async fn recommendations(
                 }
             }
         },
-        // Sort channels by percentage increase in two-week subscribers in descending order
+        // Lookup user channels to find channels that the user follows
+        doc! {
+            "$lookup": {
+                "from": "user_channels", // Name of the user_channels collection
+                "localField": "_id", // Field in the channels collection
+                "foreignField": "channel_id", // Field in the user_channels collection
+                "as": "user_channels"
+            }
+        },
+        // Match channels where the user is not the owner and is not following
+        doc! {
+            "$match": {
+                "user_channels.user_id": {
+                    "$ne": user.id
+                }
+            }
+        },
+        // Sort channels by some criteria, e.g., current_following in descending order
         doc! {
             "$sort": {
-                "percentage_increase": -1
+                "followers.current_following": -1
             }
         },
         // Skip the first N channels based on the page number and limit to the next N channels
