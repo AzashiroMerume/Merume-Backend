@@ -83,7 +83,6 @@ async fn websocket(
                         });
 
                         if let Ok(json) = json {
-                            println!("Sending updated message: {}", json);
                             if let Err(err) = sender.send(Message::Text(json)).await {
                                 eprintln!("Error sending message to websocket client: {:?}", err);
                                 break;
