@@ -51,10 +51,11 @@ pub async fn new_channel(
 
     let channel = Channel {
         id: ObjectId::new(),
+        channel_type: payload.channel_type,
         author: author.to_owned(),
         name: payload.name,
         goal: payload.goal,
-        channel_type: payload.channel_type,
+        channel_visibility: payload.channel_visibility,
         description: payload.description,
         categories: payload.categories,
         participants: payload.participants,

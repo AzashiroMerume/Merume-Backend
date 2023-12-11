@@ -13,9 +13,10 @@ pub struct Channel {
     #[serde(rename = "_id")]
     pub id: ObjectId,
     pub author: Author,
+    pub channel_type: String,
     pub name: String,
     pub goal: u32,
-    pub channel_type: String,
+    pub channel_visibility: String,
     pub description: String,
     pub categories: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -41,12 +42,14 @@ pub struct Followers {
 #[serde(rename_all = "snake_case")]
 pub struct UpdateChannel {
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub channel_type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub goal: Option<String>,
-    #[validate(custom = "validate_channel_type")]
+    #[validate(custom = "validate_channel_visibility")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub channel_type: Option<String>,
+    pub channel_visibility: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -56,12 +59,13 @@ pub struct UpdateChannel {
 #[derive(Debug, Clone, Deserialize, Validate)]
 #[serde(rename_all = "snake_case")]
 pub struct ChannelPayload {
+    pub channel_type: String,
     #[validate(length(min = 1))]
     pub name: String,
     #[validate(range(min = 1000, max = 2000))]
     pub goal: u32,
-    #[validate(custom = "validate_channel_type")]
-    pub channel_type: String,
+    #[validate(custom = "validate_channel_visibility")]
+    pub channel_visibility: String,
     #[validate(length(min = 1))]
     pub description: String,
     #[validate(length(min = 1))]
@@ -70,8 +74,8 @@ pub struct ChannelPayload {
     pub channel_profile_picture_url: Option<String>,
 }
 
-fn validate_channel_type(channel_type: &str) -> Result<(), ValidationError> {
-    if channel_type == "Public" || channel_type == "Private" {
+fn validate_channel_visibility(channel_visibility: &str) -> Result<(), ValidationError> {
+    if channel_visibility == "Public" || channel_visibility == "Private" {
         return Ok(());
     }
 

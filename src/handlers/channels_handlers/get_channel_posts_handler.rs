@@ -145,7 +145,7 @@ async fn is_channel_public(channel_id: ObjectId, state: &AppState) -> bool {
         .find_one(doc! {"_id": channel_id}, None)
         .await
     {
-        return channel.channel_type == "Public";
+        return channel.channel_visibility == "Public";
     }
 
     false
