@@ -15,7 +15,8 @@ pub struct Channel {
     pub author: Author,
     pub channel_type: String,
     pub name: String,
-    pub goal: u32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub goal: Option<u32>,
     pub channel_visibility: String,
     pub description: String,
     pub categories: Vec<String>,
@@ -46,7 +47,7 @@ pub struct UpdateChannel {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub goal: Option<String>,
+    pub goal: Option<u32>,
     #[validate(custom = "validate_channel_visibility")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub channel_visibility: Option<String>,
@@ -63,7 +64,7 @@ pub struct ChannelPayload {
     #[validate(length(min = 1))]
     pub name: String,
     #[validate(range(min = 1000, max = 2000))]
-    pub goal: u32,
+    pub goal: Option<u32>,
     #[validate(custom = "validate_channel_visibility")]
     pub channel_visibility: String,
     #[validate(length(min = 1))]
