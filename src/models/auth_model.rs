@@ -11,6 +11,7 @@ pub struct RegisterPayload {
     pub email: String,
     #[validate(length(min = 8, max = 50))]
     pub password: String,
+    pub firebase_user_id: String,
 }
 
 #[derive(Debug, Clone, Deserialize, Validate)]
@@ -20,4 +21,5 @@ pub struct LoginPayload {
     #[validate(length(min = 8, max = 50))]
     pub password: String,
     pub by_email: bool,
+    pub firebase_user_id: String,
 }

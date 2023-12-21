@@ -4,37 +4,24 @@ use crate::{
 };
 
 use axum::{
-    extract::State,
-    http::{self, Request, StatusCode},
+    extract::{Request, State},
+    http::{self, StatusCode},
     middleware::Next,
     response::Response,
     Json,
 };
-use bson::{doc, oid::ObjectId};
+use bson::doc;
 
-pub async fn auth<B>(
+pub async fn auth(
     State(state): State<AppState>,
-    mut req: Request<B>,
-    next: Next<B>,
+    mut req: Request,
+    next: Next,
     pass_full_user: Option<bool>,
 ) -> Result<Response, (StatusCode, Json<OperationStatusResponse>)> {
     let auth_header = match req.headers().get(http::header::AUTHORIZATION) {
         Some(header) => header.to_str().ok(),
         None => None,
     };
-
-    let jwt_secret = std::env::var("JWT_SECRET").map_err(|err| {
-        eprintln!("There is an error with `JWT_SECRET`: {}", err);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(OperationStatusResponse {
-                success: false,
-                error_message: Some(
-                    "There was an error on the server side, try again later.".to_string(),
-                ),
-            }),
-        )
-    })?;
 
     let token = match auth_header {
         Some(token) => token,
@@ -49,30 +36,22 @@ pub async fn auth<B>(
         }
     };
 
-    let token_claims = verify_token(token, &jwt_secret).map_err(|_| {
+    let token_claims = verify_token(token, state.firebase_token_decoding_key).map_err(|err| {
         (
             StatusCode::UNAUTHORIZED,
             Json(OperationStatusResponse {
                 success: false,
-                error_message: Some("Invalid token".to_string()),
+                error_message: Some(format!("{}", err)),
             }),
         )
     })?;
 
-    let user_id = ObjectId::parse_str(&token_claims.sub).map_err(|_| {
-        (
-            StatusCode::UNAUTHORIZED,
-            Json(OperationStatusResponse {
-                success: false,
-                error_message: Some("Invalid user ID in token".to_string()),
-            }),
-        )
-    })?;
+    let firebase_user_id = token_claims.uid;
 
     let user = match state
         .db
         .users_collection
-        .find_one(doc! {"_id": user_id}, None)
+        .find_one(doc! {"firebase_user_id": firebase_user_id.clone()}, None)
         .await
     {
         Ok(Some(user)) => user,
@@ -100,7 +79,7 @@ pub async fn auth<B>(
     };
 
     let author_info = Author {
-        id: user_id,
+        id: user.id,
         nickname: user.nickname.clone(),
         username: user.username.clone(),
     };

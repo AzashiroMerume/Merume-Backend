@@ -8,6 +8,7 @@ use validator::Validate;
 pub struct User {
     #[serde(rename = "_id")]
     pub id: ObjectId,
+    pub firebase_user_id: String,
     pub username: String,
     pub nickname: String,
     pub email: String,
