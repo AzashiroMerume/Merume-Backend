@@ -1,5 +1,5 @@
 use crate::{
-    handlers::common_handler,
+    handlers::{common_handler, get_email_handler},
     routes::{
         auth_routes, channel_system_routes, content_routes, mark_as_read_posts_routes,
         preferences_routes, user_channels_routes,
@@ -13,13 +13,14 @@ use axum::{
         header::{self, AUTHORIZATION},
         HeaderValue,
     },
+    routing::post,
     Router,
 };
 use std::{iter::once, time::Duration};
 use tower::ServiceBuilder;
 use tower_http::{
-    sensitive_headers::SetSensitiveRequestHeadersLayer, set_header::SetResponseHeaderLayer,
-    timeout::TimeoutLayer, trace::TraceLayer,
+    limit::RequestBodyLimitLayer, sensitive_headers::SetSensitiveRequestHeadersLayer,
+    set_header::SetResponseHeaderLayer, timeout::TimeoutLayer, trace::TraceLayer,
 };
 // use std::sync::Arc;
 
@@ -31,7 +32,7 @@ pub fn create_router(State(state): State<AppState>) -> Router {
         .parse()
         .expect("Failed to parse `REQUEST_TIMEOUT` environment variable.");
 
-    //creating routers
+    //creating base routes
     let auth_routes = auth_routes::auth_routes(State(state.clone()));
     let user_channels_routes = user_channels_routes::user_channels_routes(State(state.clone()));
     let channel_system = channel_system_routes::channel_system(State(state.clone()));
@@ -39,18 +40,23 @@ pub fn create_router(State(state): State<AppState>) -> Router {
     let content_routes = content_routes::content_routes(State(state.clone()));
     let preferences_routes = preferences_routes::preferences_routes(State(state.clone()));
 
+    let user_routes = Router::new()
+        .route("/get_email", post(get_email_handler::get_email_by_nickname))
+        .layer(RequestBodyLimitLayer::new(1024))
+        .nest("/channels", user_channels_routes)
+        .nest("/recommendations", content_routes)
+        .nest("/preferences", preferences_routes);
+
     let app = Router::new()
         // .route("/test", get(common_handler::_test_handler))
         // .route_layer(middleware::from_fn_with_state(
         //     client.clone(),
         //     |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
         // ))
-        .nest("/users/channels", user_channels_routes)
-        .nest("/users/recommendations", content_routes)
+        .nest("/user", user_routes)
         .nest("/auth", auth_routes)
         .nest("/channels", channel_system)
         .nest("/mark", read_post_routes)
-        .nest("/preferences", preferences_routes)
         .layer(
             ServiceBuilder::new()
                 //sensetive header authorization from request
