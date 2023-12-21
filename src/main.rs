@@ -9,6 +9,7 @@ mod utils;
 
 use axum::extract::State;
 use db::DB;
+use jsonwebtoken::{DecodingKey, EncodingKey};
 use router::create_router;
 
 use dotenv::dotenv;
@@ -18,6 +19,9 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 #[derive(Clone)]
 pub struct AppState {
     db: DB,
+    firebase_token_encoding_key: EncodingKey,
+    firebase_token_decoding_key: DecodingKey,
+    firebase_service_account: String,
     //Use Redis
     // _redis_client: redis::Client,
 }
@@ -40,6 +44,17 @@ async fn main() {
         .await
         .expect("The Database initialization failed..");
 
+    let firebase_private_key = std::env::var("FIREBASE_SERVICE_PRIVATE_KEY")
+        .expect("Failed to load `FIREBASE_SERVICE_PRIVATE_KEY` environment variable.");
+    let firebase_public_key = std::env::var("FIREBASE_SERVICE_PUBLIC_KEY")
+        .expect("Failed to load `FIREBASE_SERVICE_PUBLIC_KEY` environment variable.");
+    let firebase_service_account = std::env::var("FIREBASE_SERVICE_ACCOUNT_EMAIL")
+        .expect("Failed to load `FIREBASE_SERVICE_ACCOUNT_EMAIL` environment variable.");
+    let firebase_token_encoding_key =
+        EncodingKey::from_rsa_pem(firebase_private_key.as_bytes()).unwrap();
+    let firebase_token_decoding_key =
+        DecodingKey::from_rsa_pem(firebase_public_key.as_bytes()).unwrap();
+
     //redis initialization
     // let redis_uri =
     //     std::env::var("REDIS_URI").expect("Failed to load `REDIS_URI` environment variable.");
@@ -48,22 +63,22 @@ async fn main() {
     // router creation
     let app = create_router(State(AppState {
         db: db.clone(),
-        // _redis_client: redis_client.clone(),
+        firebase_token_encoding_key,
+        firebase_token_decoding_key,
+        firebase_service_account,
     }));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 8081));
     tracing::debug!("listening on {}", addr);
 
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .with_graceful_shutdown(signal_shutdown())
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
 
-    async fn signal_shutdown() {
-        tokio::signal::ctrl_c()
-            .await
-            .expect("Expect ctrl - ctrl shutdown");
-        println!("Signal shutting down");
-    }
+    axum::serve(listener, app).await.unwrap();
+
+    // async fn signal_shutdown() {
+    //     tokio::signal::ctrl_c()
+    //         .await
+    //         .expect("Expect ctrl - ctrl shutdown");
+    //     println!("Signal shutting down");
+    // }
 }

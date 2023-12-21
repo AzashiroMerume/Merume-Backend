@@ -128,9 +128,11 @@ pub async fn login(
         }));
     }
 
-    let jwt_secret = std::env::var("JWT_SECRET");
-
-    let token = match generate_jwt_token(&user.id.to_string(), &jwt_secret.unwrap()) {
+    let token = match generate_jwt_token(
+        &payload.firebase_user_id,
+        state.firebase_token_encoding_key,
+        state.firebase_service_account,
+    ) {
         Ok(token) => token,
         Err(err) => {
             eprintln!("Error while generating token: {:?}", err);

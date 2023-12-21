@@ -1,5 +1,5 @@
 use crate::{handlers, middlewares, AppState};
-use handlers::content_system_handlers;
+use handlers::user_handlers::content_system_handlers;
 use middlewares::auth_middleware;
 
 use axum::{extract::State, middleware, routing::get, Router};

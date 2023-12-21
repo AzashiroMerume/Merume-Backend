@@ -1,5 +1,5 @@
 use crate::{handlers, middlewares, AppState};
-use handlers::preferences_handlers;
+use handlers::user_handlers::preferences_handlers;
 use middlewares::auth_middleware;
 
 use axum::{

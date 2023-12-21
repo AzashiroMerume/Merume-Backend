@@ -1,19 +1,19 @@
 use crate::{models::author_model::Author, responses::OperationStatusResponse, AppState};
 use axum::{
-    extract::{Path, State},
-    http::{Request, StatusCode},
+    extract::{Path, Request, State},
+    http::StatusCode,
     middleware::Next,
     response::Response,
     Extension, Json,
 };
 use bson::{doc, oid::ObjectId};
 
-pub async fn verify_channel_owner<B>(
+pub async fn verify_channel_owner(
     State(state): State<AppState>,
     Extension(author): Extension<Author>,
     Path(channel_id): Path<ObjectId>,
-    mut req: Request<B>,
-    next: Next<B>,
+    mut req: Request,
+    next: Next,
 ) -> Result<Response, (StatusCode, Json<OperationStatusResponse>)> {
     let channel = state
         .db
@@ -56,12 +56,12 @@ pub async fn verify_channel_owner<B>(
     }
 }
 
-pub async fn verify_channel_owner_with_post_id<B>(
+pub async fn verify_channel_owner_with_post_id(
     State(state): State<AppState>,
     Extension(author): Extension<Author>,
     Path((channel_id, _post_id)): Path<(ObjectId, ObjectId)>,
-    mut req: Request<B>,
-    next: Next<B>,
+    mut req: Request,
+    next: Next,
 ) -> Result<Response, (StatusCode, Json<OperationStatusResponse>)> {
     let channel = state
         .db

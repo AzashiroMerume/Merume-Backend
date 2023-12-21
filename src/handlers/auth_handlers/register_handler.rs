@@ -102,6 +102,7 @@ pub async fn register(
 
     let user = User {
         id: ObjectId::new(),
+        firebase_user_id: payload.clone().firebase_user_id,
         username: payload.username,
         nickname: payload.nickname.to_lowercase(),
         email: payload.email,
@@ -121,9 +122,12 @@ pub async fn register(
 
     match result {
         Ok(inserted) => {
-            let jwt_secret = std::env::var("JWT_SECRET");
-
-            let token = generate_jwt_token(&user.id.to_string(), &jwt_secret.unwrap()).unwrap();
+            let token = generate_jwt_token(
+                &payload.firebase_user_id,
+                state.firebase_token_encoding_key,
+                state.firebase_service_account,
+            )
+            .unwrap();
             let user_info = UserInfo {
                 id: inserted.inserted_id.as_object_id().unwrap(),
                 nickname: user.nickname,

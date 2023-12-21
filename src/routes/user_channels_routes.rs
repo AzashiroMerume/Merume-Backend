@@ -1,5 +1,5 @@
 use crate::{handlers, middlewares, AppState};
-use handlers::channels_handlers::user_channels_handlers;
+use handlers::user_handlers::user_channels_handlers;
 use middlewares::{auth_middleware, verify_channel_owner_middleware};
 
 use axum::{

@@ -1,5 +1,5 @@
 use crate::{
-    handlers::{common_handler, get_email_handler},
+    handlers::{common_handler, user_handlers::get_email_handler},
     routes::{
         auth_routes, channel_system_routes, content_routes, mark_as_read_posts_routes,
         preferences_routes, user_channels_routes,
