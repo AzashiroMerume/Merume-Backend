@@ -30,10 +30,7 @@ pub fn generate_jwt_token(
     };
 
     match encode::<Claims>(&Header::new(Algorithm::RS256), &claims, &encoding_key) {
-        Ok(token) => {
-            println!("{}", token);
-            Ok(token)
-        }
+        Ok(token) => Ok(token),
         Err(err) => Err(format!("Error generating JWT token: {:?}", err)),
     }
 }
