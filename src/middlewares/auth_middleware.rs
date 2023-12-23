@@ -1,6 +1,6 @@
 use crate::{
-    models::author_model::Author, responses::OperationStatusResponse, utils::jwt::verify_token,
-    AppState,
+    models::author_model::Author, responses::OperationStatusResponse,
+    utils::jwt::firebase_token_jwt::verify_token, AppState,
 };
 
 use axum::{

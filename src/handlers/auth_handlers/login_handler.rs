@@ -1,8 +1,7 @@
 use crate::models::{auth_model::LoginPayload, user_info_model::UserInfo};
 use crate::responses::AuthResponse;
-use crate::utils::jwt::generate_jwt_token;
+use crate::utils::jwt::firebase_token_jwt::generate_jwt_token;
 use crate::AppState;
-
 use argon2::{
     password_hash::{PasswordHash, PasswordVerifier},
     Argon2,

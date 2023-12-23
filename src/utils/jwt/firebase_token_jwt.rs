@@ -18,7 +18,7 @@ pub fn generate_jwt_token(
     service_account_email: String,
 ) -> Result<String, String> {
     let iat = Utc::now().timestamp();
-    let exp = iat + (60 * 60);
+    let exp = iat + (3600);
 
     let claims = Claims {
         iss: service_account_email.to_owned(),
