@@ -19,7 +19,7 @@ pub fn auth_routes(State(state): State<AppState>) -> Router<AppState> {
         .route("/logout", post(auth_handlers::logout_handler::logout))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
-            |state, req, next| auth_middleware::auth(state, req, next, Some(true)),
+            |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
         ))
         .route("/register", post(auth_handlers::register_handler::register))
         .route("/login", post(auth_handlers::login_handler::login))
