@@ -1,6 +1,5 @@
-use axum::{http::StatusCode, response::IntoResponse, Json};
-
 use crate::responses::AuthResponse;
+use axum::{http::StatusCode, response::IntoResponse, Json};
 
 pub async fn logout() -> impl IntoResponse {
     (
@@ -8,6 +7,7 @@ pub async fn logout() -> impl IntoResponse {
         Json(AuthResponse {
             success: true,
             token: None,
+            refresh_token: None,
             user_info: None,
             error_message: None,
         }),

@@ -1,7 +1,8 @@
 use crate::models::user_info_model::UserInfo;
 use crate::models::{auth_model::RegisterPayload, user_model::User};
 use crate::responses::AuthResponse;
-use crate::utils::jwt::firebase_token_jwt::generate_jwt_token;
+use crate::utils::jwt::firebase_token_jwt::generate_access_jwt_token;
+use crate::utils::jwt::refresh_token_jwt::generate_refresh_jwt_token;
 use crate::AppState;
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
@@ -25,6 +26,7 @@ pub async fn register(
                 Json(AuthResponse {
                     success: false,
                     token: None,
+                    refresh_token: None,
                     user_info: None,
                     error_message: Some(err.to_string()),
                 }),
@@ -54,6 +56,7 @@ pub async fn register(
             let main_response = AuthResponse {
                 success: false,
                 token: None,
+                refresh_token: None,
                 user_info: None,
                 error_message: Some(error_message.to_string()),
             };
@@ -66,6 +69,7 @@ pub async fn register(
                 Json(AuthResponse {
                     success: false,
                     token: None,
+                    refresh_token: None,
                     user_info: None,
                     error_message: Some(
                         "There was an error on the server side, try again later.".to_string(),
@@ -88,6 +92,7 @@ pub async fn register(
                 Json(AuthResponse {
                     success: false,
                     token: None,
+                    refresh_token: None,
                     user_info: None,
                     error_message: Some(
                         "There was an error on the server side, try again later.".to_string(),
@@ -121,28 +126,85 @@ pub async fn register(
 
     match result {
         Ok(inserted) => {
-            let token = generate_jwt_token(
-                &payload.firebase_user_id,
-                state.firebase_token_encoding_key,
-                state.firebase_service_account,
-            )
-            .unwrap();
-            let user_info = UserInfo {
-                id: inserted.inserted_id.as_object_id().unwrap(),
-                nickname: user.nickname,
-                username: user.username,
-                email: user.email,
-                preferences: user.preferences,
-            };
-            return (
-                StatusCode::CREATED,
-                Json(AuthResponse {
-                    success: true,
-                    token: Some(token),
-                    user_info: Some(user_info),
-                    error_message: None,
-                }),
-            );
+            if let Some(user_id) = inserted.inserted_id.as_object_id() {
+                let access_token = match generate_access_jwt_token(
+                    &payload.firebase_user_id,
+                    state.firebase_token_encoding_key,
+                    state.firebase_service_account,
+                ) {
+                    Ok(token) => token,
+                    Err(err) => {
+                        eprintln!("Error generating firebase JWT token: {:?}", err);
+                        return (
+                            StatusCode::INTERNAL_SERVER_ERROR,
+                            Json(AuthResponse {
+                                success: false,
+                                token: None,
+                                refresh_token: None,
+                                user_info: None,
+                                error_message: Some(
+                                    "There was an error on the server side, try again later."
+                                        .to_string(),
+                                ),
+                            }),
+                        );
+                    }
+                };
+
+                let refresh_token = match generate_refresh_jwt_token(
+                    &user_id.to_hex(),
+                    &state.refresh_jwt_secret,
+                ) {
+                    Ok(token) => token,
+                    Err(err) => {
+                        eprintln!("Error generating JWT token: {:?}", err);
+                        return (
+                            StatusCode::INTERNAL_SERVER_ERROR,
+                            Json(AuthResponse {
+                                success: false,
+                                token: None,
+                                refresh_token: None,
+                                user_info: None,
+                                error_message: Some(
+                                    "There was an error on the server side, try again later."
+                                        .to_string(),
+                                ),
+                            }),
+                        );
+                    }
+                };
+
+                let user_info = UserInfo {
+                    id: inserted.inserted_id.as_object_id().unwrap(),
+                    nickname: user.nickname,
+                    username: user.username,
+                    email: user.email,
+                    preferences: user.preferences,
+                };
+                return (
+                    StatusCode::CREATED,
+                    Json(AuthResponse {
+                        success: true,
+                        token: Some(access_token),
+                        refresh_token: Some(refresh_token),
+                        user_info: Some(user_info),
+                        error_message: None,
+                    }),
+                );
+            } else {
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(AuthResponse {
+                        success: false,
+                        token: None,
+                        refresh_token: None,
+                        user_info: None,
+                        error_message: Some(
+                            "There was an error on the server side, try again later.".to_string(),
+                        ),
+                    }),
+                );
+            }
         }
         Err(err) => {
             eprintln!("Error inserting user: {:?}", err);
@@ -151,6 +213,7 @@ pub async fn register(
                 Json(AuthResponse {
                     success: false,
                     token: None,
+                    refresh_token: None,
                     user_info: None,
                     error_message: Some(
                         "There was an error on the server side, try again later.".to_string(),

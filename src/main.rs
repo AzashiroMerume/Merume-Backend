@@ -22,6 +22,7 @@ pub struct AppState {
     firebase_token_encoding_key: EncodingKey,
     firebase_token_decoding_key: DecodingKey,
     firebase_service_account: String,
+    refresh_jwt_secret: String,
     //Use Redis
     // _redis_client: redis::Client,
 }
@@ -55,6 +56,9 @@ async fn main() {
     let firebase_token_decoding_key =
         DecodingKey::from_rsa_pem(firebase_public_key.as_bytes()).unwrap();
 
+    let refresh_jwt_secret = std::env::var("REFRESH_JWT_SECRET")
+        .expect("Failed to load `REFRESH_JWT_SECRET` environment variable.");
+
     //redis initialization
     // let redis_uri =
     //     std::env::var("REDIS_URI").expect("Failed to load `REDIS_URI` environment variable.");
@@ -66,6 +70,7 @@ async fn main() {
         firebase_token_encoding_key,
         firebase_token_decoding_key,
         firebase_service_account,
+        refresh_jwt_secret,
     }));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 8081));

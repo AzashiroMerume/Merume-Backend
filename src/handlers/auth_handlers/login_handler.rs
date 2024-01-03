@@ -1,6 +1,7 @@
 use crate::models::{auth_model::LoginPayload, user_info_model::UserInfo};
 use crate::responses::AuthResponse;
-use crate::utils::jwt::firebase_token_jwt::generate_jwt_token;
+use crate::utils::jwt::firebase_token_jwt::generate_access_jwt_token;
+use crate::utils::jwt::refresh_token_jwt::generate_refresh_jwt_token;
 use crate::AppState;
 use argon2::{
     password_hash::{PasswordHash, PasswordVerifier},
@@ -22,6 +23,7 @@ pub async fn login(
                 Json(AuthResponse {
                     success: false,
                     token: None,
+                    refresh_token: None,
                     user_info: None,
                     error_message: Some(err.to_string()),
                 }),
@@ -42,6 +44,7 @@ pub async fn login(
                 return (StatusCode::NOT_FOUND, Json(AuthResponse {
                     success: false,
                     token: None,
+                    refresh_token: None,
                     user_info: None,
                     error_message: Some(
                         "Email or password are incorrect, please try a different email or sign up for a new account."
@@ -56,6 +59,7 @@ pub async fn login(
                     Json(AuthResponse {
                         success: false,
                         token: None,
+                        refresh_token: None,
                         user_info: None,
                         error_message: Some(
                             "There was an error on the server side, try again later.".to_string(),
@@ -77,6 +81,7 @@ pub async fn login(
                 return (StatusCode::NOT_FOUND, Json(AuthResponse {
                     success: false,
                     token: None,
+                    refresh_token: None,
                     user_info: None,
                     error_message: Some(
                         "Nickname or password are incorrect, please try a different nickname or sign up for a new account."
@@ -91,6 +96,7 @@ pub async fn login(
                     Json(AuthResponse {
                         success: false,
                         token: None,
+                        refresh_token: None,
                         user_info: None,
                         error_message: Some(
                             "There was an error on the server side, try again later.".to_string(),
@@ -105,12 +111,19 @@ pub async fn login(
     let parsed_hash = match PasswordHash::new(&user.password) {
         Ok(hash) => hash,
         Err(_) => {
-            return (StatusCode::UNAUTHORIZED, Json(AuthResponse {
-                success: false,
-                token: None,
-                user_info: None,
-                error_message: Some("Email or password are incorrect, please try a different email or sign up for a new account.".to_string()),
-            }));
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(AuthResponse {
+                    success: false,
+                    token: None,
+                    refresh_token: None,
+                    user_info: None,
+                    error_message: Some(
+                        "Creadentials are incorrect. Please try to sign up for a new account."
+                            .to_string(),
+                    ),
+                }),
+            );
         }
     };
 
@@ -119,15 +132,22 @@ pub async fn login(
         .verify_password(payload.password.as_bytes(), &parsed_hash)
         .is_err()
     {
-        return (StatusCode::UNAUTHORIZED, Json(AuthResponse {
-            success: false,
-            token: None,
-            user_info: None,
-            error_message: Some("Email or password are incorrect, please try a different email or sign up for a new account.".to_string()),
-        }));
+        return (
+            StatusCode::UNAUTHORIZED,
+            Json(AuthResponse {
+                success: false,
+                token: None,
+                refresh_token: None,
+                user_info: None,
+                error_message: Some(
+                    "Creadentials are incorrect. Please try to sign up for a new account."
+                        .to_string(),
+                ),
+            }),
+        );
     }
 
-    let token = match generate_jwt_token(
+    let token = match generate_access_jwt_token(
         &payload.firebase_user_id,
         state.firebase_token_encoding_key,
         state.firebase_service_account,
@@ -140,6 +160,7 @@ pub async fn login(
                 Json(AuthResponse {
                     success: false,
                     token: None,
+                    refresh_token: None,
                     user_info: None,
                     error_message: Some(
                         "There was an error on the server side, try again later.".to_string(),
@@ -148,6 +169,26 @@ pub async fn login(
             );
         }
     };
+
+    let refresh_token =
+        match generate_refresh_jwt_token(&user.id.to_hex(), &state.refresh_jwt_secret) {
+            Ok(token) => token,
+            Err(err) => {
+                eprintln!("Error generating JWT token: {:?}", err);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(AuthResponse {
+                        success: false,
+                        token: None,
+                        refresh_token: None,
+                        user_info: None,
+                        error_message: Some(
+                            "There was an error on the server side, try again later.".to_string(),
+                        ),
+                    }),
+                );
+            }
+        };
 
     let user_info = UserInfo {
         id: user.id,
@@ -162,6 +203,7 @@ pub async fn login(
         Json(AuthResponse {
             success: true,
             token: Some(token),
+            refresh_token: Some(refresh_token),
             user_info: Some(user_info),
             error_message: None,
         }),

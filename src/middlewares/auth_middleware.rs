@@ -1,16 +1,16 @@
 use crate::{
     models::author_model::Author, responses::OperationStatusResponse,
-    utils::jwt::firebase_token_jwt::verify_token, AppState,
+    utils::jwt::firebase_token_jwt::verify_access_jwt_token, AppState,
 };
-
 use axum::{
     extract::{Request, State},
-    http::{self, StatusCode},
+    http::StatusCode,
     middleware::Next,
     response::Response,
     Json,
 };
 use bson::doc;
+use jsonwebtoken::errors::ErrorKind;
 
 pub async fn auth(
     State(state): State<AppState>,
@@ -18,35 +18,44 @@ pub async fn auth(
     next: Next,
     pass_full_user: Option<bool>,
 ) -> Result<Response, (StatusCode, Json<OperationStatusResponse>)> {
-    let auth_header = match req.headers().get(http::header::AUTHORIZATION) {
+    let access_token_header = match req.headers().get("access_token") {
         Some(header) => header.to_str().ok(),
         None => None,
     };
 
-    let token = match auth_header {
+    let token = match access_token_header {
         Some(token) => token,
         None => {
             return Err((
                 StatusCode::UNAUTHORIZED,
                 Json(OperationStatusResponse {
                     success: false,
-                    error_message: Some("Authorization header missing".to_string()),
+                    error_message: Some("Token header missing".to_string()),
                 }),
             ))
         }
     };
 
-    let token_claims = verify_token(token, state.firebase_token_decoding_key).map_err(|err| {
-        (
-            StatusCode::UNAUTHORIZED,
-            Json(OperationStatusResponse {
-                success: false,
-                error_message: Some(format!("{}", err)),
-            }),
-        )
-    })?;
-
-    let firebase_user_id = token_claims.uid;
+    let firebase_user_id = verify_access_jwt_token(token, state.firebase_token_decoding_key)
+        .map_err(|err| {
+            if err == ErrorKind::ExpiredSignature {
+                (
+                    StatusCode::UNAUTHORIZED,
+                    Json(OperationStatusResponse {
+                        success: false,
+                        error_message: Some(("Expired").to_string()),
+                    }),
+                )
+            } else {
+                (
+                    StatusCode::UNAUTHORIZED,
+                    Json(OperationStatusResponse {
+                        success: false,
+                        error_message: Some(("Token authentication failed").to_string()),
+                    }),
+                )
+            }
+        })?;
 
     let user = match state
         .db
