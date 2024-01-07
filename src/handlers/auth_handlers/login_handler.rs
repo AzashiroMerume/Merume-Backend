@@ -195,6 +195,7 @@ pub async fn login(
         nickname: user.nickname,
         username: user.username,
         email: user.email,
+        pfp_link: user.pfp_link,
         preferences: user.preferences,
     };
 

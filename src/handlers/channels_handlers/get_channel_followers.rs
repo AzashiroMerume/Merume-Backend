@@ -48,6 +48,7 @@ pub async fn get_channel_followers(
                                 nickname: user.nickname,
                                 username: user.username,
                                 email: user.email,
+                                pfp_link: user.pfp_link,
                                 preferences: user.preferences,
                             };
                             subscribers_info.push(user_info);

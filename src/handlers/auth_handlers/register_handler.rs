@@ -111,6 +111,7 @@ pub async fn register(
         nickname: payload.nickname.to_lowercase(),
         email: payload.email,
         password: hashed_password,
+        pfp_link: None,
         preferences: None,
         liked: None,
         bookmarks: None,
@@ -179,6 +180,7 @@ pub async fn register(
                     nickname: user.nickname,
                     username: user.username,
                     email: user.email,
+                    pfp_link: user.pfp_link,
                     preferences: user.preferences,
                 };
                 return (

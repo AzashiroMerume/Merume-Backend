@@ -14,6 +14,8 @@ pub struct User {
     pub email: String,
     pub password: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub pfp_link: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub preferences: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub liked: Option<Vec<ObjectId>>,
