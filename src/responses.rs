@@ -18,6 +18,14 @@ pub struct ChannelResponse {
 
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
+pub struct ChannelFollowersResponse {
+    pub success: bool,
+    pub data: Option<Vec<UserInfo>>,
+    pub error_message: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub struct ChannelPostResponse {
     pub success: bool,
     pub data: Option<Vec<Post>>,

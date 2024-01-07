@@ -38,6 +38,7 @@ pub async fn auth(
 
     let firebase_user_id = verify_access_jwt_token(token, state.firebase_token_decoding_key)
         .map_err(|err| {
+            eprintln!("{:?}", err);
             if err == ErrorKind::ExpiredSignature {
                 (
                     StatusCode::UNAUTHORIZED,

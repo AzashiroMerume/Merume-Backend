@@ -17,6 +17,10 @@ pub fn channels_routes(State(state): State<AppState>) -> Router<AppState> {
             get(channels_handlers::get_channel_handler::get_channel_by_id),
         )
         .route(
+            "/:channel_id/followers",
+            get(channels_handlers::get_channel_followers::get_channel_followers),
+        )
+        .route(
             "/:channel_id/subscribe",
             get(channels_handlers::subscribe_to_channel_handler::subscribe_to_channel),
         )
