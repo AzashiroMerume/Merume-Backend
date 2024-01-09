@@ -92,6 +92,8 @@ pub async fn auth(
         id: user.id,
         nickname: user.nickname.clone(),
         username: user.username.clone(),
+        pfp_link: user.pfp_link.clone(),
+        is_online: false,
     };
 
     if let Some(true) = pass_full_user {

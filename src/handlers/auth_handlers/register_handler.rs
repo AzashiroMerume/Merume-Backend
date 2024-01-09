@@ -117,6 +117,7 @@ pub async fn register(
         bookmarks: None,
         created_at: now,
         updated_at: now,
+        is_online: false,
     };
 
     let result = state

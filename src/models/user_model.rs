@@ -23,6 +23,7 @@ pub struct User {
     pub bookmarks: Option<Vec<ObjectId>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub is_online: bool,
 }
 
 #[derive(Debug, Clone, Deserialize, Validate)]

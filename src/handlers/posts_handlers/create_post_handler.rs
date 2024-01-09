@@ -42,6 +42,8 @@ pub async fn create_post(
         id: author.id,
         nickname: author.nickname,
         username: author.username,
+        pfp_link: author.pfp_link,
+        is_online: false,
     };
 
     let post = Post {
