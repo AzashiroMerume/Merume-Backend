@@ -8,4 +8,7 @@ pub struct Author {
     pub id: ObjectId,
     pub nickname: String,
     pub username: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pfp_link: Option<String>,
+    pub is_online: bool,
 }

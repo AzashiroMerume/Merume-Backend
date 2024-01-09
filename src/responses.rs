@@ -1,4 +1,6 @@
-use crate::models::{channel_model::Channel, post_model::Post, user_info_model::UserInfo};
+use crate::models::{
+    author_model::Author, channel_model::Channel, post_model::Post, user_info_model::UserInfo,
+};
 use serde::Serialize;
 
 #[derive(Clone, Debug, Serialize)]
@@ -20,7 +22,7 @@ pub struct ChannelResponse {
 #[serde(rename_all = "snake_case")]
 pub struct ChannelFollowersResponse {
     pub success: bool,
-    pub data: Option<Vec<UserInfo>>,
+    pub data: Option<Vec<Author>>,
     pub error_message: Option<String>,
 }
 

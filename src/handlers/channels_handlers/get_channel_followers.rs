@@ -1,5 +1,5 @@
 use crate::{
-    models::{user_channel_model::UserChannel, user_info_model::UserInfo, user_model::User},
+    models::{author_model::Author, user_channel_model::UserChannel, user_model::User},
     responses::ChannelFollowersResponse,
     AppState,
 };
@@ -11,7 +11,7 @@ use axum::{
 };
 use bson::{doc, oid::ObjectId, Document};
 use futures::stream::StreamExt;
-use mongodb::Collection; // Import StreamExt to work with streams
+use mongodb::Collection;
 
 pub async fn get_channel_followers(
     State(state): State<AppState>,
@@ -43,13 +43,12 @@ pub async fn get_channel_followers(
                     if let Ok(user) = user_collection.find_one(doc! {"_id": user_id}, None).await {
                         if let Some(user) = user {
                             // Convert User model to UserInfo here
-                            let user_info = UserInfo {
+                            let user_info = Author {
                                 id: user.id,
                                 nickname: user.nickname,
                                 username: user.username,
-                                email: user.email,
                                 pfp_link: user.pfp_link,
-                                preferences: user.preferences,
+                                is_online: false,
                             };
                             subscribers_info.push(user_info);
                         }
