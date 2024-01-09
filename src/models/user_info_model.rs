@@ -14,4 +14,5 @@ pub struct UserInfo {
     pub pfp_link: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub preferences: Option<Vec<String>>,
+    pub is_online: bool,
 }

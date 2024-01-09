@@ -10,5 +10,6 @@ pub struct Author {
     pub username: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub pfp_link: Option<String>,
-    pub is_online: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_online: Option<bool>,
 }

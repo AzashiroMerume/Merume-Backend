@@ -183,6 +183,7 @@ pub async fn register(
                     email: user.email,
                     pfp_link: user.pfp_link,
                     preferences: user.preferences,
+                    is_online: user.is_online,
                 };
                 return (
                     StatusCode::CREATED,
