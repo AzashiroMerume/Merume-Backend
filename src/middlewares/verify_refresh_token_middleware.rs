@@ -41,6 +41,7 @@ pub async fn verify_refresh_token(
     let user_id = match verify_refresh_jwt_token(refresh_token, &state.refresh_jwt_secret) {
         Ok(id) => id,
         Err(err) => {
+            eprintln!("{:?}", err);
             if err == ErrorKind::ExpiredSignature {
                 return Err((
                     StatusCode::UNAUTHORIZED,
