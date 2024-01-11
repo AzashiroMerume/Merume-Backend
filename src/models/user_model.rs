@@ -24,6 +24,7 @@ pub struct User {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub is_online: bool,
+    pub last_time_online: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Deserialize, Validate)]

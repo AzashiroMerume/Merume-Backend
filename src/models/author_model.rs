@@ -1,4 +1,5 @@
 use bson::oid::ObjectId;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::usize;
 
@@ -12,4 +13,6 @@ pub struct Author {
     pub pfp_link: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub is_online: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last_time_online: Option<DateTime<Utc>>,
 }

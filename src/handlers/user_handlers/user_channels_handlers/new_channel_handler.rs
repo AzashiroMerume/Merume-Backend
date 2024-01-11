@@ -49,6 +49,7 @@ pub async fn new_channel(
         username: author.username,
         pfp_link: author.pfp_link,
         is_online: None,
+        last_time_online: None,
     };
 
     let channel = Channel {

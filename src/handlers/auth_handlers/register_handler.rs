@@ -118,6 +118,7 @@ pub async fn register(
         created_at: now,
         updated_at: now,
         is_online: false,
+        last_time_online: now,
     };
 
     let result = state
@@ -184,6 +185,7 @@ pub async fn register(
                     pfp_link: user.pfp_link,
                     preferences: user.preferences,
                     is_online: user.is_online,
+                    last_time_online: user.last_time_online,
                 };
                 return (
                     StatusCode::CREATED,

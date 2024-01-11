@@ -49,6 +49,7 @@ pub async fn get_channel_followers(
                                 username: user.username,
                                 pfp_link: user.pfp_link,
                                 is_online: Some(user.is_online),
+                                last_time_online: Some(user.last_time_online),
                             };
                             subscribers_info.push(user_info);
                         }

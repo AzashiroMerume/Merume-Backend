@@ -198,6 +198,7 @@ pub async fn login(
         pfp_link: user.pfp_link,
         preferences: user.preferences,
         is_online: user.is_online,
+        last_time_online: user.last_time_online,
     };
 
     (
