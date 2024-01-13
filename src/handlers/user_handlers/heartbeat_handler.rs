@@ -40,15 +40,15 @@ async fn websocket(mut socket: WebSocket, state: State<AppState>, user_id: Objec
 }
 
 async fn set_user_online(user_id: ObjectId, state: &State<AppState>) {
-    let now = Utc::now().to_rfc3339();
+    let now = Utc::now();
     let update_result = state
         .db
-        .users_collection
+        .users_collection_bson
         .update_one(
             doc! {"_id": user_id},
             doc! {
                 "$set": {
-                    "last_time_online": now,
+                    "last_time_online": bson::DateTime::from_chrono(now),
                     "is_online": true,
                 }
             },
@@ -63,7 +63,6 @@ async fn set_user_online(user_id: ObjectId, state: &State<AppState>) {
 }
 
 async fn set_user_offline(user_id: ObjectId, state: &State<AppState>) {
-    println!("dude");
     let update_result = state
         .db
         .users_collection
