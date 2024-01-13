@@ -99,8 +99,10 @@ pub async fn auth(
 
     if let Some(true) = pass_full_user {
         req.extensions_mut().insert(user);
-    } else {
+    } else if let Some(false) = pass_full_user {
         req.extensions_mut().insert(author_info);
+    } else {
+        req.extensions_mut().insert(user.id);
     }
 
     Ok(next.run(req).await)
