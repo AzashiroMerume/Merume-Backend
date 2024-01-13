@@ -1,5 +1,9 @@
 use crate::{
-    handlers::{common_handler, user_handlers::get_email_handler},
+    handlers::{
+        common_handler,
+        user_handlers::{get_email_handler::get_email_by_nickname, heartbeat_handler::heartbeat},
+    },
+    middlewares::auth_middleware,
     routes::{
         auth_routes, channel_system_routes, content_routes, mark_as_read_posts_routes,
         preferences_routes, user_channels_routes,
@@ -13,7 +17,8 @@ use axum::{
         header::{self, AUTHORIZATION},
         HeaderValue,
     },
-    routing::post,
+    middleware,
+    routing::{get, post},
     Router,
 };
 use std::{iter::once, time::Duration};
@@ -41,7 +46,12 @@ pub fn create_router(State(state): State<AppState>) -> Router {
     let preferences_routes = preferences_routes::preferences_routes(State(state.clone()));
 
     let user_routes = Router::new()
-        .route("/get_email", post(get_email_handler::get_email_by_nickname))
+        .route("/heartbeat", get(heartbeat))
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            |state, req, next| auth_middleware::auth(state, req, next, None),
+        ))
+        .route("/get_email", post(get_email_by_nickname))
         .layer(RequestBodyLimitLayer::new(1024))
         .nest("/channels", user_channels_routes)
         .nest("/recommendations", content_routes)
