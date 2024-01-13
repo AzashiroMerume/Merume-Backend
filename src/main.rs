@@ -78,12 +78,15 @@ async fn main() {
 
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
 
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app)
+        .with_graceful_shutdown(signal_shutdown())
+        .await
+        .unwrap();
 
-    // async fn signal_shutdown() {
-    //     tokio::signal::ctrl_c()
-    //         .await
-    //         .expect("Expect ctrl - ctrl shutdown");
-    //     println!("Signal shutting down");
-    // }
+    async fn signal_shutdown() {
+        tokio::signal::ctrl_c()
+            .await
+            .expect("Expect ctrl - ctrl shutdown");
+        println!("Signal shutting down");
+    }
 }
