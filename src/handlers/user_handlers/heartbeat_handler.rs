@@ -63,7 +63,6 @@ async fn set_user_online(user_id: ObjectId, state: &State<AppState>) {
 }
 
 async fn set_user_offline(user_id: ObjectId, state: &State<AppState>) {
-    println!("dude");
     let update_result = state
         .db
         .users_collection
