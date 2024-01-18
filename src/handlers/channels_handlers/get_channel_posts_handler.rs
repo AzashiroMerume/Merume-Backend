@@ -13,6 +13,14 @@ use axum::{
 use bson::{doc, oid::ObjectId};
 use futures::{SinkExt, StreamExt, TryStreamExt};
 use mongodb::options::FindOptions;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+struct WebSocketResponse {
+    success: bool,
+    data: Option<Vec<Post>>,
+    error_message: Option<String>,
+}
 
 pub async fn channel_posts(
     ws: WebSocketUpgrade,
@@ -31,12 +39,38 @@ async fn websocket(
 ) {
     let (mut sender, _receiver) = _socket.split();
 
+    if !is_channel_public(channel_id, &state).await
+        && !is_user_subscribed(user_id, channel_id, &state).await
+    {
+        let response_json = match serde_json::to_string(&WebSocketResponse {
+            success: false,
+            data: None,
+            error_message: Some("Unauthorized access".to_string()),
+        }) {
+            Ok(json) => json,
+            Err(err) => {
+                eprintln!("Error sending message to websocket client: {:?}", err);
+                return;
+            }
+        };
+
+        if let Err(err) = sender.send(Message::Text(response_json)).await {
+            eprintln!("Error sending message to websocket client: {:?}", err);
+            return;
+        }
+    }
+
     // Retrieve initial posts
     let initial_posts = fetch_posts(state.clone(), channel_id).await;
 
     let initial_json = match initial_posts {
         Some(posts) => {
-            if let Ok(json) = serde_json::to_string(&posts) {
+            let response = WebSocketResponse {
+                success: true,
+                data: Some(posts),
+                error_message: None,
+            };
+            if let Ok(json) = serde_json::to_string(&response) {
                 json
             } else {
                 eprintln!("Error serializing posts to JSON");
@@ -48,12 +82,6 @@ async fn websocket(
 
     if let Err(err) = sender.send(Message::Text(initial_json)).await {
         eprintln!("Error sending message to websocket client: {:?}", err);
-        return;
-    }
-
-    if !is_channel_public(channel_id, &state).await
-        && !is_user_subscribed(user_id, channel_id, &state).await
-    {
         return;
     }
 
@@ -77,7 +105,12 @@ async fn websocket(
                     let posts = fetch_posts(state.clone(), channel_id).await;
 
                     if let Some(posts) = posts {
-                        let json = serde_json::to_string(&posts).map_err(|err| {
+                        let response = WebSocketResponse {
+                            success: true,
+                            data: Some(posts),
+                            error_message: None,
+                        };
+                        let json = serde_json::to_string(&response).map_err(|err| {
                             eprintln!("Error serializing posts: {:?}", err);
                             "Failed to serialize posts".to_string()
                         });
@@ -107,10 +140,7 @@ async fn websocket(
 async fn fetch_posts(state: State<AppState>, channel_id: ObjectId) -> Option<Vec<Post>> {
     let filter = doc! {"channel_id": channel_id};
 
-    let options = FindOptions::builder()
-        .sort(doc! {"timestamp": -1})
-        .limit(20)
-        .build();
+    let options = FindOptions::builder().sort(doc! {"timestamp": -1}).build();
 
     if let Ok(cursor) = state.db.posts_collection.find(filter, options).await {
         if let Ok(posts) = cursor.try_collect().await {
