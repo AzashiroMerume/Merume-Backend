@@ -140,7 +140,10 @@ async fn websocket(
 async fn fetch_posts(state: State<AppState>, channel_id: ObjectId) -> Option<Vec<Post>> {
     let filter = doc! {"channel_id": channel_id};
 
-    let options = FindOptions::builder().sort(doc! {"timestamp": -1}).build();
+    let options = FindOptions::builder()
+        .limit(20)
+        .sort(doc! {"timestamp": -1})
+        .build();
 
     if let Ok(cursor) = state.db.posts_collection.find(filter, options).await {
         if let Ok(posts) = cursor.try_collect().await {
