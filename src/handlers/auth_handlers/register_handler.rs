@@ -181,7 +181,7 @@ pub async fn register(
                     id: inserted.inserted_id.as_object_id().unwrap(),
                     nickname: user.nickname,
                     username: user.username,
-                    email: user.email,
+                    email: Some(user.email),
                     pfp_link: user.pfp_link,
                     preferences: user.preferences,
                     is_online: user.is_online,

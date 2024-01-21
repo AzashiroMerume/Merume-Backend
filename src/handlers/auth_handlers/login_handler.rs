@@ -194,7 +194,7 @@ pub async fn login(
         id: user.id,
         nickname: user.nickname,
         username: user.username,
-        email: user.email,
+        email: Some(user.email),
         pfp_link: user.pfp_link,
         preferences: user.preferences,
         is_online: user.is_online,

@@ -1,6 +1,5 @@
 use crate::{
-    models::{author_model::Author, user_channel_model::UserChannel, user_model::User},
-    responses::ChannelFollowersResponse,
+    models::{user_channel_model::UserChannel, user_info_model::UserInfo, user_model::User},
     AppState,
 };
 use axum::{
@@ -10,9 +9,20 @@ use axum::{
     Json,
 };
 use bson::{doc, oid::ObjectId, Document};
-use futures::stream::StreamExt;
+use futures::StreamExt;
 use mongodb::Collection;
+use serde::Serialize;
+use std::usize;
 
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub struct ChannelFollowersResponse {
+    pub success: bool,
+    pub data: Option<Vec<UserInfo>>,
+    pub error_message: Option<String>,
+}
+
+// Modify your function to use UserInfo
 pub async fn get_channel_followers(
     State(state): State<AppState>,
     Path(channel_id): Path<ObjectId>,
@@ -43,13 +53,15 @@ pub async fn get_channel_followers(
                     if let Ok(user) = user_collection.find_one(doc! {"_id": user_id}, None).await {
                         if let Some(user) = user {
                             // Convert User model to UserInfo here
-                            let user_info = Author {
+                            let user_info = UserInfo {
                                 id: user.id,
                                 nickname: user.nickname,
                                 username: user.username,
+                                email: None,
                                 pfp_link: user.pfp_link,
-                                is_online: Some(user.is_online),
-                                last_time_online: Some(user.last_time_online),
+                                preferences: user.preferences,
+                                is_online: user.is_online,
+                                last_time_online: user.last_time_online,
                             };
                             subscribers_info.push(user_info);
                         }

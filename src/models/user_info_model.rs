@@ -9,7 +9,8 @@ pub struct UserInfo {
     pub id: ObjectId,
     pub nickname: String,
     pub username: String,
-    pub email: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub email: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub pfp_link: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
