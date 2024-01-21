@@ -1,31 +1,21 @@
 use crate::{
-    handlers::{
-        common_handler,
-        user_handlers::{get_email_handler::get_email_by_nickname, heartbeat_handler::heartbeat},
-    },
-    middlewares::auth_middleware,
-    routes::{
-        auth_routes, channel_system_routes, content_routes, mark_as_read_posts_routes,
-        preferences_routes, user_channels_routes,
-    },
+    handlers::common_handler,
+    routes::{auth_routes, channel_system_routes, mark_as_read_posts_routes, user_routes},
     AppState,
 };
-
 use axum::{
     extract::State,
     http::{
         header::{self, AUTHORIZATION},
         HeaderValue,
     },
-    middleware,
-    routing::{get, post},
     Router,
 };
 use std::{iter::once, time::Duration};
 use tower::ServiceBuilder;
 use tower_http::{
-    limit::RequestBodyLimitLayer, sensitive_headers::SetSensitiveRequestHeadersLayer,
-    set_header::SetResponseHeaderLayer, timeout::TimeoutLayer, trace::TraceLayer,
+    sensitive_headers::SetSensitiveRequestHeadersLayer, set_header::SetResponseHeaderLayer,
+    timeout::TimeoutLayer, trace::TraceLayer,
 };
 // use std::sync::Arc;
 
@@ -39,23 +29,9 @@ pub fn create_router(State(state): State<AppState>) -> Router {
 
     //creating base routes
     let auth_routes = auth_routes::auth_routes(State(state.clone()));
-    let user_channels_routes = user_channels_routes::user_channels_routes(State(state.clone()));
     let channel_system = channel_system_routes::channel_system(State(state.clone()));
     let read_post_routes = mark_as_read_posts_routes::read_posts_routes(State(state.clone()));
-    let content_routes = content_routes::content_routes(State(state.clone()));
-    let preferences_routes = preferences_routes::preferences_routes(State(state.clone()));
-
-    let user_routes = Router::new()
-        .route("/heartbeat", get(heartbeat))
-        .layer(middleware::from_fn_with_state(
-            state.clone(),
-            |state, req, next| auth_middleware::auth(state, req, next, None),
-        ))
-        .route("/get_email", post(get_email_by_nickname))
-        .layer(RequestBodyLimitLayer::new(1024))
-        .nest("/channels", user_channels_routes)
-        .nest("/recommendations", content_routes)
-        .nest("/preferences", preferences_routes);
+    let user_routes = user_routes::user_routes(State(state.clone()));
 
     let app = Router::new()
         // .route("/test", get(common_handler::_test_handler))
