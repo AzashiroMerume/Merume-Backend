@@ -46,7 +46,7 @@ pub async fn get_user_channels(
                 .ok();
 
             let response = UserChannelsResponse {
-                success: channels.is_some(),
+                success: true,
                 channels,
                 error: None,
             };
