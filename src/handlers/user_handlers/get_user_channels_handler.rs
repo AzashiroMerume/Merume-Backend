@@ -19,7 +19,7 @@ pub async fn get_user_channels(
     State(state): State<AppState>,
     Path(user_id): Path<ObjectId>,
 ) -> impl IntoResponse {
-    let filter = doc! {"author.id": user_id};
+    let filter = doc! {"author.id": user_id, "channel_visibility": "Public"};
 
     let channels_result = state
         .db
