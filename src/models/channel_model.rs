@@ -21,7 +21,7 @@ pub struct Channel {
     pub description: String,
     pub categories: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub participants: Option<Vec<ObjectId>>,
+    pub contributors: Option<Vec<ObjectId>>,
     pub followers: Followers,
     pub current_challenge_day: usize,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -71,7 +71,7 @@ pub struct ChannelPayload {
     pub description: String,
     #[validate(length(min = 1))]
     pub categories: Vec<String>,
-    pub participants: Option<Vec<ObjectId>>,
+    pub contributors: Option<Vec<ObjectId>>,
     pub channel_profile_picture_url: Option<String>,
 }
 
