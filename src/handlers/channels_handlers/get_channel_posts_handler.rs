@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{
     models::{author_model::Author, post_model::Post},
     AppState,
@@ -11,6 +13,7 @@ use axum::{
     Extension,
 };
 use bson::{doc, oid::ObjectId};
+use chrono::{Duration, NaiveDate};
 use futures::{SinkExt, StreamExt, TryStreamExt};
 use mongodb::options::FindOptions;
 use serde::{Deserialize, Serialize};
@@ -18,7 +21,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize)]
 struct WebSocketResponse {
     success: bool,
-    data: Option<Vec<Post>>,
+    data: Option<HashMap<String, Vec<Vec<Post>>>>,
     error_message: Option<String>,
 }
 
@@ -67,7 +70,7 @@ async fn websocket(
         Some(posts) => {
             let response = WebSocketResponse {
                 success: true,
-                data: Some(posts),
+                data: Some(transform_posts(posts)),
                 error_message: None,
             };
             if let Ok(json) = serde_json::to_string(&response) {
@@ -107,7 +110,7 @@ async fn websocket(
                     if let Some(posts) = posts {
                         let response = WebSocketResponse {
                             success: true,
-                            data: Some(posts),
+                            data: Some(transform_posts(posts)),
                             error_message: None,
                         };
                         let json = serde_json::to_string(&response).map_err(|err| {
@@ -182,4 +185,53 @@ async fn is_channel_public(channel_id: ObjectId, state: &AppState) -> bool {
     }
 
     false
+}
+
+fn transform_posts(posts: Vec<Post>) -> HashMap<String, Vec<Vec<Post>>> {
+    let mut result: HashMap<String, Vec<Vec<Post>>> = HashMap::new();
+
+    for post in posts {
+        let created_date_str = post.created_at.date_naive().to_string();
+
+        // Calculate the interval limit (5 minutes)
+        let interval_limit = Duration::minutes(5);
+
+        // Check if there's an existing array for the created date
+        let entry = result
+            .entry(created_date_str.clone())
+            .or_insert_with(Vec::new);
+
+        // Check if there's an existing array for the time interval
+        let mut interval_found = false;
+        for interval_posts in entry.iter_mut() {
+            if let Some(last_post) = interval_posts.last() {
+                let time_difference = post.created_at.signed_duration_since(last_post.created_at);
+                if time_difference <= interval_limit {
+                    interval_posts.push(post.clone());
+                    interval_found = true;
+                    break;
+                }
+            }
+        }
+
+        if !interval_found {
+            // Create a new interval array for this time
+            entry.push(vec![post]);
+        }
+    }
+
+    // Convert the HashMap into a vector of key-value pairs
+    let mut sorted_result: Vec<_> = result.into_iter().collect();
+
+    // Sort the vector by the date key from old to new
+    sorted_result.sort_by(|a, b| {
+        NaiveDate::parse_from_str(&a.0, "%Y-%m-%d")
+            .unwrap()
+            .cmp(&NaiveDate::parse_from_str(&b.0, "%Y-%m-%d").unwrap())
+    });
+
+    // Reconstruct the HashMap from the sorted vector
+    let sorted_map: HashMap<String, Vec<Vec<Post>>> = sorted_result.into_iter().collect();
+
+    sorted_map
 }
