@@ -13,7 +13,6 @@ pub async fn delete_post_by_id(
     Extension(author): Extension<Author>,
     Path((_channel_id, post_id)): Path<(ObjectId, ObjectId)>,
 ) -> impl IntoResponse {
-    println!("{}", post_id);
     let post = state
         .db
         .posts_collection
@@ -22,10 +21,6 @@ pub async fn delete_post_by_id(
 
     match post {
         Ok(Some(post)) => {
-            println!(
-                "Post Author Id: {}, Author Id: {}",
-                post.author.id, author.id
-            );
             if post.author.id == author.id {
                 let deletion_result = state
                     .db

@@ -41,6 +41,11 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
+    let server_port = std::env::var("SERVER_PORT")
+        .expect("Failed to load `SERVER_PORT` environment variable.")
+        .parse()
+        .expect("Failed to load `SERVER_PORT` environment variable.");
+
     let db = DB::init()
         .await
         .expect("The Database initialization failed..");
@@ -73,7 +78,7 @@ async fn main() {
         refresh_jwt_secret,
     }));
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 8081));
+    let addr = SocketAddr::from(([127, 0, 0, 1], server_port));
     tracing::debug!("listening on {}", addr);
 
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
