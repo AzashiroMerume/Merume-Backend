@@ -1,6 +1,6 @@
 use crate::{handlers, middlewares, AppState};
 use handlers::{channels_handlers, posts_handlers};
-use middlewares::{auth_middleware, verify_channel_owner_middleware};
+use middlewares::{auth_middleware, verify_channel_access_middleware};
 
 use axum::{
     extract::State,
@@ -45,7 +45,7 @@ pub fn post_routes(State(state): State<AppState>) -> Router<AppState> {
         )
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
-            verify_channel_owner_middleware::verify_channel_owner,
+            verify_channel_access_middleware::verify_channel_access,
         ));
 
     let with_post_id = Router::new()
@@ -59,7 +59,7 @@ pub fn post_routes(State(state): State<AppState>) -> Router<AppState> {
         )
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
-            verify_channel_owner_middleware::verify_channel_owner_with_post_id,
+            verify_channel_access_middleware::verify_channel_access,
         ));
 
     Router::new()

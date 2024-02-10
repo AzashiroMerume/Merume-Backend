@@ -8,10 +8,10 @@ use axum::{
 };
 use bson::{doc, oid::ObjectId};
 
-pub async fn verify_channel_owner(
+pub async fn verify_channel_access(
     State(state): State<AppState>,
     Extension(author): Extension<Author>,
-    Path(channel_id): Path<ObjectId>,
+    Path((channel_id, _post_id)): Path<(ObjectId, ObjectId)>,
     mut req: Request,
     next: Next,
 ) -> Result<Response, (StatusCode, Json<OperationStatusResponse>)> {
@@ -41,22 +41,27 @@ pub async fn verify_channel_owner(
         }),
     ))?;
 
-    match channel.author.id == author.id {
+    match (channel.author.id == author.id)
+        || (channel
+            .contributors
+            .unwrap_or_default()
+            .contains(&author.id))
+    {
         true => {
             req.extensions_mut().insert(channel.current_challenge_day);
             return Ok(next.run(req).await);
         }
         false => Err((
-            StatusCode::CONFLICT,
+            StatusCode::FORBIDDEN,
             Json(OperationStatusResponse {
                 success: false,
-                error_message: Some("CONFLICT".to_string()),
+                error_message: Some("Access forbidden".to_string()),
             }),
         )),
     }
 }
 
-pub async fn verify_channel_owner_with_post_id(
+/* pub async fn verify_channel_owner_with_post_id(
     State(state): State<AppState>,
     Extension(author): Extension<Author>,
     Path((channel_id, _post_id)): Path<(ObjectId, ObjectId)>,
@@ -103,3 +108,4 @@ pub async fn verify_channel_owner_with_post_id(
         )),
     }
 }
+ */
