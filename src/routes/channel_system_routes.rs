@@ -59,7 +59,7 @@ pub fn post_routes(State(state): State<AppState>) -> Router<AppState> {
         )
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
-            verify_channel_access_middleware::verify_channel_access,
+            verify_channel_access_middleware::verify_channel_access_with_post_id,
         ));
 
     Router::new()
