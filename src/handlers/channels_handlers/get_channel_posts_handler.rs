@@ -13,7 +13,7 @@ use axum::{
     Extension,
 };
 use bson::{doc, oid::ObjectId};
-use chrono::{Duration, NaiveDate};
+use chrono::Duration;
 use futures::{SinkExt, StreamExt, TryStreamExt};
 use mongodb::options::FindOptions;
 use serde::{Deserialize, Serialize};
@@ -220,18 +220,5 @@ fn transform_posts(posts: Vec<Post>) -> HashMap<String, Vec<Vec<Post>>> {
         }
     }
 
-    // Convert the HashMap into a vector of key-value pairs
-    let mut sorted_result: Vec<_> = result.into_iter().collect();
-
-    // Sort the vector by the date key from old to new
-    sorted_result.sort_by(|a, b| {
-        NaiveDate::parse_from_str(&a.0, "%Y-%m-%d")
-            .unwrap()
-            .cmp(&NaiveDate::parse_from_str(&b.0, "%Y-%m-%d").unwrap())
-    });
-
-    // Reconstruct the HashMap from the sorted vector
-    let sorted_map: HashMap<String, Vec<Vec<Post>>> = sorted_result.into_iter().collect();
-
-    sorted_map
+    result
 }
