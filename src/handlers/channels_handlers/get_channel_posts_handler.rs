@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::{
     models::{author_model::Author, post_model::Post},
     AppState,
@@ -17,11 +15,12 @@ use chrono::Duration;
 use futures::{SinkExt, StreamExt, TryStreamExt};
 use mongodb::options::FindOptions;
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct WebSocketResponse {
     success: bool,
-    data: Option<HashMap<String, Vec<Vec<Post>>>>,
+    data: Option<BTreeMap<String, Vec<Vec<Post>>>>,
     error_message: Option<String>,
 }
 
@@ -143,10 +142,7 @@ async fn websocket(
 async fn fetch_posts(state: State<AppState>, channel_id: ObjectId) -> Option<Vec<Post>> {
     let filter = doc! {"channel_id": channel_id};
 
-    let options = FindOptions::builder()
-        .limit(20)
-        .sort(doc! {"timestamp": -1})
-        .build();
+    let options = FindOptions::builder().limit(20).build();
 
     if let Ok(cursor) = state.db.posts_collection.find(filter, options).await {
         if let Ok(posts) = cursor.try_collect().await {
@@ -187,8 +183,8 @@ async fn is_channel_public(channel_id: ObjectId, state: &AppState) -> bool {
     false
 }
 
-fn transform_posts(posts: Vec<Post>) -> HashMap<String, Vec<Vec<Post>>> {
-    let mut result: HashMap<String, Vec<Vec<Post>>> = HashMap::new();
+fn transform_posts(posts: Vec<Post>) -> BTreeMap<String, Vec<Vec<Post>>> {
+    let mut result: BTreeMap<String, Vec<Vec<Post>>> = BTreeMap::new();
 
     for post in posts {
         let created_date_str = post.created_at.date_naive().to_string();
