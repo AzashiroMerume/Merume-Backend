@@ -1,6 +1,8 @@
 use serde::Deserialize;
 use validator::Validate;
 
+use super::components::time_zone_model::TimeZone;
+
 #[derive(Debug, Clone, Deserialize, Validate)]
 #[serde(rename_all = "snake_case")]
 pub struct RegisterPayload {
@@ -12,6 +14,7 @@ pub struct RegisterPayload {
     #[validate(length(min = 8, max = 50))]
     pub password: String,
     pub firebase_user_id: String,
+    pub time_zone: TimeZone,
 }
 
 #[derive(Debug, Clone, Deserialize, Validate)]

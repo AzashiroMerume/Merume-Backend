@@ -1,4 +1,4 @@
-use chrono::{Duration, Utc};
+use chrono::{TimeDelta, Utc};
 use jsonwebtoken::{
     decode, encode, errors::ErrorKind, DecodingKey, EncodingKey, Header, Validation,
 };
@@ -13,7 +13,11 @@ struct Claims {
 
 pub fn generate_refresh_jwt_token(user_id: &str, jwt_secret: &str) -> Result<String, String> {
     let iat = Utc::now();
-    let exp = iat + Duration::days(30);
+    let month = match TimeDelta::try_days(30) {
+        Some(month) => month,
+        None => return Err(format!("Failed to calculate time interval")),
+    };
+    let exp = iat + month;
 
     let claims = Claims {
         sub: user_id.to_owned(),

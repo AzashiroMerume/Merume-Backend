@@ -3,7 +3,9 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+use super::components::time_zone_model::TimeZone;
+
+#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 #[serde(rename_all = "snake_case")]
 pub struct User {
     #[serde(rename = "_id")]
@@ -21,6 +23,7 @@ pub struct User {
     pub liked: Option<Vec<ObjectId>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bookmarks: Option<Vec<ObjectId>>,
+    pub time_zone: TimeZone,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub is_online: bool,

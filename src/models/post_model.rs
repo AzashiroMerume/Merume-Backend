@@ -33,7 +33,7 @@ pub struct UpdatePost {
 }
 
 #[derive(Debug, Clone, Deserialize, Validate)]
-#[validate(schema(function = "check_both_none", skip_on_field_errors = false))]
+#[validate(schema(function = "validate_post_structure", skip_on_field_errors = false))]
 #[serde(rename_all = "snake_case")]
 pub struct PostPayload {
     pub id: ObjectId,
@@ -42,10 +42,10 @@ pub struct PostPayload {
     pub images: Option<Vec<String>>,
 }
 
-fn check_both_none(post: &PostPayload) -> Result<(), ValidationError> {
+fn validate_post_structure(post: &PostPayload) -> Result<(), ValidationError> {
     if post.body.is_none() && post.images.is_none() {
         return Err(ValidationError::new(
-            "Post's body and images field cannot be both none",
+            "Post must contain either a body or images field",
         ));
     }
 

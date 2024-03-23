@@ -115,6 +115,7 @@ pub async fn register(
         preferences: None,
         liked: None,
         bookmarks: None,
+        time_zone: payload.time_zone,
         created_at: now,
         updated_at: now,
         is_online: false,

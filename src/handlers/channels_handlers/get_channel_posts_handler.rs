@@ -11,7 +11,7 @@ use axum::{
     Extension,
 };
 use bson::{doc, oid::ObjectId};
-use chrono::Duration;
+use chrono::TimeDelta;
 use futures::{SinkExt, StreamExt, TryStreamExt};
 use mongodb::options::FindOptions;
 use serde::{Deserialize, Serialize};
@@ -66,19 +66,26 @@ async fn websocket(
     let initial_posts = fetch_posts(state.clone(), channel_id).await;
 
     let initial_json = match initial_posts {
-        Some(posts) => {
-            let response = WebSocketResponse {
-                success: true,
-                data: Some(transform_posts(posts)),
-                error_message: None,
-            };
-            if let Ok(json) = serde_json::to_string(&response) {
-                json
-            } else {
-                eprintln!("Error serializing posts to JSON");
+        Some(posts) => match transform_posts(posts) {
+            Ok(transformed_posts) => {
+                let response = WebSocketResponse {
+                    success: true,
+                    data: Some(transformed_posts),
+                    error_message: None,
+                };
+                match serde_json::to_string(&response) {
+                    Ok(json) => json,
+                    Err(err) => {
+                        eprintln!("Error serializing posts to JSON: {:?}", err);
+                        return;
+                    }
+                }
+            }
+            Err(err) => {
+                eprintln!("Error transforming posts: {:?}", err);
                 return;
             }
-        }
+        },
         None => "[]".to_string(), // Send an empty array if there are no initial posts
     };
 
@@ -86,8 +93,6 @@ async fn websocket(
         eprintln!("Error sending message to websocket client: {:?}", err);
         return;
     }
-
-    // let pipeline = [doc! {"$match": {"channel_id": channel_id}}];
 
     // Listen for changes in channel posts
     let change_stream = state
@@ -107,23 +112,30 @@ async fn websocket(
                     let posts = fetch_posts(state.clone(), channel_id).await;
 
                     if let Some(posts) = posts {
-                        let response = WebSocketResponse {
-                            success: true,
-                            data: Some(transform_posts(posts)),
-                            error_message: None,
-                        };
-                        let json = serde_json::to_string(&response).map_err(|err| {
-                            eprintln!("Error serializing posts: {:?}", err);
-                            "Failed to serialize posts".to_string()
-                        });
-
-                        if let Ok(json) = json {
-                            if let Err(err) = sender.send(Message::Text(json)).await {
-                                eprintln!("Error sending message to websocket client: {:?}", err);
+                        match transform_posts(posts) {
+                            Ok(transformed_posts) => {
+                                let response = WebSocketResponse {
+                                    success: true,
+                                    data: Some(transformed_posts),
+                                    error_message: None,
+                                };
+                                if let Ok(json) = serde_json::to_string(&response) {
+                                    if let Err(err) = sender.send(Message::Text(json)).await {
+                                        eprintln!(
+                                            "Error sending message to websocket client: {:?}",
+                                            err
+                                        );
+                                        break;
+                                    }
+                                } else {
+                                    eprintln!("Error serializing posts to JSON");
+                                    break;
+                                }
+                            }
+                            Err(err) => {
+                                eprintln!("Error transforming posts: {:?}", err);
                                 break;
                             }
-                        } else {
-                            break;
                         }
                     }
                 }
@@ -183,38 +195,45 @@ async fn is_channel_public(channel_id: ObjectId, state: &AppState) -> bool {
     false
 }
 
-fn transform_posts(posts: Vec<Post>) -> BTreeMap<String, Vec<Vec<Post>>> {
+fn transform_posts(posts: Vec<Post>) -> Result<BTreeMap<String, Vec<Vec<Post>>>, String> {
     let mut result: BTreeMap<String, Vec<Vec<Post>>> = BTreeMap::new();
+
+    let interval_limit = match TimeDelta::try_minutes(5) {
+        Some(time) => Some(time),
+        None => return Err(format!("Failed to calculate time interval")),
+    };
 
     for post in posts {
         let created_date_str = post.created_at.date_naive().to_string();
-
-        // Calculate the interval limit (5 minutes)
-        let interval_limit = Duration::minutes(5);
 
         // Check if there's an existing array for the created date
         let entry = result
             .entry(created_date_str.clone())
             .or_insert_with(Vec::new);
 
-        // Check if there's an existing array for the time interval
-        let mut interval_found = false;
-        for interval_posts in entry.iter_mut() {
-            if let Some(last_post) = interval_posts.last() {
-                let time_difference = post.created_at.signed_duration_since(last_post.created_at);
-                if time_difference <= interval_limit {
-                    interval_posts.push(post.clone());
-                    interval_found = true;
-                    break;
+        if let Some(interval_limit) = interval_limit {
+            // Check if there's an existing array for the time interval
+            let mut interval_found = false;
+            for interval_posts in entry.iter_mut() {
+                if let Some(last_post) = interval_posts.last() {
+                    let time_difference =
+                        post.created_at.signed_duration_since(last_post.created_at);
+                    if time_difference <= interval_limit {
+                        interval_posts.push(post.clone());
+                        interval_found = true;
+                        break;
+                    }
                 }
             }
-        }
 
-        if !interval_found {
-            // Create a new interval array for this time
-            entry.push(vec![post]);
+            if !interval_found {
+                // Create a new interval array for this time
+                entry.push(vec![post]);
+            }
+        } else {
+            return Err("Failed to calculate time interval".to_string());
         }
     }
 
-    result
+    Ok(result)
 }
