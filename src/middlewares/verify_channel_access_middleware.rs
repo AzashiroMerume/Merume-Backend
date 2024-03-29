@@ -49,7 +49,7 @@ pub async fn verify_channel_access(
             .contains(&author.id))
     {
         true => {
-            req.extensions_mut().insert(channel.current_challenge_day);
+            req.extensions_mut().insert(channel.challenge.current_day);
             return Ok(next.run(req).await);
         }
         false => Err((
@@ -102,7 +102,7 @@ pub async fn verify_channel_access_with_post_id(
             .contains(&author.id))
     {
         true => {
-            req.extensions_mut().insert(channel.current_challenge_day);
+            req.extensions_mut().insert(channel.challenge.current_day);
             return Ok(next.run(req).await);
         }
         false => Err((

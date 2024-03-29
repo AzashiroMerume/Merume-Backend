@@ -1,5 +1,5 @@
 use crate::{
-    models::{author_model::Author, post_model::Post},
+    models::{author_model::Author, components::channel_enums::Visibility, post_model::Post},
     AppState,
 };
 use axum::{
@@ -189,7 +189,10 @@ async fn is_channel_public(channel_id: ObjectId, state: &AppState) -> bool {
         .find_one(doc! {"_id": channel_id}, None)
         .await
     {
-        return channel.channel_visibility == "Public";
+        return match channel.visibility {
+            Visibility::Public => true,
+            Visibility::Private => false,
+        };
     }
 
     false

@@ -2,9 +2,12 @@ use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::usize;
-use validator::{Validate, ValidationError};
+use validator::Validate;
 
-use super::author_model::Author;
+use super::{
+    author_model::Author,
+    components::channel_enums::{ChallengeType, Visibility},
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -12,20 +15,32 @@ pub struct Channel {
     #[serde(rename = "_id")]
     pub id: ObjectId,
     pub author: Author,
-    pub channel_type: String,
     pub name: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub goal: Option<u32>,
-    pub channel_visibility: String,
+    pub visibility: Visibility,
     pub description: String,
     pub categories: Vec<String>,
+    pub challenge: Challenge,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub contributors: Option<Vec<ObjectId>>,
     pub followers: Followers,
-    pub current_challenge_day: usize,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub channel_profile_picture_url: Option<String>,
     pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+#[serde(rename_all = "snake_case")]
+pub struct Challenge {
+    pub challenge_type: ChallengeType,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[validate(range(min = 1000, max = 2000))]
+    pub goal: Option<u32>,
+    pub points: usize,
+    pub current_day: usize,
+    pub streak: usize,
+    pub missed_count: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub missed_days: Option<Vec<DateTime<Utc>>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -41,52 +56,51 @@ pub struct Followers {
 #[derive(Debug, Clone, Deserialize, Validate)]
 #[serde(rename_all = "snake_case")]
 pub struct ChannelPayload {
-    pub channel_type: String,
     #[validate(length(min = 1))]
     pub name: String,
+    pub challenge_type: String,
     #[validate(range(min = 1000, max = 2000))]
     pub goal: Option<u32>,
-    #[validate(custom(function = "validate_channel_visibility"))]
-    pub channel_visibility: String,
+    pub visibility: String,
     #[validate(length(min = 1))]
     pub description: String,
     #[validate(length(min = 1))]
     pub categories: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub contributors: Option<Vec<ObjectId>>,
     pub channel_profile_picture_url: Option<String>,
+}
+
+impl ChannelPayload {
+    pub fn challenge_type_enum(&self) -> ChallengeType {
+        match &self.challenge_type.to_lowercase()[..] {
+            "fixed" => ChallengeType::Fixed,
+            "unfixed" => ChallengeType::Unfixed,
+            _ => ChallengeType::Fixed,
+        }
+    }
+
+    pub fn visibility_enum(&self) -> Visibility {
+        match &self.visibility.to_lowercase()[..] {
+            "public" => Visibility::Public,
+            "private" => Visibility::Private,
+            _ => Visibility::Public,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 #[serde(rename_all = "snake_case")]
 pub struct UpdateChannel {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub channel_type: Option<String>,
+    pub challenge_type: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub goal: Option<u32>,
-    #[validate(custom(function = "validate_channel_visibility_option"))]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub channel_visibility: Option<String>,
+    pub visibility: Visibility,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub channel_profile_picture_url: Option<String>,
-}
-
-fn validate_channel_visibility(channel_visibility: &str) -> Result<(), ValidationError> {
-    if channel_visibility == "Public" || channel_visibility == "Private" {
-        return Ok(());
-    }
-
-    Err(ValidationError::new("Not correct channel type"))
-}
-
-fn validate_channel_visibility_option(
-    channel_visibility: &Option<String>,
-) -> Result<(), ValidationError> {
-    match channel_visibility {
-        Some(visibility) => validate_channel_visibility(visibility),
-        None => Ok(()),
-    }
 }
