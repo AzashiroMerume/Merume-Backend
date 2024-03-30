@@ -24,7 +24,7 @@ pub struct Channel {
     pub contributors: Option<Vec<ObjectId>>,
     pub followers: Followers,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub channel_profile_picture_url: Option<String>,
+    pub channel_pfp_link: Option<String>,
     pub created_at: DateTime<Utc>,
 }
 
@@ -68,7 +68,7 @@ pub struct ChannelPayload {
     pub categories: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub contributors: Option<Vec<ObjectId>>,
-    pub channel_profile_picture_url: Option<String>,
+    pub channel_pfp_link: Option<String>,
 }
 
 impl ChannelPayload {
@@ -102,5 +102,5 @@ pub struct UpdateChannel {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub channel_profile_picture_url: Option<String>,
+    pub channel_pfp_link: Option<String>,
 }

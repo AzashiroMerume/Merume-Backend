@@ -71,7 +71,7 @@ pub async fn new_channel(
         challenge,
         contributors: payload.contributors,
         followers,
-        channel_profile_picture_url: payload.channel_profile_picture_url,
+        channel_pfp_link: payload.channel_pfp_link,
         created_at: now,
     };
 
