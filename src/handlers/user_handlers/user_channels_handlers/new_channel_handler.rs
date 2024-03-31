@@ -38,8 +38,8 @@ pub async fn new_channel(
         challenge_type: ChannelPayload::challenge_type_enum(&payload),
         goal: payload.goal,
         points: 0,
-        current_day: 0,
-        streak: 0,
+        current_day: 1,
+        streak: 1,
         missed_count: 0,
         missed_days: None,
     };
