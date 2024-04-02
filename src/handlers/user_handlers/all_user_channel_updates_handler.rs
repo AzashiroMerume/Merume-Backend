@@ -7,8 +7,14 @@ use axum::{
     Extension,
 };
 use bson::{doc, oid::ObjectId};
-use futures::{SinkExt, StreamExt, TryStreamExt};
-use mongodb::{change_stream::event::OperationType, options::ChangeStreamOptions};
+use futures::{stream::SplitSink, SinkExt, StreamExt, TryStreamExt};
+use mongodb::{
+    change_stream::event::OperationType,
+    options::{
+        ChangeStreamOptions,
+        FullDocumentType::{self},
+    },
+};
 use serde::{Deserialize, Serialize};
 
 use crate::{models::post_model::Post, AppState};
@@ -33,14 +39,26 @@ async fn websocket(socket: WebSocket, state: State<AppState>, user_id: ObjectId)
 
     let pipeline = vec![doc! {
         "$match": {
-            "author.id": user_id
+            "$or": [
+                {"fullDocument.author.id": user_id},
+                {"fullDocumentBeforeChange.author.id": user_id},
+                {"updateDescription.updatedFields.author.id": user_id},
+            ]
         }
     }];
+
+    // Define the options to include all operation types and full document for updates
+    let options = ChangeStreamOptions::builder()
+        .full_document(Some(FullDocumentType::UpdateLookup))
+        .full_document_before_change(Some(
+            mongodb::options::FullDocumentBeforeChangeType::WhenAvailable,
+        ))
+        .build();
 
     let change_stream = state
         .db
         .posts_collection
-        .watch(pipeline, None)
+        .watch(pipeline, Some(options))
         .await
         .map_err(|err| {
             eprintln!("Error creating change stream: {:?}", err);
@@ -57,15 +75,7 @@ async fn websocket(socket: WebSocket, state: State<AppState>, user_id: ObjectId)
                             post: change_event.full_document,
                             post_id: None,
                         };
-                        if let Ok(json) = serde_json::to_string(&response) {
-                            if let Err(err) = sender.send(Message::Text(json)).await {
-                                eprintln!("Error sending message to websocket client: {:?}", err);
-                                break;
-                            }
-                        } else {
-                            eprintln!("Error serializing response to JSON");
-                            break;
-                        }
+                        send_response(&mut sender, response).await;
                     }
                     OperationType::Delete => {
                         let post_id = change_event
@@ -78,15 +88,21 @@ async fn websocket(socket: WebSocket, state: State<AppState>, user_id: ObjectId)
                             post: None,
                             post_id: Some(post_id),
                         };
-                        if let Ok(json) = serde_json::to_string(&response) {
-                            if let Err(err) = sender.send(Message::Text(json)).await {
-                                eprintln!("Error sending message to websocket client: {:?}", err);
-                                break;
-                            }
-                        } else {
-                            eprintln!("Error serializing response to JSON");
-                            break;
-                        }
+                        send_response(&mut sender, response).await;
+                    }
+                    OperationType::Update => {
+                        let response = WebSocketResponse {
+                            operation_type: OperationType::Update,
+                            post: change_event.full_document,
+                            post_id: Some(
+                                change_event
+                                    .document_key
+                                    .unwrap()
+                                    .get_object_id("_id")
+                                    .unwrap(),
+                            ),
+                        };
+                        send_response(&mut sender, response).await;
                     }
                     _ => {}
                 },
@@ -100,5 +116,15 @@ async fn websocket(socket: WebSocket, state: State<AppState>, user_id: ObjectId)
                 }
             }
         }
+    }
+}
+
+async fn send_response(sender: &mut SplitSink<WebSocket, Message>, response: WebSocketResponse) {
+    if let Ok(json) = serde_json::to_string(&response) {
+        if let Err(err) = sender.send(Message::Text(json)).await {
+            eprintln!("Error sending message to websocket client: {:?}", err);
+        }
+    } else {
+        eprintln!("Error serializing response to JSON");
     }
 }

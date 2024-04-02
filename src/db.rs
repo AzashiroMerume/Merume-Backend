@@ -7,7 +7,11 @@ use crate::{
 };
 
 use axum::{http::StatusCode, Json};
-use mongodb::{bson::Document, options::ClientOptions, options::Compressor, Client, Collection};
+use mongodb::{
+    bson::Document,
+    options::{ChangeStreamPreAndPostImages, ClientOptions, Compressor, CreateCollectionOptions},
+    Client, Collection,
+};
 use std::time::Duration;
 
 #[derive(Clone, Debug)]
@@ -115,6 +119,31 @@ impl DB {
         let user_channels_collection_bson =
             database.collection::<Document>(&user_channels_collection_name);
 
+        let enable = ChangeStreamPreAndPostImages::builder()
+            .enabled(true)
+            .build();
+        let opts = CreateCollectionOptions::builder()
+            .change_stream_pre_and_post_images(enable)
+            .build();
+        let create_posts_collection = database
+            .create_collection(&posts_collection_name, opts)
+            .await;
+        create_posts_collection.map_err(|err| {
+            eprintln!(
+                "Error creating posts collection with change stream options: {}",
+                err
+            );
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(OperationStatusResponse {
+                    success: false,
+                    error_message: Some(format!(
+                        "Failed to create MongoDB collection: {}",
+                        err.to_string()
+                    )),
+                }),
+            )
+        })?;
         let posts_collection = database.collection::<Post>(&posts_collection_name);
         let posts_collection_bson = database.collection::<Document>(&posts_collection_name);
 
