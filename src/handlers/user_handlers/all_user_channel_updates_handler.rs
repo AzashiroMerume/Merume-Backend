@@ -1,13 +1,11 @@
+use crate::{models::post_model::Post, utils::websocket_helpers::send_response, AppState};
 use axum::{
-    extract::{
-        ws::{Message, WebSocket},
-        State, WebSocketUpgrade,
-    },
+    extract::{ws::WebSocket, State, WebSocketUpgrade},
     response::IntoResponse,
     Extension,
 };
 use bson::{doc, oid::ObjectId};
-use futures::{stream::SplitSink, SinkExt, StreamExt, TryStreamExt};
+use futures::{StreamExt, TryStreamExt};
 use mongodb::{
     change_stream::event::OperationType,
     options::{
@@ -16,8 +14,6 @@ use mongodb::{
     },
 };
 use serde::{Deserialize, Serialize};
-
-use crate::{models::post_model::Post, AppState};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct WebSocketResponse {
@@ -116,15 +112,5 @@ async fn websocket(socket: WebSocket, state: State<AppState>, user_id: ObjectId)
                 }
             }
         }
-    }
-}
-
-async fn send_response(sender: &mut SplitSink<WebSocket, Message>, response: WebSocketResponse) {
-    if let Ok(json) = serde_json::to_string(&response) {
-        if let Err(err) = sender.send(Message::Text(json)).await {
-            eprintln!("Error sending message to websocket client: {:?}", err);
-        }
-    } else {
-        eprintln!("Error serializing response to JSON");
     }
 }

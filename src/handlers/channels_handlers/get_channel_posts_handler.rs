@@ -1,10 +1,11 @@
 use crate::{
     models::{author_model::Author, components::channel_enums::Visibility, post_model::Post},
+    utils::websocket_helpers::send_response,
     AppState,
 };
 use axum::{
     extract::{
-        ws::{Message, WebSocket, WebSocketUpgrade},
+        ws::{WebSocket, WebSocketUpgrade},
         Path, State,
     },
     response::IntoResponse,
@@ -12,7 +13,7 @@ use axum::{
 };
 use bson::{doc, oid::ObjectId};
 use chrono::TimeDelta;
-use futures::{SinkExt, StreamExt, TryStreamExt};
+use futures::{StreamExt, TryStreamExt};
 use mongodb::options::FindOptions;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -44,55 +45,41 @@ async fn websocket(
     if !is_channel_public(channel_id, &state).await
         && !is_user_subscribed(user_id, channel_id, &state).await
     {
-        let response_json = match serde_json::to_string(&WebSocketResponse {
-            success: false,
-            data: None,
-            error_message: Some("Unauthorized access".to_string()),
-        }) {
-            Ok(json) => json,
-            Err(err) => {
-                eprintln!("Error sending message to websocket client: {:?}", err);
-                return;
-            }
-        };
-
-        if let Err(err) = sender.send(Message::Text(response_json)).await {
-            eprintln!("Error sending message to websocket client: {:?}", err);
-            return;
-        }
+        send_response(
+            &mut sender,
+            WebSocketResponse {
+                success: false,
+                data: None,
+                error_message: Some("Unauthorized access".to_string()),
+            },
+        )
+        .await;
+        return;
     }
 
     // Retrieve initial posts
     let initial_posts = fetch_posts(state.clone(), channel_id).await;
 
-    let initial_json = match initial_posts {
+    let initial_response = match initial_posts {
         Some(posts) => match transform_posts(posts) {
-            Ok(transformed_posts) => {
-                let response = WebSocketResponse {
-                    success: true,
-                    data: Some(transformed_posts),
-                    error_message: None,
-                };
-                match serde_json::to_string(&response) {
-                    Ok(json) => json,
-                    Err(err) => {
-                        eprintln!("Error serializing posts to JSON: {:?}", err);
-                        return;
-                    }
-                }
-            }
+            Ok(transformed_posts) => WebSocketResponse {
+                success: true,
+                data: Some(transformed_posts),
+                error_message: None,
+            },
             Err(err) => {
                 eprintln!("Error transforming posts: {:?}", err);
                 return;
             }
         },
-        None => "[]".to_string(), // Send an empty array if there are no initial posts
+        None => WebSocketResponse {
+            success: true,
+            data: Some(BTreeMap::new()),
+            error_message: None,
+        },
     };
 
-    if let Err(err) = sender.send(Message::Text(initial_json)).await {
-        eprintln!("Error sending message to websocket client: {:?}", err);
-        return;
-    }
+    send_response(&mut sender, initial_response).await;
 
     // Listen for changes in channel posts
     let change_stream = state
@@ -106,45 +93,26 @@ async fn websocket(
         });
 
     if let Ok(mut change_stream) = change_stream {
-        loop {
-            match change_stream.try_next().await {
-                Ok(Some(_)) => {
-                    let posts = fetch_posts(state.clone(), channel_id).await;
+        while let Some(_change) = change_stream.next().await {
+            let posts = fetch_posts(state.clone(), channel_id).await;
 
-                    if let Some(posts) = posts {
-                        match transform_posts(posts) {
-                            Ok(transformed_posts) => {
-                                let response = WebSocketResponse {
-                                    success: true,
-                                    data: Some(transformed_posts),
-                                    error_message: None,
-                                };
-                                if let Ok(json) = serde_json::to_string(&response) {
-                                    if let Err(err) = sender.send(Message::Text(json)).await {
-                                        eprintln!(
-                                            "Error sending message to websocket client: {:?}",
-                                            err
-                                        );
-                                        break;
-                                    }
-                                } else {
-                                    eprintln!("Error serializing posts to JSON");
-                                    break;
-                                }
-                            }
-                            Err(err) => {
-                                eprintln!("Error transforming posts: {:?}", err);
-                                break;
-                            }
-                        }
+            if let Some(posts) = posts {
+                match transform_posts(posts) {
+                    Ok(transformed_posts) => {
+                        send_response(
+                            &mut sender,
+                            WebSocketResponse {
+                                success: true,
+                                data: Some(transformed_posts),
+                                error_message: None,
+                            },
+                        )
+                        .await;
                     }
-                }
-                Ok(None) => {
-                    break;
-                }
-                Err(err) => {
-                    eprintln!("Error reading change stream: {:?}", err);
-                    break;
+                    Err(err) => {
+                        eprintln!("Error transforming posts: {:?}", err);
+                        break;
+                    }
                 }
             }
         }
@@ -189,13 +157,13 @@ async fn is_channel_public(channel_id: ObjectId, state: &AppState) -> bool {
         .find_one(doc! {"_id": channel_id}, None)
         .await
     {
-        return match channel.visibility {
+        match channel.visibility {
             Visibility::Public => true,
             Visibility::Private => false,
-        };
+        }
+    } else {
+        false
     }
-
-    false
 }
 
 fn transform_posts(posts: Vec<Post>) -> Result<BTreeMap<String, Vec<Vec<Post>>>, String> {
