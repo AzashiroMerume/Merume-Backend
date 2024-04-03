@@ -22,7 +22,6 @@ pub async fn subscribed_channels(
 }
 
 async fn websocket(mut _socket: WebSocket, state: State<AppState>, user_id: ObjectId) {
-    // By splitting we can send and receive at the same time.
     let (mut sender, _receiver) = _socket.split();
 
     let user_channels: Vec<UserChannel> = state
@@ -59,13 +58,11 @@ async fn websocket(mut _socket: WebSocket, state: State<AppState>, user_id: Obje
     let mut change_stream = state
         .db
         .user_channels_collection
-        .watch(
-            /* vec![doc! {"$match": {"user_id": user_id}}] */ None, None,
-        )
+        .watch(None, None)
         .await
         .unwrap();
 
-    loop {
+    while change_stream.is_alive() {
         match change_stream.try_next().await {
             Ok(Some(_)) => {
                 // A change event occurred in the collection

@@ -90,20 +90,13 @@ async fn websocket(socket: WebSocket, state: State<AppState>, user_id: ObjectId)
                         let response = WebSocketResponse {
                             operation_type: OperationType::Update,
                             post: change_event.full_document,
-                            post_id: Some(
-                                change_event
-                                    .document_key
-                                    .unwrap()
-                                    .get_object_id("_id")
-                                    .unwrap(),
-                            ),
+                            post_id: None,
                         };
                         send_response(&mut sender, response).await;
                     }
                     _ => {}
                 },
                 Ok(None) => {
-                    eprintln!("Broke in none");
                     break;
                 }
                 Err(err) => {

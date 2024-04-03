@@ -54,7 +54,7 @@ async fn websocket(mut _socket: WebSocket, state: State<AppState>, user_id: Obje
         });
 
     if let Ok(mut change_stream) = change_stream {
-        loop {
+        while change_stream.is_alive() {
             match change_stream.try_next().await {
                 Ok(Some(_)) => {
                     let channels = fetch_channels(state.clone(), user_id).await;

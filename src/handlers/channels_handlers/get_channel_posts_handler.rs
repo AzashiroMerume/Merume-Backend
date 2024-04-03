@@ -93,26 +93,35 @@ async fn websocket(
         });
 
     if let Ok(mut change_stream) = change_stream {
-        while let Some(_change) = change_stream.next().await {
-            let posts = fetch_posts(state.clone(), channel_id).await;
+        while change_stream.is_alive() {
+            match change_stream.try_next().await {
+                Ok(Some(_)) => {
+                    let posts = fetch_posts(state.clone(), channel_id).await;
 
-            if let Some(posts) = posts {
-                match transform_posts(posts) {
-                    Ok(transformed_posts) => {
-                        send_response(
-                            &mut sender,
-                            WebSocketResponse {
-                                success: true,
-                                data: Some(transformed_posts),
-                                error_message: None,
-                            },
-                        )
-                        .await;
+                    if let Some(posts) = posts {
+                        match transform_posts(posts) {
+                            Ok(transformed_posts) => {
+                                send_response(
+                                    &mut sender,
+                                    WebSocketResponse {
+                                        success: true,
+                                        data: Some(transformed_posts),
+                                        error_message: None,
+                                    },
+                                )
+                                .await;
+                            }
+                            Err(err) => {
+                                eprintln!("Error transforming posts: {:?}", err);
+                                break;
+                            }
+                        }
                     }
-                    Err(err) => {
-                        eprintln!("Error transforming posts: {:?}", err);
-                        break;
-                    }
+                }
+                Ok(None) => break,
+                Err(err) => {
+                    eprintln!("Error reading change stream: {:?}", err);
+                    break;
                 }
             }
         }
