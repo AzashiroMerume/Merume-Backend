@@ -1,6 +1,8 @@
 use crate::{
     handlers::common_handler,
-    routes::{auth_routes, channel_system_routes, mark_as_read_posts_routes, user_routes},
+    routes::{
+        auth_routes, channel_system_routes, mark_as_read_posts_routes, user_routes, users_routes,
+    },
     AppState,
 };
 use axum::{
@@ -32,6 +34,7 @@ pub fn create_router(State(state): State<AppState>) -> Router {
     let channel_system = channel_system_routes::channel_system(State(state.clone()));
     let read_post_routes = mark_as_read_posts_routes::read_posts_routes(State(state.clone()));
     let user_routes = user_routes::user_routes(State(state.clone()));
+    let users_routes = users_routes::user_routes(State(state.clone()));
 
     let app = Router::new()
         // .route("/test", get(common_handler::_test_handler))
@@ -40,6 +43,7 @@ pub fn create_router(State(state): State<AppState>) -> Router {
         //     |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
         // ))
         .nest("/user", user_routes)
+        .nest("/users", users_routes)
         .nest("/auth", auth_routes)
         .nest("/channels", channel_system)
         .nest("/mark", read_post_routes)
