@@ -1,25 +1,25 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum ChallengeType {
+pub enum ChallengeTypes {
     Fixed,
     Unfixed,
 }
 
-impl Default for ChallengeType {
+impl Default for ChallengeTypes {
     fn default() -> Self {
-        ChallengeType::Fixed
+        ChallengeTypes::Fixed
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum Visibility {
+pub enum VisibilityTypes {
     Public,
     Private,
 }
 
-impl Default for Visibility {
+impl Default for VisibilityTypes {
     fn default() -> Self {
-        Visibility::Public
+        VisibilityTypes::Public
     }
 }

@@ -6,7 +6,7 @@ use validator::Validate;
 
 use super::{
     author_model::Author,
-    components::channel_enums::{ChallengeType, Visibility},
+    components::channel_enums::{ChallengeTypes, VisibilityTypes},
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -16,7 +16,7 @@ pub struct Channel {
     pub id: ObjectId,
     pub author: Author,
     pub name: String,
-    pub visibility: Visibility,
+    pub visibility: VisibilityTypes,
     pub description: String,
     pub categories: Vec<String>,
     pub challenge: Challenge,
@@ -31,7 +31,7 @@ pub struct Channel {
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 #[serde(rename_all = "snake_case")]
 pub struct Challenge {
-    pub challenge_type: ChallengeType,
+    pub challenge_type: ChallengeTypes,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[validate(range(min = 1000, max = 2000))]
     pub goal: Option<u32>,
@@ -72,19 +72,19 @@ pub struct ChannelPayload {
 }
 
 impl ChannelPayload {
-    pub fn challenge_type_enum(&self) -> ChallengeType {
+    pub fn challenge_type_enum(&self) -> ChallengeTypes {
         match &self.challenge_type.to_lowercase()[..] {
-            "fixed" => ChallengeType::Fixed,
-            "unfixed" => ChallengeType::Unfixed,
-            _ => ChallengeType::Fixed,
+            "fixed" => ChallengeTypes::Fixed,
+            "unfixed" => ChallengeTypes::Unfixed,
+            _ => ChallengeTypes::Fixed,
         }
     }
 
-    pub fn visibility_enum(&self) -> Visibility {
+    pub fn visibility_enum(&self) -> VisibilityTypes {
         match &self.visibility.to_lowercase()[..] {
-            "public" => Visibility::Public,
-            "private" => Visibility::Private,
-            _ => Visibility::Public,
+            "public" => VisibilityTypes::Public,
+            "private" => VisibilityTypes::Private,
+            _ => VisibilityTypes::Public,
         }
     }
 }
@@ -98,7 +98,7 @@ pub struct UpdateChannel {
     pub name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub goal: Option<u32>,
-    pub visibility: Visibility,
+    pub visibility: VisibilityTypes,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]

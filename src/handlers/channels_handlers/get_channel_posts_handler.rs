@@ -1,5 +1,5 @@
 use crate::{
-    models::{author_model::Author, components::channel_enums::Visibility, post_model::Post},
+    models::{author_model::Author, components::channel_enums::VisibilityTypes, post_model::Post},
     utils::websocket_helpers::send_response,
     AppState,
 };
@@ -167,8 +167,8 @@ async fn is_channel_public(channel_id: ObjectId, state: &AppState) -> bool {
         .await
     {
         match channel.visibility {
-            Visibility::Public => true,
-            Visibility::Private => false,
+            VisibilityTypes::Public => true,
+            VisibilityTypes::Private => false,
         }
     } else {
         false
