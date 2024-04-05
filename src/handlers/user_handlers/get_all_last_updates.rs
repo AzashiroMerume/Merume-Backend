@@ -22,7 +22,7 @@ struct WebSocketResponse {
     post_id: Option<ObjectId>,
 }
 
-pub async fn all_channels_updates(
+pub async fn all_last_updates(
     ws: WebSocketUpgrade,
     State(state): State<AppState>,
     Extension(user_id): Extension<ObjectId>,

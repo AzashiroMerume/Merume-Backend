@@ -1,4 +1,4 @@
-pub mod all_user_channel_updates_handler;
+pub mod get_all_last_updates;
 pub mod content_system_handlers;
 pub mod get_email_handler;
 pub mod heartbeat_handler;

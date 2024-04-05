@@ -4,8 +4,8 @@ pub mod user_channels_routes;
 use super::content_routes;
 use crate::{
     handlers::user_handlers::{
-        all_user_channel_updates_handler::all_channels_updates,
-        get_email_handler::get_email_by_nickname, heartbeat_handler::heartbeat,
+        get_all_last_updates::all_last_updates, get_email_handler::get_email_by_nickname,
+        heartbeat_handler::heartbeat,
     },
     middlewares::auth_middleware,
     AppState,
@@ -25,7 +25,7 @@ pub fn user_routes(State(state): State<AppState>) -> Router<AppState> {
 
     let user_routes = Router::new()
         .route("/heartbeat", get(heartbeat))
-        .route("/all_updates", get(all_channels_updates))
+        .route("/last_updates", get(all_last_updates))
         .layer(middleware::from_fn_with_state(
             state.clone(),
             |state, req, next| auth_middleware::auth(state, req, next, None),
