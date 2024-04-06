@@ -1,13 +1,12 @@
+use super::{
+    author_model::Author,
+    components::channel_enums::{ChallengeTypes, VisibilityTypes},
+};
 use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::usize;
 use validator::Validate;
-
-use super::{
-    author_model::Author,
-    components::channel_enums::{ChallengeTypes, VisibilityTypes},
-};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

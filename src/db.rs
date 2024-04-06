@@ -1,7 +1,8 @@
 use crate::{
     models::{
-        channel_model::Channel, post_actioned_model::ReadPost, post_model::Post,
-        user_channel_model::UserChannel, user_model::User,
+        channel_model::Channel, channel_read_tracker_model::ChannelReadTracker,
+        post_actioned_model::ReadPost, post_model::Post, user_channel_model::UserChannel,
+        user_model::User,
     },
     responses::OperationStatusResponse,
 };
@@ -22,6 +23,8 @@ pub struct DB {
     pub channels_collection_bson: Collection<Document>,
     pub user_channels_collection: Collection<UserChannel>,
     pub user_channels_collection_bson: Collection<Document>,
+    pub channel_read_trackers_collection: Collection<ChannelReadTracker>,
+    pub channel_read_trackers_bson_collection: Collection<Document>,
     pub posts_collection: Collection<Post>,
     pub posts_collection_bson: Collection<Document>,
     pub read_posts_collection: Collection<ReadPost>,
@@ -58,6 +61,9 @@ impl DB {
             .expect("Failed to load `DB_CHANNELS_TABLE` environement variable.");
         let user_channels_collection_name: String = std::env::var("DB_USER_CHANNELS_TABLE")
             .expect("Failed to load `DB_USER_CHANNELS_TABLE` environement variable.");
+        let channel_read_trackers_collection_name: String =
+            std::env::var("DB_CHANNEL_READ_TRACKERS_TABLE")
+                .expect("Failed to load `DB_CHANNEL_READ_TRACKERS_TABLE` environment variable.");
         let posts_collection_name: String = std::env::var("DB_POSTS_TABLE")
             .expect("Failed to load `DB_POSTS_TABLE` environement variable.");
         let read_posts_collection_name: String = std::env::var("DB_READ_POSTS_TABLE")
@@ -119,6 +125,11 @@ impl DB {
         let user_channels_collection_bson =
             database.collection::<Document>(&user_channels_collection_name);
 
+        let channel_read_trackers_collection =
+            database.collection::<ChannelReadTracker>(&channel_read_trackers_collection_name);
+        let channel_read_trackers_bson_collection =
+            database.collection::<Document>(&channel_read_trackers_collection_name);
+
         let enable = ChangeStreamPreAndPostImages::builder()
             .enabled(true)
             .build();
@@ -158,6 +169,8 @@ impl DB {
             channels_collection_bson,
             user_channels_collection,
             user_channels_collection_bson,
+            channel_read_trackers_collection,
+            channel_read_trackers_bson_collection,
             posts_collection,
             posts_collection_bson,
             read_posts_collection,

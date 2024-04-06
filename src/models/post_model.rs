@@ -12,6 +12,7 @@ pub struct Post {
     pub id: ObjectId,
     pub author: Author,
     pub channel_id: ObjectId,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub body: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub images: Option<Vec<String>>,

@@ -1,6 +1,7 @@
 pub mod auth_model;
 pub mod author_model;
 pub mod channel_model;
+pub mod channel_read_tracker_model;
 pub mod components;
 pub mod post_actioned_model;
 pub mod post_model;
