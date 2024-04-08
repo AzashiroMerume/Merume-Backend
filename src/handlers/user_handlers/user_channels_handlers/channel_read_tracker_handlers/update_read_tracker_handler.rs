@@ -105,7 +105,7 @@ pub async fn update_read_tracker_handler(
                 .await
             {
                 Ok(_) => (
-                    StatusCode::OK,
+                    StatusCode::CREATED,
                     Json(OperationStatusResponse {
                         success: true,
                         error_message: None,

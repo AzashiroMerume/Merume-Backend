@@ -13,7 +13,7 @@ struct ReadTrackersResponse {
     error_message: Option<String>,
 }
 
-pub async fn get_read_tracker(
+pub async fn get_read_trackers(
     State(state): State<AppState>,
     Extension(author): Extension<Author>,
 ) -> impl IntoResponse {
