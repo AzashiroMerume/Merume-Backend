@@ -1,6 +1,8 @@
 pub mod preferences_routes;
 pub mod user_channels_routes;
 
+use std::sync::Arc;
+
 use super::content_routes;
 use crate::{
     handlers::user_handlers::{
@@ -18,7 +20,7 @@ use axum::{
 };
 use tower_http::limit::RequestBodyLimitLayer;
 
-pub fn user_routes(State(state): State<AppState>) -> Router<AppState> {
+pub fn user_routes(State(state): State<Arc<AppState>>) -> Router<Arc<AppState>> {
     let preferences_routes = preferences_routes::preferences_routes(State(state.clone()));
     let user_channels_routes = user_channels_routes::user_channels_routes(State(state.clone()));
     let content_routes = content_routes::content_routes(State(state.clone()));
@@ -26,10 +28,9 @@ pub fn user_routes(State(state): State<AppState>) -> Router<AppState> {
     let user_routes = Router::new()
         .route("/heartbeat", get(heartbeat))
         .route("/last_updates", get(all_last_updates))
-        .layer(middleware::from_fn_with_state(
-            state.clone(),
-            |state, req, next| auth_middleware::auth(state, req, next, None),
-        ))
+        .layer(middleware::from_fn_with_state(state, |state, req, next| {
+            auth_middleware::auth(state, req, next, None)
+        }))
         .route("/get_email", post(get_email_by_nickname))
         .layer(RequestBodyLimitLayer::new(1024))
         .nest("/channels", user_channels_routes)

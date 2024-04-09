@@ -13,7 +13,7 @@ use axum::{
     },
     Router,
 };
-use std::{iter::once, time::Duration};
+use std::{iter::once, sync::Arc, time::Duration};
 use tower::ServiceBuilder;
 use tower_http::{
     sensitive_headers::SetSensitiveRequestHeadersLayer, set_header::SetResponseHeaderLayer,
@@ -21,7 +21,7 @@ use tower_http::{
 };
 // use std::sync::Arc;
 
-pub fn create_router(State(state): State<AppState>) -> Router {
+pub fn create_router(State(state): State<Arc<AppState>>) -> Router {
     //setting server configs
     let server_header_value = HeaderValue::from_static("Merume");
     let request_timeout: u64 = std::env::var("REQUEST_TIMEOUT")
@@ -39,7 +39,7 @@ pub fn create_router(State(state): State<AppState>) -> Router {
     let app = Router::new()
         // .route("/test", get(common_handler::_test_handler))
         // .route_layer(middleware::from_fn_with_state(
-        //     client.clone(),
+        //     client,
         //     |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
         // ))
         .nest("/user", user_routes)

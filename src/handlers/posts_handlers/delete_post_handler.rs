@@ -7,9 +7,10 @@ use axum::{
     Extension, Json,
 };
 use bson::{doc, oid::ObjectId};
+use std::sync::Arc;
 
 pub async fn delete_post_by_id(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Extension(author): Extension<Author>,
     Path((_channel_id, post_id)): Path<(ObjectId, ObjectId)>,
 ) -> impl IntoResponse {

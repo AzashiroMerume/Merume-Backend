@@ -14,9 +14,10 @@ use axum::{
 };
 use bson::{doc, oid::ObjectId};
 use jsonwebtoken::errors::ErrorKind;
+use std::sync::Arc;
 
 pub async fn verify_refresh_token(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     mut req: Request,
     next: Next,
 ) -> Result<Response, (StatusCode, Json<OperationStatusResponse>)> {
@@ -85,8 +86,8 @@ pub async fn verify_refresh_token(
             // After generating the access token, extract the String value from the Result
             let access_token = match generate_access_jwt_token(
                 &user.firebase_user_id,
-                state.firebase_token_encoding_key,
-                state.firebase_service_account,
+                state.firebase_config.token_encoding_key.clone(),
+                state.firebase_config.service_account.clone(),
             ) {
                 Ok(token) => token,
                 Err(err) => {

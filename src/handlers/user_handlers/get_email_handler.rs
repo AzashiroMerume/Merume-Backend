@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::AppState;
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use bson::doc;
@@ -19,7 +21,7 @@ struct EmailResponse {
 }
 
 pub async fn get_email_by_nickname(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Json(payload): Json<Payload>,
 ) -> impl IntoResponse {
     match payload.validate() {

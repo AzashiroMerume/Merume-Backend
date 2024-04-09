@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     models::{author_model::Author, user_channel_model::UserChannel},
     responses::OperationStatusResponse,
@@ -13,7 +15,7 @@ use bson::{doc, oid::ObjectId};
 use chrono::Utc;
 
 pub async fn subscribe_to_channel(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Extension(author): Extension<Author>,
     Path(channel_id): Path<ObjectId>,
 ) -> impl IntoResponse {

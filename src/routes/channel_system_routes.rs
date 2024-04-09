@@ -1,16 +1,16 @@
 use crate::{handlers, middlewares, AppState};
-use handlers::{channels_handlers, posts_handlers};
-use middlewares::{auth_middleware, verify_channel_access_middleware};
-
 use axum::{
     extract::State,
     middleware,
     routing::{get, post},
     Router,
 };
+use handlers::{channels_handlers, posts_handlers};
+use middlewares::{auth_middleware, verify_channel_access_middleware};
+use std::sync::Arc;
 use tower_http::limit::RequestBodyLimitLayer;
 
-pub fn channels_routes(State(state): State<AppState>) -> Router<AppState> {
+pub fn channels_routes(State(state): State<Arc<AppState>>) -> Router<Arc<AppState>> {
     Router::new()
         .route(
             "/:channel_id",
@@ -37,7 +37,7 @@ pub fn channels_routes(State(state): State<AppState>) -> Router<AppState> {
         }))
 }
 
-pub fn post_routes(State(state): State<AppState>) -> Router<AppState> {
+pub fn post_routes(State(state): State<Arc<AppState>>) -> Router<Arc<AppState>> {
     let without_post_id = Router::new()
         .route(
             "/:channel_id/post",
@@ -71,7 +71,7 @@ pub fn post_routes(State(state): State<AppState>) -> Router<AppState> {
         .layer(RequestBodyLimitLayer::new(1024))
 }
 
-pub fn channel_system(State(state): State<AppState>) -> Router<AppState> {
+pub fn channel_system(State(state): State<Arc<AppState>>) -> Router<Arc<AppState>> {
     Router::new()
         .merge(channels_routes(State(state.clone())))
         .merge(post_routes(State(state)))

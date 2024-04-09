@@ -12,7 +12,7 @@ use bson::{doc, oid::ObjectId, Document};
 use futures::StreamExt;
 use mongodb::Collection;
 use serde::Serialize;
-use std::usize;
+use std::{sync::Arc, usize};
 
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -24,7 +24,7 @@ pub struct ChannelFollowersResponse {
 
 // Modify your function to use UserInfo
 pub async fn get_channel_followers(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Path(channel_id): Path<ObjectId>,
 ) -> impl IntoResponse {
     let user_channel_collection: Collection<UserChannel> =

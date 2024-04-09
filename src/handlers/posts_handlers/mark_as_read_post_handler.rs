@@ -1,13 +1,13 @@
 use crate::models::author_model::Author;
 use crate::AppState;
 use crate::{models::post_actioned_model::ReadPost, responses::OperationStatusResponse};
-
 use axum::Extension;
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use bson::oid::ObjectId;
+use std::sync::Arc;
 
 pub async fn mark_as_read(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Extension(author): Extension<Author>,
     Json(payload): Json<Vec<ReadPost>>,
 ) -> impl IntoResponse {

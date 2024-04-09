@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::AppState;
 use axum::{
     extract::{
@@ -11,13 +13,13 @@ use chrono::Utc;
 
 pub async fn heartbeat(
     ws: WebSocketUpgrade,
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Extension(user_id): Extension<ObjectId>,
 ) -> impl IntoResponse {
     ws.on_upgrade(move |socket| websocket(socket, State(state), user_id))
 }
 
-async fn websocket(mut socket: WebSocket, state: State<AppState>, user_id: ObjectId) {
+async fn websocket(mut socket: WebSocket, state: State<Arc<AppState>>, user_id: ObjectId) {
     set_user_online(user_id, &state).await;
 
     loop {
@@ -39,7 +41,7 @@ async fn websocket(mut socket: WebSocket, state: State<AppState>, user_id: Objec
     set_user_offline(user_id, &state).await;
 }
 
-async fn set_user_online(user_id: ObjectId, state: &State<AppState>) {
+async fn set_user_online(user_id: ObjectId, state: &State<Arc<AppState>>) {
     let now = Utc::now().to_rfc3339();
     let update_result = state
         .db
@@ -62,7 +64,7 @@ async fn set_user_online(user_id: ObjectId, state: &State<AppState>) {
     }
 }
 
-async fn set_user_offline(user_id: ObjectId, state: &State<AppState>) {
+async fn set_user_offline(user_id: ObjectId, state: &State<Arc<AppState>>) {
     let update_result = state
         .db
         .users_collection

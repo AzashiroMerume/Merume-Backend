@@ -6,9 +6,10 @@ use axum::{
     Json,
 };
 use bson::{doc, oid::ObjectId};
+use std::sync::Arc;
 
 pub async fn get_channel_by_id(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Path(channel_id): Path<ObjectId>,
 ) -> impl IntoResponse {
     let channel = match state

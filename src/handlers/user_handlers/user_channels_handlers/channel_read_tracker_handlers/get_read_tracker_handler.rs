@@ -3,7 +3,7 @@ use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, 
 use bson::doc;
 use futures::TryStreamExt;
 use serde::Serialize;
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -14,7 +14,7 @@ struct ReadTrackersResponse {
 }
 
 pub async fn get_read_trackers(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Extension(author): Extension<Author>,
 ) -> impl IntoResponse {
     let pipeline = vec![

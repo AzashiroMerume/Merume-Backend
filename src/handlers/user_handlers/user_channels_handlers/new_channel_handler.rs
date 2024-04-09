@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     models::{
         author_model::Author,
@@ -13,7 +15,7 @@ use chrono::Utc;
 use validator::Validate;
 
 pub async fn new_channel(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Extension(author): Extension<Author>,
     Json(payload): Json<ChannelPayload>,
 ) -> impl IntoResponse {

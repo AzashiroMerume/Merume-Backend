@@ -1,16 +1,16 @@
 use crate::{models::channel_model::UpdateChannel, responses::OperationStatusResponse, AppState};
-
 use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::IntoResponse,
     Json,
 };
+use std::sync::Arc;
 
 use bson::{doc, oid::ObjectId};
 
 pub async fn update_channel_by_id(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Path(channel_id): Path<ObjectId>,
     Json(payload): Json<UpdateChannel>,
 ) -> impl IntoResponse {

@@ -1,10 +1,11 @@
 use crate::{handlers, middlewares, AppState};
 use handlers::posts_handlers;
 use middlewares::auth_middleware;
+use std::sync::Arc;
 
 use axum::{extract::State, middleware, routing::post, Router};
 
-pub fn read_posts_routes(State(state): State<AppState>) -> Router<AppState> {
+pub fn read_posts_routes(State(state): State<Arc<AppState>>) -> Router<Arc<AppState>> {
     Router::new()
         .route(
             "/",

@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     handlers::{self},
     middlewares::{auth_middleware, verify_refresh_token_middleware},
@@ -13,7 +15,7 @@ use axum::{
 use handlers::auth_handlers;
 use tower_http::limit::RequestBodyLimitLayer;
 
-pub fn auth_routes(State(state): State<AppState>) -> Router<AppState> {
+pub fn auth_routes(State(state): State<Arc<AppState>>) -> Router<Arc<AppState>> {
     Router::new()
         .route("/", get(auth_handlers::verify_auth_handler::verify_auth))
         .route("/logout", post(auth_handlers::logout_handler::logout))

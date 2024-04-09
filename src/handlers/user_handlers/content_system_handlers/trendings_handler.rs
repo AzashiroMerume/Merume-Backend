@@ -2,7 +2,6 @@ use crate::{
     models::channel_model::Channel, responses::RecommendedChannelResponse,
     utils::pagination::Pagination, AppState,
 };
-
 use axum::{
     extract::{Query, State},
     http::StatusCode,
@@ -11,9 +10,10 @@ use axum::{
 };
 use bson::doc;
 use futures::StreamExt;
+use std::sync::Arc;
 
 pub async fn trendings(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Query(pagination): Query<Pagination>,
 ) -> impl IntoResponse {
     let skip = pagination.page * pagination.limit;

@@ -2,6 +2,7 @@ use crate::{
     models::channel_model::Channel, models::user_model::User,
     responses::RecommendedChannelResponse, utils::pagination::Pagination, AppState,
 };
+use std::sync::Arc;
 
 use axum::{
     extract::{Extension, Query, State},
@@ -13,7 +14,7 @@ use bson::doc;
 use futures::StreamExt;
 
 pub async fn recommendations(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
     Query(pagination): Query<Pagination>,
 ) -> impl IntoResponse {

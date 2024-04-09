@@ -7,9 +7,10 @@ use axum::{
     Extension, Json,
 };
 use bson::{doc, oid::ObjectId};
+use std::sync::Arc;
 
 pub async fn verify_channel_access(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Extension(author): Extension<Author>,
     Path(channel_id): Path<ObjectId>,
     _post_id: Option<Path<ObjectId>>,
@@ -63,7 +64,7 @@ pub async fn verify_channel_access(
 }
 
 pub async fn verify_channel_access_with_post_id(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Extension(author): Extension<Author>,
     Path((channel_id, _post_id)): Path<(ObjectId, ObjectId)>,
     mut req: Request,

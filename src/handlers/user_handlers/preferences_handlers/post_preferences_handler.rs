@@ -1,16 +1,16 @@
-use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, Json};
-use bson::doc;
-use mongodb::options::UpdateOptions;
-use validator::Validate;
-
 use crate::{
     models::{author_model::Author, user_model::UserPreferencesPayload},
     responses::OperationStatusResponse,
     AppState,
 };
+use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, Json};
+use bson::doc;
+use mongodb::options::UpdateOptions;
+use std::sync::Arc;
+use validator::Validate;
 
 pub async fn post_preferences(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Extension(author): Extension<Author>,
     Json(payload): Json<UserPreferencesPayload>,
 ) -> impl IntoResponse {

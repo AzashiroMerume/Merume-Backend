@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     handlers::user_handlers::user_channels_handlers as channel_handlers, middlewares, AppState,
 };
@@ -10,7 +12,7 @@ use axum::{
 };
 use tower_http::limit::RequestBodyLimitLayer;
 
-pub fn user_channels_routes(State(state): State<AppState>) -> Router<AppState> {
+pub fn user_channels_routes(State(state): State<Arc<AppState>>) -> Router<Arc<AppState>> {
     Router::new()
         .route(
             "/:channel_id/delete",

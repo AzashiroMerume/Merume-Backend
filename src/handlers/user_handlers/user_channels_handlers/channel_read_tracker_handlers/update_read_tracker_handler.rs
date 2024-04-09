@@ -13,9 +13,10 @@ use axum::{
     Extension, Json,
 };
 use bson::{doc, oid::ObjectId};
+use std::sync::Arc;
 
 pub async fn update_read_tracker_handler(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Path(channel_id): Path<ObjectId>,
     Extension(author): Extension<Author>,
     Json(payload): Json<ChannelReadTrackerPayload>,

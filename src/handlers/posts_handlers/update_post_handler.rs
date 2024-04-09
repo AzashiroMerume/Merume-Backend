@@ -1,17 +1,17 @@
 use crate::{models::post_model::UpdatePost, responses::OperationStatusResponse, AppState};
-
 use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::IntoResponse,
     Json,
 };
+use std::sync::Arc;
 
 use bson::{doc, oid::ObjectId};
 use chrono::Utc;
 
 pub async fn update_post_by_id(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Path((_channel_id, post_id)): Path<(ObjectId, ObjectId)>,
     Json(payload): Json<UpdatePost>,
 ) -> impl IntoResponse {

@@ -1,10 +1,12 @@
+use std::sync::Arc;
+
 use crate::{handlers, middlewares, AppState};
 use handlers::user_handlers::content_system_handlers;
 use middlewares::auth_middleware;
 
 use axum::{extract::State, middleware, routing::get, Router};
 
-pub fn content_routes(State(state): State<AppState>) -> Router<AppState> {
+pub fn content_routes(State(state): State<Arc<AppState>>) -> Router<Arc<AppState>> {
     Router::new()
         .route(
             "/",

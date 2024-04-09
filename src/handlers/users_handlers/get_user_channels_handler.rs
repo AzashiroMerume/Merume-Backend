@@ -7,6 +7,7 @@ use axum::{
 use bson::{doc, oid::ObjectId};
 use futures::TryStreamExt;
 use serde::Serialize;
+use std::sync::Arc;
 
 #[derive(Serialize)]
 pub struct UserChannelsResponse {
@@ -16,7 +17,7 @@ pub struct UserChannelsResponse {
 }
 
 pub async fn get_user_channels(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Path(user_id): Path<ObjectId>,
 ) -> impl IntoResponse {
     let filter = doc! {"author.id": user_id, "channel_visibility": "Public"};

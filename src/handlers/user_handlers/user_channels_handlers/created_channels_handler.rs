@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     models::{author_model::Author, channel_model::Channel},
     AppState,
@@ -14,13 +16,13 @@ use futures::{SinkExt, StreamExt, TryStreamExt};
 
 pub async fn created_channels(
     ws: WebSocketUpgrade,
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Extension(author): Extension<Author>,
 ) -> impl IntoResponse {
     ws.on_upgrade(move |socket| websocket(socket, State(state), author.id))
 }
 
-async fn websocket(mut _socket: WebSocket, state: State<AppState>, user_id: ObjectId) {
+async fn websocket(mut _socket: WebSocket, state: State<Arc<AppState>>, user_id: ObjectId) {
     let (mut sender, _receiver) = _socket.split();
 
     // Retrieve initial channels
@@ -87,7 +89,7 @@ async fn websocket(mut _socket: WebSocket, state: State<AppState>, user_id: Obje
     }
 }
 
-async fn fetch_channels(state: State<AppState>, user_id: ObjectId) -> Option<Vec<Channel>> {
+async fn fetch_channels(state: State<Arc<AppState>>, user_id: ObjectId) -> Option<Vec<Channel>> {
     let filter = doc! {"author.id": user_id};
 
     let channels_result = state

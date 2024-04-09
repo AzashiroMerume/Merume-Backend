@@ -12,16 +12,17 @@ use axum::{
 };
 use bson::{doc, oid::ObjectId};
 use futures::{SinkExt, StreamExt, TryStreamExt};
+use std::sync::Arc;
 
 pub async fn subscribed_channels(
     ws: WebSocketUpgrade,
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Extension(author): Extension<Author>,
 ) -> impl IntoResponse {
     ws.on_upgrade(move |socket| websocket(socket, State(state), author.id))
 }
 
-async fn websocket(mut _socket: WebSocket, state: State<AppState>, user_id: ObjectId) {
+async fn websocket(mut _socket: WebSocket, state: State<Arc<AppState>>, user_id: ObjectId) {
     let (mut sender, _receiver) = _socket.split();
 
     let user_channels: Vec<UserChannel> = state

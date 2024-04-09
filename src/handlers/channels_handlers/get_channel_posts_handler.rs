@@ -16,7 +16,7 @@ use chrono::TimeDelta;
 use futures::{StreamExt, TryStreamExt};
 use mongodb::options::FindOptions;
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, sync::Arc};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct WebSocketResponse {
@@ -27,7 +27,7 @@ struct WebSocketResponse {
 
 pub async fn channel_posts(
     ws: WebSocketUpgrade,
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Extension(author): Extension<Author>,
     Path(channel_id): Path<ObjectId>,
 ) -> impl IntoResponse {
@@ -36,7 +36,7 @@ pub async fn channel_posts(
 
 async fn websocket(
     mut _socket: WebSocket,
-    state: State<AppState>,
+    state: State<Arc<AppState>>,
     channel_id: ObjectId,
     user_id: ObjectId,
 ) {
@@ -128,7 +128,7 @@ async fn websocket(
     }
 }
 
-async fn fetch_posts(state: State<AppState>, channel_id: ObjectId) -> Option<Vec<Post>> {
+async fn fetch_posts(state: State<Arc<AppState>>, channel_id: ObjectId) -> Option<Vec<Post>> {
     let filter = doc! {"channel_id": channel_id};
 
     let options = FindOptions::builder().limit(20).build();

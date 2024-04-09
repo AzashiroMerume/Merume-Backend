@@ -6,6 +6,7 @@ use axum::{
 };
 use bson::oid::ObjectId;
 use chrono::Utc;
+use std::sync::Arc;
 use validator::Validate;
 
 use crate::{models::author_model::Author, responses::OperationStatusResponse};
@@ -15,7 +16,7 @@ use crate::{
 };
 
 pub async fn create_post(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Extension(author): Extension<Author>,
     Extension(current_challenge_day): Extension<usize>,
     Path(channel_id): Path<ObjectId>,

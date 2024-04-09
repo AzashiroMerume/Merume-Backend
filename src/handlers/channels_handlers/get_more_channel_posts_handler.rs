@@ -2,7 +2,6 @@ use crate::{
     models::post_model::Post, responses::ChannelPostResponse, utils::pagination::Pagination,
     AppState,
 };
-
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -12,9 +11,10 @@ use axum::{
 use bson::{doc, oid::ObjectId};
 use futures::TryStreamExt;
 use mongodb::options::FindOptions;
+use std::sync::Arc;
 
 pub async fn more_channel_posts(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Path(channel_id): Path<ObjectId>,
     Query(pagination): Query<Pagination>,
 ) -> impl IntoResponse {

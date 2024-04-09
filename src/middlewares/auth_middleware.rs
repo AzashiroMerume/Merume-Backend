@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     models::author_model::Author, responses::OperationStatusResponse,
     utils::jwt::firebase_token_jwt::verify_access_jwt_token, AppState,
@@ -13,7 +15,7 @@ use bson::doc;
 use jsonwebtoken::errors::ErrorKind;
 
 pub async fn auth(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     mut req: Request,
     next: Next,
     pass_full_user: Option<bool>,
@@ -36,27 +38,29 @@ pub async fn auth(
         }
     };
 
-    let firebase_user_id = verify_access_jwt_token(token, state.firebase_token_decoding_key)
-        .map_err(|err| {
-            eprintln!("{:?}", err);
-            if err == ErrorKind::ExpiredSignature {
-                (
-                    StatusCode::UNAUTHORIZED,
-                    Json(OperationStatusResponse {
-                        success: false,
-                        error_message: Some(("Expired").to_string()),
-                    }),
-                )
-            } else {
-                (
-                    StatusCode::UNAUTHORIZED,
-                    Json(OperationStatusResponse {
-                        success: false,
-                        error_message: Some(("Token authentication failed").to_string()),
-                    }),
-                )
-            }
-        })?;
+    let firebase_user_id =
+        verify_access_jwt_token(token, state.firebase_config.token_decoding_key.clone()).map_err(
+            |err| {
+                eprintln!("{:?}", err);
+                if err == ErrorKind::ExpiredSignature {
+                    (
+                        StatusCode::UNAUTHORIZED,
+                        Json(OperationStatusResponse {
+                            success: false,
+                            error_message: Some(("Expired").to_string()),
+                        }),
+                    )
+                } else {
+                    (
+                        StatusCode::UNAUTHORIZED,
+                        Json(OperationStatusResponse {
+                            success: false,
+                            error_message: Some(("Token authentication failed").to_string()),
+                        }),
+                    )
+                }
+            },
+        )?;
 
     let user = match state
         .db

@@ -11,10 +11,11 @@ use argon2::{
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use bson::{doc, oid::ObjectId};
 use chrono::Utc;
+use std::sync::Arc;
 use validator::Validate;
 
 pub async fn register(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Json(payload): Json<RegisterPayload>,
 ) -> impl IntoResponse {
     // Validate the payload
@@ -133,8 +134,8 @@ pub async fn register(
             if let Some(user_id) = inserted.inserted_id.as_object_id() {
                 let access_token = match generate_access_jwt_token(
                     &payload.firebase_user_id,
-                    state.firebase_token_encoding_key,
-                    state.firebase_service_account,
+                    state.firebase_config.token_encoding_key.clone(),
+                    state.firebase_config.service_account.clone(),
                 ) {
                     Ok(token) => token,
                     Err(err) => {

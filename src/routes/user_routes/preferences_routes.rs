@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{handlers, middlewares, AppState};
 use handlers::user_handlers::preferences_handlers;
 use middlewares::auth_middleware;
@@ -10,7 +12,7 @@ use axum::{
 };
 use tower_http::limit::RequestBodyLimitLayer;
 
-pub fn preferences_routes(State(state): State<AppState>) -> Router<AppState> {
+pub fn preferences_routes(State(state): State<Arc<AppState>>) -> Router<Arc<AppState>> {
     Router::new()
         .route(
             "/",

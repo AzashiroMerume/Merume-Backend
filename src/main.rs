@@ -1,4 +1,5 @@
 mod db;
+mod firebase_config;
 mod handlers;
 mod middlewares;
 mod models;
@@ -9,22 +10,31 @@ mod utils;
 
 use axum::extract::State;
 use db::DB;
+use firebase_config::FirebaseConfig;
 use jsonwebtoken::{DecodingKey, EncodingKey};
 use router::create_router;
 
 use dotenv::dotenv;
-use std::net::SocketAddr;
+use std::{net::SocketAddr, sync::Arc};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Clone)]
 pub struct AppState {
     db: DB,
-    firebase_token_encoding_key: EncodingKey,
-    firebase_token_decoding_key: DecodingKey,
-    firebase_service_account: String,
+    firebase_config: FirebaseConfig,
     refresh_jwt_secret: String,
     //Use Redis
     // _redis_client: redis::Client,
+}
+
+impl AppState {
+    pub fn new(db: DB, firebase_config: FirebaseConfig, refresh_jwt_secret: String) -> Self {
+        AppState {
+            db,
+            firebase_config,
+            refresh_jwt_secret,
+        }
+    }
 }
 
 #[tokio::main]
@@ -69,14 +79,17 @@ async fn main() {
     //     std::env::var("REDIS_URI").expect("Failed to load `REDIS_URI` environment variable.");
     // let redis_client = redis::Client::open(redis_uri).expect("Failed to create redis_client");
 
+    let firebase_config = FirebaseConfig {
+        token_encoding_key: firebase_token_encoding_key,
+        token_decoding_key: firebase_token_decoding_key,
+        service_account: firebase_service_account,
+    };
     // router creation
-    let app = create_router(State(AppState {
-        db: db.clone(),
-        firebase_token_encoding_key,
-        firebase_token_decoding_key,
-        firebase_service_account,
+    let app = create_router(State(Arc::new(AppState::new(
+        db,
+        firebase_config,
         refresh_jwt_secret,
-    }));
+    ))));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], server_port));
     tracing::debug!("listening on {}", addr);

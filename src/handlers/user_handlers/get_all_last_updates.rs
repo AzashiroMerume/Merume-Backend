@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{models::post_model::Post, utils::websocket_helpers::send_response, AppState};
 use axum::{
     extract::{ws::WebSocket, State, WebSocketUpgrade},
@@ -24,13 +26,13 @@ struct WebSocketResponse {
 
 pub async fn all_last_updates(
     ws: WebSocketUpgrade,
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Extension(user_id): Extension<ObjectId>,
 ) -> impl IntoResponse {
     ws.on_upgrade(move |socket| websocket(socket, State(state), user_id))
 }
 
-async fn websocket(socket: WebSocket, state: State<AppState>, user_id: ObjectId) {
+async fn websocket(socket: WebSocket, state: State<Arc<AppState>>, user_id: ObjectId) {
     let (mut sender, _receiver) = socket.split();
 
     let pipeline = vec![doc! {
