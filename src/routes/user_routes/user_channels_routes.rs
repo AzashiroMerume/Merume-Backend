@@ -26,7 +26,7 @@ pub fn user_channels_routes(State(state): State<Arc<AppState>>) -> Router<Arc<Ap
             state.clone(),
             middlewares::verify_channel_access_middleware::verify_channel_access,
         ))
-        .route("/read_trackers", get(channel_handlers::channel_read_tracker_handlers::get_read_tracker_handler::get_read_trackers))
+        .route("/read_trackers", get(channel_handlers::channel_read_tracker_handlers::get_read_trackers_handler::get_read_trackers))
         .route(
             "/read_trackers/:channel_id",
             post(channel_handlers::channel_read_tracker_handlers::update_read_tracker_handler::update_read_tracker_handler),
