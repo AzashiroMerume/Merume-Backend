@@ -12,6 +12,7 @@ use axum::{
 };
 use bson::{doc, oid::ObjectId};
 use futures::{SinkExt, StreamExt, TryStreamExt};
+use mongodb::options::{ChangeStreamOptions, FullDocumentType};
 use std::sync::Arc;
 
 pub async fn subscribed_channels(
@@ -55,11 +56,28 @@ async fn websocket(mut _socket: WebSocket, state: State<Arc<AppState>>, user_id:
     let json = serde_json::to_string(&channels).unwrap();
     sender.send(Message::Text(json)).await.unwrap();
 
+    let pipeline = vec![doc! {
+        "$match": {
+            "$or": [
+                {"fullDocument.user_id": user_id},
+                {"fullDocumentBeforeChange.user_id": user_id},
+                {"updateDescription.updatedFields.user_id": user_id},
+            ]
+        }
+    }];
+
+    let options = ChangeStreamOptions::builder()
+        .full_document(Some(FullDocumentType::UpdateLookup))
+        .full_document_before_change(Some(
+            mongodb::options::FullDocumentBeforeChangeType::WhenAvailable,
+        ))
+        .build();
+
     // Watch for changes in the collection
     let mut change_stream = state
         .db
         .user_channels_collection
-        .watch(None, None)
+        .watch(pipeline, options)
         .await
         .unwrap();
 

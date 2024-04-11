@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     models::{author_model::Author, channel_model::Channel},
     AppState,
@@ -13,6 +11,8 @@ use axum::{
 };
 use bson::{doc, oid::ObjectId};
 use futures::{SinkExt, StreamExt, TryStreamExt};
+use mongodb::options::{ChangeStreamOptions, FullDocumentType};
+use std::sync::Arc;
 
 pub async fn created_channels(
     ws: WebSocketUpgrade,
@@ -41,14 +41,28 @@ async fn websocket(mut _socket: WebSocket, state: State<Arc<AppState>>, user_id:
             }
         }
     }
+    let pipeline = vec![doc! {
+        "$match": {
+            "$or": [
+                {"fullDocument.author.id": user_id},
+                {"fullDocumentBeforeChange.author.id": user_id},
+                {"updateDescription.updatedFields.author.id": user_id},
+            ]
+        }
+    }];
+
+    let options = ChangeStreamOptions::builder()
+        .full_document(Some(FullDocumentType::UpdateLookup))
+        .full_document_before_change(Some(
+            mongodb::options::FullDocumentBeforeChangeType::WhenAvailable,
+        ))
+        .build();
 
     // Listen for changes in channels
     let change_stream = state
         .db
         .channels_collection
-        .watch(
-            /* vec![doc! {"$match": {"owner_id": user_id}}] */ None, None,
-        )
+        .watch(pipeline, options)
         .await
         .map_err(|err| {
             eprintln!("Error creating change stream: {:?}", err);
