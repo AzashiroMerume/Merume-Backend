@@ -1,7 +1,4 @@
-use crate::{
-    models::post_model::Post, responses::ChannelPostResponse, utils::pagination::Pagination,
-    AppState,
-};
+use crate::{models::post_model::Post, utils::pagination::Pagination, AppState};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -11,7 +8,16 @@ use axum::{
 use bson::{doc, oid::ObjectId};
 use futures::TryStreamExt;
 use mongodb::options::FindOptions;
+use serde::Serialize;
 use std::sync::Arc;
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub struct ChannelPostResponse {
+    pub success: bool,
+    pub data: Option<Vec<Post>>,
+    pub error_message: Option<String>,
+}
 
 pub async fn more_channel_posts(
     State(state): State<Arc<AppState>>,

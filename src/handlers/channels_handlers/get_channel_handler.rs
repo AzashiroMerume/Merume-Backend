@@ -1,4 +1,4 @@
-use crate::{responses::ChannelResponse, AppState};
+use crate::{models::channel_model::Channel, AppState};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -6,7 +6,16 @@ use axum::{
     Json,
 };
 use bson::{doc, oid::ObjectId};
+use serde::Serialize;
 use std::sync::Arc;
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub struct ChannelResponse {
+    pub success: bool,
+    pub data: Option<Channel>,
+    pub error_message: Option<String>,
+}
 
 pub async fn get_channel_by_id(
     State(state): State<Arc<AppState>>,
