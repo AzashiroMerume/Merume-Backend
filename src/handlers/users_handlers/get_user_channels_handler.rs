@@ -1,8 +1,7 @@
-use crate::{models::channel_model::Channel, AppState};
+use crate::{models::channel_model::Channel, responses::ErrorResponse, AppState};
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
-    response::{IntoResponse, Json},
+    response::Json,
 };
 use bson::{doc, oid::ObjectId};
 use futures::TryStreamExt;
@@ -11,15 +10,13 @@ use std::sync::Arc;
 
 #[derive(Serialize)]
 pub struct UserChannelsResponse {
-    success: bool,
     channels: Option<Vec<Channel>>,
-    error: Option<String>,
 }
 
 pub async fn get_user_channels(
     State(state): State<Arc<AppState>>,
     Path(user_id): Path<ObjectId>,
-) -> impl IntoResponse {
+) -> Result<Json<UserChannelsResponse>, ErrorResponse> {
     let filter = doc! {"author.id": user_id, "channel_visibility": "Public"};
 
     let channels_result = state
@@ -35,35 +32,17 @@ pub async fn get_user_channels(
                 .await
                 .map_err(|err| {
                     eprintln!("Error collecting channels: {:?}", err);
-                    (
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(UserChannelsResponse {
-                            success: false,
-                            channels: None,
-                            error: Some("Failed to fetch channels".to_string()),
-                        }),
-                    )
+                    ErrorResponse::ServerError(None)
                 })
                 .ok();
 
-            let response = UserChannelsResponse {
-                success: true,
-                channels,
-                error: None,
-            };
+            let response = UserChannelsResponse { channels };
 
-            (StatusCode::OK, Json(response))
+            Ok(Json(response))
         }
         Err(err) => {
             eprintln!("Error finding channels: {:?}", err);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(UserChannelsResponse {
-                    success: false,
-                    channels: None,
-                    error: Some("Failed to fetch channels".to_string()),
-                }),
-            )
+            Err(ErrorResponse::ServerError(None))
         }
     }
 }

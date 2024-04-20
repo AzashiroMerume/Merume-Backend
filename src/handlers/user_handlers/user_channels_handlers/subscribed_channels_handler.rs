@@ -7,7 +7,7 @@ use axum::{
         ws::{Message, WebSocket, WebSocketUpgrade},
         State,
     },
-    response::IntoResponse,
+    response::Response,
     Extension,
 };
 use bson::{doc, oid::ObjectId};
@@ -19,7 +19,7 @@ pub async fn subscribed_channels(
     ws: WebSocketUpgrade,
     State(state): State<Arc<AppState>>,
     Extension(author): Extension<Author>,
-) -> impl IntoResponse {
+) -> Response {
     ws.on_upgrade(move |socket| websocket(socket, State(state), author.id))
 }
 
@@ -37,10 +37,7 @@ async fn websocket(mut _socket: WebSocket, state: State<Arc<AppState>>, user_id:
         .unwrap();
 
     // Retrieve the channels corresponding to the user's subscribed channels
-    let channel_ids: Vec<ObjectId> = user_channels
-        .iter()
-        .map(|uc| uc.channel_id.clone())
-        .collect();
+    let channel_ids: Vec<ObjectId> = user_channels.iter().map(|uc| uc.channel_id).collect();
 
     let filter = doc! {"_id": {"$in": channel_ids}};
     let channels: Vec<Channel> = state

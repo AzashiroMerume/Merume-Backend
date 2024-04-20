@@ -10,11 +10,10 @@ mod utils;
 
 use axum::extract::State;
 use db::DB;
+use dotenv::dotenv;
 use firebase_config::FirebaseConfig;
 use jsonwebtoken::{DecodingKey, EncodingKey};
 use router::create_router;
-
-use dotenv::dotenv;
 use std::{net::SocketAddr, sync::Arc};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 

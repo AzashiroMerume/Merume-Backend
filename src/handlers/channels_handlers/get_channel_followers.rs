@@ -1,11 +1,10 @@
 use crate::{
     models::{user_channel_model::UserChannel, user_info_model::UserInfo, user_model::User},
+    responses::ErrorResponse,
     AppState,
 };
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
-    response::IntoResponse,
     Json,
 };
 use bson::{doc, oid::ObjectId, Document};
@@ -17,16 +16,13 @@ use std::{sync::Arc, usize};
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub struct ChannelFollowersResponse {
-    pub success: bool,
     pub data: Option<Vec<UserInfo>>,
-    pub error_message: Option<String>,
 }
 
-// Modify your function to use UserInfo
 pub async fn get_channel_followers(
     State(state): State<Arc<AppState>>,
     Path(channel_id): Path<ObjectId>,
-) -> impl IntoResponse {
+) -> Result<Json<ChannelFollowersResponse>, ErrorResponse> {
     let user_channel_collection: Collection<UserChannel> =
         state.db.user_channels_collection.clone();
     let user_collection: Collection<User> = state.db.users_collection.clone();
@@ -70,24 +66,10 @@ pub async fn get_channel_followers(
             }
         }
 
-        return (
-            StatusCode::OK,
-            Json(ChannelFollowersResponse {
-                success: true,
-                data: Some(subscribers_info),
-                error_message: None,
-            }),
-        );
+        return Ok(Json(ChannelFollowersResponse {
+            data: Some(subscribers_info),
+        }));
     }
 
-    (
-        StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ChannelFollowersResponse {
-            success: false,
-            data: None,
-            error_message: Some(
-                "There was an error on the server side, try again later.".to_string(),
-            ),
-        }),
-    )
+    Err(ErrorResponse::ServerError(None))
 }

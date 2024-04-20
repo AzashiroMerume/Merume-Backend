@@ -1,11 +1,11 @@
 use crate::{
-    models::channel_model::Channel, responses::RecommendedChannelResponse,
-    utils::pagination::Pagination, AppState,
+    models::channel_model::Channel,
+    responses::{ErrorResponse, RecommendedChannelResponse},
+    utils::pagination::Pagination,
+    AppState,
 };
 use axum::{
     extract::{Query, State},
-    http::StatusCode,
-    response::IntoResponse,
     Json,
 };
 use bson::doc;
@@ -15,7 +15,7 @@ use std::sync::Arc;
 pub async fn trendings(
     State(state): State<Arc<AppState>>,
     Query(pagination): Query<Pagination>,
-) -> impl IntoResponse {
+) -> Result<Json<RecommendedChannelResponse>, ErrorResponse> {
     let skip = pagination.page * pagination.limit;
 
     let pipeline = vec![
@@ -73,15 +73,7 @@ pub async fn trendings(
         Ok(cursor) => cursor,
         Err(err) => {
             eprintln!("Cursor error: {}", err);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(RecommendedChannelResponse {
-                    success: false,
-                    data: None,
-                    page: None,
-                    error_message: Some("There was an error on the server".to_string()),
-                }),
-            );
+            return Err(ErrorResponse::ServerError(None));
         }
     };
 
@@ -105,13 +97,8 @@ pub async fn trendings(
         result.push(recommended_channel); // Only add the channel data
     }
 
-    (
-        StatusCode::OK,
-        Json(RecommendedChannelResponse {
-            success: true,
-            data: Some(result),
-            page: Some(pagination.page),
-            error_message: None,
-        }),
-    )
+    Ok(Json(RecommendedChannelResponse {
+        data: Some(result),
+        page: Some(pagination.page),
+    }))
 }

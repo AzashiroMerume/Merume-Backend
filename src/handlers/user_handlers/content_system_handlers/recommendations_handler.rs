@@ -1,37 +1,27 @@
 use crate::{
-    models::channel_model::Channel, models::user_model::User,
-    responses::RecommendedChannelResponse, utils::pagination::Pagination, AppState,
+    models::channel_model::Channel,
+    models::user_model::User,
+    responses::{ErrorResponse, RecommendedChannelResponse},
+    utils::pagination::Pagination,
+    AppState,
 };
-use std::sync::Arc;
-
 use axum::{
     extract::{Extension, Query, State},
-    http::StatusCode,
-    response::IntoResponse,
     Json,
 };
 use bson::doc;
 use futures::StreamExt;
+use std::sync::Arc;
 
 pub async fn recommendations(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<User>,
     Query(pagination): Query<Pagination>,
-) -> impl IntoResponse {
+) -> Result<Json<RecommendedChannelResponse>, ErrorResponse> {
     let user_preferences = match user.preferences {
         Some(preferences) => preferences,
         None => {
-            return (
-                StatusCode::NOT_FOUND,
-                Json(RecommendedChannelResponse {
-                    success: false,
-                    data: None,
-                    page: None,
-                    error_message: Some(
-                        "User does not have any preferences, try to add preferences".to_string(),
-                    ),
-                }),
-            )
+            return Err(ErrorResponse::NotFound(None));
         }
     };
 
@@ -82,15 +72,7 @@ pub async fn recommendations(
         Ok(cursor) => cursor,
         Err(err) => {
             eprintln!("Cursor error: {}", err);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(RecommendedChannelResponse {
-                    success: false,
-                    data: None,
-                    page: None,
-                    error_message: Some("There was an error on the server".to_string()),
-                }),
-            );
+            return Err(ErrorResponse::ServerError(None));
         }
     };
 
@@ -114,13 +96,8 @@ pub async fn recommendations(
         result.push(recommended_channel);
     }
 
-    (
-        StatusCode::OK,
-        Json(RecommendedChannelResponse {
-            success: true,
-            data: Some(result),
-            page: Some(pagination.page),
-            error_message: None,
-        }),
-    )
+    Ok(Json(RecommendedChannelResponse {
+        data: Some(result),
+        page: Some(pagination.page),
+    }))
 }

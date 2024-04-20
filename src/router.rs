@@ -19,7 +19,6 @@ use tower_http::{
     sensitive_headers::SetSensitiveRequestHeadersLayer, set_header::SetResponseHeaderLayer,
     timeout::TimeoutLayer, trace::TraceLayer,
 };
-// use std::sync::Arc;
 
 pub fn create_router(State(state): State<Arc<AppState>>) -> Router {
     //setting server configs

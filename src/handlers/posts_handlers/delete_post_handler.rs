@@ -1,10 +1,10 @@
+use crate::models::author_model::Author;
+use crate::responses::ErrorResponse;
 use crate::AppState;
-use crate::{models::author_model::Author, responses::OperationStatusResponse};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
-    response::IntoResponse,
-    Extension, Json,
+    Extension,
 };
 use bson::{doc, oid::ObjectId};
 use std::sync::Arc;
@@ -13,7 +13,7 @@ pub async fn delete_post_by_id(
     State(state): State<Arc<AppState>>,
     Extension(author): Extension<Author>,
     Path((_channel_id, post_id)): Path<(ObjectId, ObjectId)>,
-) -> impl IntoResponse {
+) -> Result<StatusCode, ErrorResponse> {
     let post = state
         .db
         .posts_collection
@@ -32,65 +32,24 @@ pub async fn delete_post_by_id(
                 match deletion_result {
                     Ok(result) => {
                         if result.deleted_count == 1 {
-                            (
-                                StatusCode::OK,
-                                Json(OperationStatusResponse {
-                                    success: true,
-                                    error_message: None,
-                                }),
-                            )
+                            Ok(StatusCode::OK)
                         } else {
-                            (
-                                StatusCode::INTERNAL_SERVER_ERROR,
-                                Json(OperationStatusResponse {
-                                    success: false,
-                                    error_message: Some("Failed to delete post".to_string()),
-                                }),
-                            )
+                            Err(ErrorResponse::ServerError(None))
                         }
                     }
                     Err(err) => {
                         eprintln!("Error deleting post: {:?}", err);
-                        (
-                            StatusCode::INTERNAL_SERVER_ERROR,
-                            Json(OperationStatusResponse {
-                                success: false,
-                                error_message: Some(
-                                    "There was an error on the server side, try again later."
-                                        .to_string(),
-                                ),
-                            }),
-                        )
+                        Err(ErrorResponse::ServerError(None))
                     }
                 }
             } else {
-                (
-                    StatusCode::FORBIDDEN,
-                    Json(OperationStatusResponse {
-                        success: false,
-                        error_message: Some("You are not the author of this post".to_string()),
-                    }),
-                )
+                Err(ErrorResponse::Forbidden(Some("Not an author of the post")))
             }
         }
-        Ok(None) => (
-            StatusCode::NOT_FOUND,
-            Json(OperationStatusResponse {
-                success: false,
-                error_message: Some("Post not found".to_string()),
-            }),
-        ),
+        Ok(None) => Err(ErrorResponse::NotFound(None)),
         Err(err) => {
             eprintln!("Error finding post: {:?}", err);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(OperationStatusResponse {
-                    success: false,
-                    error_message: Some(
-                        "There was an error on the server side, try again later.".to_string(),
-                    ),
-                }),
-            )
+            Err(ErrorResponse::ServerError(None))
         }
     }
 }

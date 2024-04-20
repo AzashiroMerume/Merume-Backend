@@ -1,8 +1,8 @@
-use crate::{models::post_model::Post, utils::pagination::Pagination, AppState};
+use crate::{
+    models::post_model::Post, responses::ErrorResponse, utils::pagination::Pagination, AppState,
+};
 use axum::{
     extract::{Path, Query, State},
-    http::StatusCode,
-    response::IntoResponse,
     Json,
 };
 use bson::{doc, oid::ObjectId};
@@ -14,16 +14,14 @@ use std::sync::Arc;
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub struct ChannelPostResponse {
-    pub success: bool,
     pub data: Option<Vec<Post>>,
-    pub error_message: Option<String>,
 }
 
 pub async fn more_channel_posts(
     State(state): State<Arc<AppState>>,
     Path(channel_id): Path<ObjectId>,
     Query(pagination): Query<Pagination>,
-) -> impl IntoResponse {
+) -> Result<Json<ChannelPostResponse>, ErrorResponse> {
     let skip = pagination.page * pagination.limit;
 
     let filter = doc! {"channel_id": channel_id};
@@ -37,14 +35,7 @@ pub async fn more_channel_posts(
         Ok(cursor) => cursor,
         Err(err) => {
             eprintln!("Cursor error: {}", err);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ChannelPostResponse {
-                    success: false,
-                    data: None,
-                    error_message: Some("There was an error on the server".to_string()),
-                }),
-            );
+            return Err(ErrorResponse::ServerError(None));
         }
     };
 
@@ -52,23 +43,9 @@ pub async fn more_channel_posts(
         Ok(posts) => posts,
         Err(err) => {
             eprintln!("Failed to collect posts: {}", err);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ChannelPostResponse {
-                    success: false,
-                    data: None,
-                    error_message: Some("There was an error on the server".to_string()),
-                }),
-            );
+            return Err(ErrorResponse::ServerError(None));
         }
     };
 
-    (
-        StatusCode::OK,
-        Json(ChannelPostResponse {
-            success: true,
-            data: Some(posts),
-            error_message: None,
-        }),
-    )
+    Ok(Json(ChannelPostResponse { data: Some(posts) }))
 }
