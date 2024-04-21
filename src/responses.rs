@@ -5,6 +5,7 @@ use axum::{
 };
 use serde::Serialize;
 
+#[derive(Debug)]
 pub enum ErrorResponse {
     BadRequest(Option<&'static str>),
     Unauthorized(Option<&'static str>),
