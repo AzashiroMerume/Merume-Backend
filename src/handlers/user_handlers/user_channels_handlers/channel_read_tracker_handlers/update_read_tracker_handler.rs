@@ -3,13 +3,12 @@ use crate::{
         author_model::Author,
         channel_read_tracker_model::{ChannelReadTracker, ChannelReadTrackerPayload},
     },
-    responses::OperationStatusResponse,
+    responses::ErrorResponse,
     AppState,
 };
 use axum::{
     extract::{Path, State},
     http::StatusCode,
-    response::IntoResponse,
     Extension, Json,
 };
 use bson::{doc, oid::ObjectId};
@@ -20,20 +19,12 @@ pub async fn update_read_tracker_handler(
     Path(channel_id): Path<ObjectId>,
     Extension(author): Extension<Author>,
     Json(payload): Json<ChannelReadTrackerPayload>,
-) -> impl IntoResponse {
+) -> Result<StatusCode, ErrorResponse> {
     let serialized_channel_read_tracker = match bson::to_bson(&payload) {
         Ok(data) => data,
         Err(err) => {
             eprintln!("Failed to serialize payload: {}", err);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(OperationStatusResponse {
-                    success: false,
-                    error_message: Some(
-                        "There was an error on the server side, try again later.".to_string(),
-                    ),
-                }),
-            );
+            return Err(ErrorResponse::ServerError(None));
         }
     };
 
@@ -41,15 +32,7 @@ pub async fn update_read_tracker_handler(
         Some(document) => document,
         None => {
             eprintln!("Failed to convert serialized data to document");
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(OperationStatusResponse {
-                    success: false,
-                    error_message: Some(
-                        "There was an error on the server side, try again later.".to_string(),
-                    ),
-                }),
-            );
+            return Err(ErrorResponse::ServerError(None));
         }
     };
 
@@ -69,25 +52,10 @@ pub async fn update_read_tracker_handler(
                 .find_one_and_update(filter, update, None)
                 .await
             {
-                Ok(_) => (
-                    StatusCode::OK,
-                    Json(OperationStatusResponse {
-                        success: true,
-                        error_message: None,
-                    }),
-                ),
+                Ok(_) => Ok(StatusCode::OK),
                 Err(err) => {
                     eprintln!("Failed to update channel read tracker: {}", err);
-                    (
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(OperationStatusResponse {
-                            success: false,
-                            error_message: Some(
-                                "There was an error on the server side, try again later."
-                                    .to_string(),
-                            ),
-                        }),
-                    )
+                    Err(ErrorResponse::ServerError(None))
                 }
             }
         }
@@ -105,39 +73,16 @@ pub async fn update_read_tracker_handler(
                 .insert_one(channel_read_tracker.to_owned(), None)
                 .await
             {
-                Ok(_) => (
-                    StatusCode::CREATED,
-                    Json(OperationStatusResponse {
-                        success: true,
-                        error_message: None,
-                    }),
-                ),
+                Ok(_) => Ok(StatusCode::OK),
                 Err(err) => {
                     eprintln!("Failed to insert channel read tracker: {}", err);
-                    (
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(OperationStatusResponse {
-                            success: false,
-                            error_message: Some(
-                                "There was an error on the server side, try again later."
-                                    .to_string(),
-                            ),
-                        }),
-                    )
+                    Err(ErrorResponse::ServerError(None))
                 }
             }
         }
         Err(err) => {
             eprintln!("Failed to find channel read tracker: {}", err);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(OperationStatusResponse {
-                    success: false,
-                    error_message: Some(
-                        "There was an error on the server side, try again later.".to_string(),
-                    ),
-                }),
-            )
+            Err(ErrorResponse::ServerError(None))
         }
     }
 }

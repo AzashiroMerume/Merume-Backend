@@ -1,9 +1,9 @@
 use crate::{
     models::{author_model::Author, user_model::UserPreferencesPayload},
-    responses::OperationStatusResponse,
+    responses::ErrorResponse,
     AppState,
 };
-use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, Json};
+use axum::{extract::State, http::StatusCode, Extension, Json};
 use bson::doc;
 use mongodb::options::UpdateOptions;
 use std::sync::Arc;
@@ -13,18 +13,13 @@ pub async fn post_preferences(
     State(state): State<Arc<AppState>>,
     Extension(author): Extension<Author>,
     Json(payload): Json<UserPreferencesPayload>,
-) -> impl IntoResponse {
+) -> Result<StatusCode, ErrorResponse> {
     // Validate the payload
     match payload.validate() {
         Ok(()) => {} // Validation successful, do nothing
         Err(err) => {
-            return (
-                StatusCode::UNPROCESSABLE_ENTITY,
-                Json(OperationStatusResponse {
-                    success: false,
-                    error_message: Some(err.to_string()),
-                }),
-            );
+            eprintln!("Error validating payload: {}", err);
+            return Err(ErrorResponse::UnprocessableEntity(None));
         }
     }
 
@@ -38,24 +33,10 @@ pub async fn post_preferences(
         .await;
 
     match result {
-        Ok(_) => (
-            StatusCode::OK,
-            Json(OperationStatusResponse {
-                success: true,
-                error_message: None,
-            }),
-        ),
+        Ok(_) => Ok(StatusCode::OK),
         Err(err) => {
             eprintln!("Failed to update preferences: {}", err);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(OperationStatusResponse {
-                    success: false,
-                    error_message: Some(
-                        "There was an error on server side. Please try again later.".to_string(),
-                    ),
-                }),
-            );
+            Err(ErrorResponse::ServerError(None))
         }
     }
 }

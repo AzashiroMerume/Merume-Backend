@@ -1,9 +1,7 @@
-use std::sync::Arc;
-
 use crate::{models::post_model::Post, utils::websocket_helpers::send_response, AppState};
 use axum::{
     extract::{ws::WebSocket, State, WebSocketUpgrade},
-    response::IntoResponse,
+    response::Response,
     Extension,
 };
 use bson::{doc, oid::ObjectId};
@@ -16,6 +14,7 @@ use mongodb::{
     },
 };
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct WebSocketResponse {
@@ -28,7 +27,7 @@ pub async fn all_last_updates(
     ws: WebSocketUpgrade,
     State(state): State<Arc<AppState>>,
     Extension(user_id): Extension<ObjectId>,
-) -> impl IntoResponse {
+) -> Response {
     ws.on_upgrade(move |socket| websocket(socket, State(state), user_id))
 }
 

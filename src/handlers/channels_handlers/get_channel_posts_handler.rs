@@ -8,7 +8,7 @@ use axum::{
         ws::{WebSocket, WebSocketUpgrade},
         Path, State,
     },
-    response::IntoResponse,
+    response::Response,
     Extension,
 };
 use bson::{doc, oid::ObjectId};
@@ -30,7 +30,7 @@ pub async fn channel_posts(
     State(state): State<Arc<AppState>>,
     Extension(author): Extension<Author>,
     Path(channel_id): Path<ObjectId>,
-) -> impl IntoResponse {
+) -> Response {
     ws.on_upgrade(move |socket| websocket(socket, State(state), channel_id, author.id))
 }
 

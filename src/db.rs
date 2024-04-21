@@ -4,10 +4,8 @@ use crate::{
         post_actioned_model::ReadPost, post_model::Post, user_channel_model::UserChannel,
         user_model::User,
     },
-    responses::OperationStatusResponse,
+    responses::ErrorResponse,
 };
-
-use axum::{http::StatusCode, Json};
 use mongodb::{
     bson::Document,
     options::{ChangeStreamPreAndPostImages, ClientOptions, Compressor, CreateCollectionOptions},
@@ -32,7 +30,7 @@ pub struct DB {
 }
 
 impl DB {
-    pub async fn init() -> Result<Self, (StatusCode, Json<OperationStatusResponse>)> {
+    pub async fn init() -> Result<Self, ErrorResponse> {
         let mongo_uri: String =
             std::env::var("MONGO_URI").expect("Failed to load `MONGO_URI` environment variable.");
         let mongo_connection_timeout: u64 = match std::env::var("MONGO_CONNECTION_TIMEOUT") {
@@ -70,17 +68,8 @@ impl DB {
             .expect("Failed to load `DB_READ_POSTS_TABLE` environment variable.");
 
         let mut client_options = ClientOptions::parse(mongo_uri).await.map_err(|err| {
-            eprintln!("Failed to parse MongoDB URI: {}", err.to_string());
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(OperationStatusResponse {
-                    success: false,
-                    error_message: Some(format!(
-                        "Failed to parse MongoDB URI: {}",
-                        err.to_string()
-                    )),
-                }),
-            )
+            eprintln!("Failed to parse MongoDB URI: {}", err);
+            ErrorResponse::ServerError(None)
         })?;
 
         client_options.connect_timeout = Some(Duration::from_secs(mongo_connection_timeout));
@@ -100,16 +89,7 @@ impl DB {
 
         let client = Client::with_options(client_options).map_err(|err| {
             eprintln!("Error applying options to client: {}", err);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(OperationStatusResponse {
-                    success: false,
-                    error_message: Some(format!(
-                        "Failed to create MongoDB client: {}",
-                        err.to_string()
-                    )),
-                }),
-            )
+            ErrorResponse::ServerError(None)
         })?;
 
         let database = client.database(db_name.as_str());
@@ -144,16 +124,7 @@ impl DB {
                 "Error creating posts collection with change stream options: {}",
                 err
             );
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(OperationStatusResponse {
-                    success: false,
-                    error_message: Some(format!(
-                        "Failed to create MongoDB collection: {}",
-                        err.to_string()
-                    )),
-                }),
-            )
+            ErrorResponse::ServerError(None)
         })?;
         let posts_collection = database.collection::<Post>(&posts_collection_name);
         let posts_collection_bson = database.collection::<Document>(&posts_collection_name);

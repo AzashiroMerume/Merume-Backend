@@ -1,39 +1,34 @@
-use std::sync::Arc;
-
 use crate::AppState;
 use axum::{
     extract::{
         ws::{WebSocket, WebSocketUpgrade},
         Extension, State,
     },
-    response::IntoResponse,
+    response::Response,
 };
 use bson::{doc, oid::ObjectId};
 use chrono::Utc;
+use std::sync::Arc;
 
 pub async fn heartbeat(
     ws: WebSocketUpgrade,
     State(state): State<Arc<AppState>>,
     Extension(user_id): Extension<ObjectId>,
-) -> impl IntoResponse {
+) -> Response {
     ws.on_upgrade(move |socket| websocket(socket, State(state), user_id))
 }
 
 async fn websocket(mut socket: WebSocket, state: State<Arc<AppState>>, user_id: ObjectId) {
     set_user_online(user_id, &state).await;
 
-    loop {
-        if let Some(msg) = socket.recv().await {
-            let msg = if let Ok(msg) = msg {
-                msg
-            } else {
-                break;
-            };
-
-            if socket.send(msg).await.is_err() {
-                break;
-            }
+    while let Some(msg) = socket.recv().await {
+        let msg = if let Ok(msg) = msg {
+            msg
         } else {
+            break;
+        };
+
+        if socket.send(msg).await.is_err() {
             break;
         }
     }

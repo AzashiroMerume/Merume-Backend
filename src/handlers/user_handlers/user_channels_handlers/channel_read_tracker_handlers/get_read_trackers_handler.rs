@@ -1,5 +1,5 @@
-use crate::{models::author_model::Author, AppState};
-use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, Json};
+use crate::{models::author_model::Author, responses::ErrorResponse, AppState};
+use axum::{extract::State, Extension, Json};
 use bson::doc;
 use futures::TryStreamExt;
 use serde::Serialize;
@@ -7,16 +7,14 @@ use std::{collections::HashMap, sync::Arc};
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
-struct ReadTrackersResponse {
-    success: bool,
+pub struct ReadTrackersResponse {
     data: Option<HashMap<String, i32>>,
-    error_message: Option<String>,
 }
 
 pub async fn get_read_trackers(
     State(state): State<Arc<AppState>>,
     Extension(author): Extension<Author>,
-) -> impl IntoResponse {
+) -> Result<Json<ReadTrackersResponse>, ErrorResponse> {
     let pipeline = vec![
         doc! {
             "$match": { "user_id": author.id }
@@ -132,14 +130,7 @@ pub async fn get_read_trackers(
         }
         Err(err) => {
             eprintln!("Error executing aggregation pipeline: {:?}", err);
-            return (
-                StatusCode::OK,
-                Json(ReadTrackersResponse {
-                    success: false,
-                    data: None,
-                    error_message: Some("Error on the server side".to_string()),
-                }),
-            );
+            return Err(ErrorResponse::ServerError(None));
         }
     };
 
@@ -149,12 +140,5 @@ pub async fn get_read_trackers(
         Some(unread_counts_map)
     };
 
-    (
-        StatusCode::OK,
-        Json(ReadTrackersResponse {
-            success: true,
-            data: response,
-            error_message: None,
-        }),
-    )
+    Ok(Json(ReadTrackersResponse { data: response }))
 }

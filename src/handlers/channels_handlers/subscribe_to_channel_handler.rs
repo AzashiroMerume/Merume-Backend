@@ -1,24 +1,22 @@
-use std::sync::Arc;
-
 use crate::{
     models::{author_model::Author, user_channel_model::UserChannel},
-    responses::OperationStatusResponse,
+    responses::ErrorResponse,
     AppState,
 };
 use axum::{
     extract::{Path, State},
     http::StatusCode,
-    response::IntoResponse,
-    Extension, Json,
+    Extension,
 };
 use bson::{doc, oid::ObjectId};
 use chrono::Utc;
+use std::sync::Arc;
 
 pub async fn subscribe_to_channel(
     State(state): State<Arc<AppState>>,
     Extension(author): Extension<Author>,
     Path(channel_id): Path<ObjectId>,
-) -> impl IntoResponse {
+) -> Result<StatusCode, ErrorResponse> {
     let channel = state
         .db
         .channels_collection
@@ -27,39 +25,21 @@ pub async fn subscribe_to_channel(
 
     if let Err(err) = channel {
         eprintln!("Failed to retrieve channel: {}", err.to_string());
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(OperationStatusResponse {
-                success: false,
-                error_message: Some(
-                    "There was an error on the server side, try again later.".to_string(),
-                ),
-            }),
-        );
+        return Err(ErrorResponse::ServerError(None));
     }
 
     let channel = match channel.unwrap() {
         Some(channel) => channel,
         None => {
-            return (
-                StatusCode::NOT_FOUND,
-                Json(OperationStatusResponse {
-                    success: false,
-                    error_message: Some("Channel not found".to_string()),
-                }),
-            );
+            return Err(ErrorResponse::ServerError(None));
         }
     };
 
     // Check if the channel belongs to the user trying to subscribe
     if channel.author.id == author.id {
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(OperationStatusResponse {
-                success: false,
-                error_message: Some("You cannot subscribe to your own channel".to_string()),
-            }),
-        );
+        return Err(ErrorResponse::BadRequest(Some(
+            "Cannot subscribe to your own channel",
+        )));
     }
 
     // Check if the user is already subscribed to the channel
@@ -69,13 +49,7 @@ pub async fn subscribe_to_channel(
         .find_one(doc! {"user_id": author.id, "channel_id": channel.id}, None)
         .await
     {
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(OperationStatusResponse {
-                success: false,
-                error_message: Some("User is already subscribed to this channel".to_string()),
-            }),
-        );
+        return Err(ErrorResponse::BadRequest(Some("Already subscribed")));
     }
 
     let user_channel = UserChannel {
@@ -105,43 +79,20 @@ pub async fn subscribe_to_channel(
                 .await
             {
                 Ok(_) => {
-                    return (
-                        StatusCode::OK,
-                        Json(OperationStatusResponse {
-                            success: true,
-                            error_message: None,
-                        }),
-                    )
+                    return Ok(StatusCode::OK);
                 }
                 Err(err) => {
                     eprintln!(
                         "Failed to update channel subscription field: {}",
                         err.to_string()
                     );
-                    return (
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(OperationStatusResponse {
-                            success: false,
-                            error_message: Some(
-                                "There was an error on the server side, try again later."
-                                    .to_string(),
-                            ),
-                        }),
-                    );
+                    return Err(ErrorResponse::ServerError(None));
                 }
             }
         }
         Err(err) => {
             eprintln!("Failed to insert user channel: {}", err.to_string());
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(OperationStatusResponse {
-                    success: false,
-                    error_message: Some(
-                        "There was an error on the server side, try again later.".to_string(),
-                    ),
-                }),
-            );
+            return Err(ErrorResponse::ServerError(None));
         }
     }
 }

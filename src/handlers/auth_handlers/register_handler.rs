@@ -1,6 +1,6 @@
 use crate::models::user_info_model::UserInfo;
 use crate::models::{auth_model::RegisterPayload, user_model::User};
-use crate::responses::AuthResponse;
+use crate::responses::{AuthResponse, ErrorResponse};
 use crate::utils::jwt::firebase_token_jwt::generate_access_jwt_token;
 use crate::utils::jwt::refresh_token_jwt::generate_refresh_jwt_token;
 use crate::AppState;
@@ -8,7 +8,7 @@ use argon2::{
     password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2,
 };
-use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
+use axum::{extract::State, Json};
 use bson::{doc, oid::ObjectId};
 use chrono::Utc;
 use std::sync::Arc;
@@ -17,25 +17,16 @@ use validator::Validate;
 pub async fn register(
     State(state): State<Arc<AppState>>,
     Json(payload): Json<RegisterPayload>,
-) -> impl IntoResponse {
-    // Validate the payload
+) -> Result<Json<AuthResponse>, ErrorResponse> {
     match payload.validate() {
-        Ok(()) => {} // Validation successful, do nothing
+        Ok(()) => {}
         Err(err) => {
-            return (
-                StatusCode::UNPROCESSABLE_ENTITY,
-                Json(AuthResponse {
-                    success: false,
-                    token: None,
-                    refresh_token: None,
-                    user_info: None,
-                    error_message: Some(err.to_string()),
-                }),
-            );
+            eprintln!("Error validating payload: {:?}", err);
+            return Err(ErrorResponse::UnprocessableEntity(None));
         }
     }
 
-    //checking email and nickname for existence
+    // Checking email and nickname for existence
     match state
         .db
         .users_collection
@@ -47,36 +38,12 @@ pub async fn register(
         )
         .await
     {
-        Ok(Some(existing_user)) => {
-            let error_message = if existing_user.nickname == payload.nickname.to_lowercase() {
-                "Nickname already in use. Please try sign in."
-            } else {
-                "Email already in use. Please try sign in."
-            };
-
-            let main_response = AuthResponse {
-                success: false,
-                token: None,
-                refresh_token: None,
-                user_info: None,
-                error_message: Some(error_message.to_string()),
-            };
-            return (StatusCode::CONFLICT, Json(main_response));
+        Ok(Some(_)) => {
+            return Err(ErrorResponse::ServerError(None));
         }
         Err(err) => {
             eprintln!("Error checking email and nickname: {:?}", err);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(AuthResponse {
-                    success: false,
-                    token: None,
-                    refresh_token: None,
-                    user_info: None,
-                    error_message: Some(
-                        "There was an error on the server side, try again later.".to_string(),
-                    ),
-                }),
-            );
+            return Err(ErrorResponse::ServerError(None));
         }
         _ => {} // continue with registration
     }
@@ -88,18 +55,7 @@ pub async fn register(
         Ok(hash) => hash.to_string(),
         Err(err) => {
             eprintln!("Error hashing password: {:?}", err);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(AuthResponse {
-                    success: false,
-                    token: None,
-                    refresh_token: None,
-                    user_info: None,
-                    error_message: Some(
-                        "There was an error on the server side, try again later.".to_string(),
-                    ),
-                }),
-            );
+            return Err(ErrorResponse::ServerError(None));
         }
     };
 
@@ -140,19 +96,7 @@ pub async fn register(
                     Ok(token) => token,
                     Err(err) => {
                         eprintln!("Error generating firebase JWT token: {:?}", err);
-                        return (
-                            StatusCode::INTERNAL_SERVER_ERROR,
-                            Json(AuthResponse {
-                                success: false,
-                                token: None,
-                                refresh_token: None,
-                                user_info: None,
-                                error_message: Some(
-                                    "There was an error on the server side, try again later."
-                                        .to_string(),
-                                ),
-                            }),
-                        );
+                        return Err(ErrorResponse::ServerError(None));
                     }
                 };
 
@@ -163,19 +107,7 @@ pub async fn register(
                     Ok(token) => token,
                     Err(err) => {
                         eprintln!("Error generating JWT token: {:?}", err);
-                        return (
-                            StatusCode::INTERNAL_SERVER_ERROR,
-                            Json(AuthResponse {
-                                success: false,
-                                token: None,
-                                refresh_token: None,
-                                user_info: None,
-                                error_message: Some(
-                                    "There was an error on the server side, try again later."
-                                        .to_string(),
-                                ),
-                            }),
-                        );
+                        return Err(ErrorResponse::ServerError(None));
                     }
                 };
 
@@ -189,45 +121,18 @@ pub async fn register(
                     is_online: user.is_online,
                     last_time_online: user.last_time_online,
                 };
-                return (
-                    StatusCode::CREATED,
-                    Json(AuthResponse {
-                        success: true,
-                        token: Some(access_token),
-                        refresh_token: Some(refresh_token),
-                        user_info: Some(user_info),
-                        error_message: None,
-                    }),
-                );
+                Ok(Json(AuthResponse {
+                    token: Some(access_token),
+                    refresh_token: Some(refresh_token),
+                    user_info: Some(user_info),
+                }))
             } else {
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(AuthResponse {
-                        success: false,
-                        token: None,
-                        refresh_token: None,
-                        user_info: None,
-                        error_message: Some(
-                            "There was an error on the server side, try again later.".to_string(),
-                        ),
-                    }),
-                );
+                Err(ErrorResponse::ServerError(None))
             }
         }
         Err(err) => {
             eprintln!("Error inserting user: {:?}", err);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(AuthResponse {
-                    success: false,
-                    token: None,
-                    refresh_token: None,
-                    user_info: None,
-                    error_message: Some(
-                        "There was an error on the server side, try again later.".to_string(),
-                    ),
-                }),
-            )
+            Err(ErrorResponse::ServerError(None))
         }
     }
 }

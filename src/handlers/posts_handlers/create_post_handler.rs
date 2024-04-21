@@ -1,7 +1,6 @@
 use axum::{
     extract::{Path, State},
     http::StatusCode,
-    response::IntoResponse,
     Extension, Json,
 };
 use bson::oid::ObjectId;
@@ -9,7 +8,7 @@ use chrono::Utc;
 use std::sync::Arc;
 use validator::Validate;
 
-use crate::{models::author_model::Author, responses::OperationStatusResponse};
+use crate::{models::author_model::Author, responses::ErrorResponse};
 use crate::{
     models::post_model::{Post, PostPayload},
     AppState,
@@ -21,24 +20,17 @@ pub async fn create_post(
     Extension(current_challenge_day): Extension<usize>,
     Path(channel_id): Path<ObjectId>,
     Json(payload): Json<PostPayload>,
-) -> impl IntoResponse {
+) -> Result<StatusCode, ErrorResponse> {
     // Validate the payload
     match payload.validate() {
         Ok(()) => {} // Validation successful, do nothing
         Err(err) => {
             eprintln!("Error validating payload: {:?}", err);
-            return (
-                StatusCode::UNPROCESSABLE_ENTITY,
-                Json(OperationStatusResponse {
-                    success: false,
-                    error_message: Some(err.to_string()),
-                }),
-            );
+            return Err(ErrorResponse::UnprocessableEntity(None));
         }
     }
 
     let now = Utc::now();
-
     let author = Author {
         id: author.id,
         nickname: author.nickname,
@@ -65,26 +57,10 @@ pub async fn create_post(
     let result = state.db.posts_collection.insert_one(post, None).await;
 
     match result {
-        Ok(_) => {
-            return (
-                StatusCode::CREATED,
-                Json(OperationStatusResponse {
-                    success: true,
-                    error_message: None,
-                }),
-            );
-        }
+        Ok(_) => Ok(StatusCode::CREATED),
         Err(err) => {
             eprintln!("Error inserting user: {:?}", err);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(OperationStatusResponse {
-                    success: false,
-                    error_message: Some(
-                        "There was an error on the server side, try again later.".to_string(),
-                    ),
-                }),
-            )
+            Err(ErrorResponse::ServerError(None))
         }
     }
 }

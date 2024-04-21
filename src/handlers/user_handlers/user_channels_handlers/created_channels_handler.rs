@@ -7,7 +7,7 @@ use axum::{
         ws::{Message, WebSocket, WebSocketUpgrade},
         Extension, State,
     },
-    response::IntoResponse,
+    response::Response,
 };
 use bson::{doc, oid::ObjectId};
 use futures::{SinkExt, StreamExt, TryStreamExt};
@@ -18,7 +18,7 @@ pub async fn created_channels(
     ws: WebSocketUpgrade,
     State(state): State<Arc<AppState>>,
     Extension(author): Extension<Author>,
-) -> impl IntoResponse {
+) -> Response  {
     ws.on_upgrade(move |socket| websocket(socket, State(state), author.id))
 }
 
