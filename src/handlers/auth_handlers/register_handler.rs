@@ -8,6 +8,7 @@ use argon2::{
     password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2,
 };
+use axum::http::StatusCode;
 use axum::{extract::State, Json};
 use bson::{doc, oid::ObjectId};
 use chrono::Utc;
@@ -17,7 +18,7 @@ use validator::Validate;
 pub async fn register(
     State(state): State<Arc<AppState>>,
     Json(payload): Json<RegisterPayload>,
-) -> Result<Json<AuthResponse>, ErrorResponse> {
+) -> Result<(StatusCode, Json<AuthResponse>), ErrorResponse> {
     match payload.validate() {
         Ok(()) => {}
         Err(err) => {
@@ -121,11 +122,14 @@ pub async fn register(
                     is_online: user.is_online,
                     last_time_online: user.last_time_online,
                 };
-                Ok(Json(AuthResponse {
-                    token: Some(access_token),
-                    refresh_token: Some(refresh_token),
-                    user_info: Some(user_info),
-                }))
+                Ok((
+                    StatusCode::OK,
+                    Json(AuthResponse {
+                        token: Some(access_token),
+                        refresh_token: Some(refresh_token),
+                        user_info: Some(user_info),
+                    }),
+                ))
             } else {
                 Err(ErrorResponse::ServerError(None))
             }
