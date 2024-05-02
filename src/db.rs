@@ -41,29 +41,37 @@ impl DB {
                 .expect("Failed to parse `MONGO_CONNECTION_TIMEOUT` environment variable."),
             None => panic!("Failed to load `MONGO_CONNECTION_TIMEOUT` environment variable"),
         };
-        let mongo_min_pool_size: u32 = std::env::var("MONGO_MIN_POOL_SIZE")
+        let mongo_min_pool_size: u32 = secrets
+            .get("MONGO_MIN_POOL_SIZE")
             .expect("Failed to load `MONGO_MIN_POOL_SIZE` environment variable.")
             .parse()
             .expect("Failed to parse `MONGO_MIN_POOL_SIZE` environment variable.");
-        let mongo_max_pool_size: u32 = std::env::var("MONGO_MAX_POOL_SIZE")
+        let mongo_max_pool_size: u32 = secrets
+            .get("MONGO_MAX_POOL_SIZE")
             .expect("Failed to load `MONGO_MAX_POOL_SIZE` environment variable.")
             .parse()
             .expect("Failed to parse `MONGO_MAX_POOL_SIZE` environment variable.");
 
-        let db_name: String =
-            std::env::var("DB_NAME").expect("Failed to load `DB_NAME` environement variable.");
-        let users_collection_name: String = std::env::var("DB_USERS_TABLE")
+        let db_name: String = secrets
+            .get("DB_NAME")
+            .expect("Failed to load `DB_NAME` environement variable.");
+        let users_collection_name: String = secrets
+            .get("DB_USERS_TABLE")
             .expect("Failed to load `DB_USERS_TABLE` environement variable.");
-        let channels_collection_name: String = std::env::var("DB_CHANNELS_TABLE")
+        let channels_collection_name: String = secrets
+            .get("DB_CHANNELS_TABLE")
             .expect("Failed to load `DB_CHANNELS_TABLE` environement variable.");
-        let user_channels_collection_name: String = std::env::var("DB_USER_CHANNELS_TABLE")
+        let user_channels_collection_name: String = secrets
+            .get("DB_USER_CHANNELS_TABLE")
             .expect("Failed to load `DB_USER_CHANNELS_TABLE` environement variable.");
-        let channel_read_trackers_collection_name: String =
-            std::env::var("DB_CHANNEL_READ_TRACKERS_TABLE")
-                .expect("Failed to load `DB_CHANNEL_READ_TRACKERS_TABLE` environment variable.");
-        let posts_collection_name: String = std::env::var("DB_POSTS_TABLE")
+        let channel_read_trackers_collection_name: String = secrets
+            .get("DB_CHANNEL_READ_TRACKERS_TABLE")
+            .expect("Failed to load `DB_CHANNEL_READ_TRACKERS_TABLE` environment variable.");
+        let posts_collection_name: String = secrets
+            .get("DB_POSTS_TABLE")
             .expect("Failed to load `DB_POSTS_TABLE` environement variable.");
-        let read_posts_collection_name: String = std::env::var("DB_READ_POSTS_TABLE")
+        let read_posts_collection_name: String = secrets
+            .get("DB_READ_POSTS_TABLE")
             .expect("Failed to load `DB_READ_POSTS_TABLE` environment variable.");
 
         let mut client_options = ClientOptions::parse(mongo_uri).await.map_err(|err| {
