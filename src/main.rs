@@ -14,8 +14,9 @@ use dotenv::dotenv;
 use firebase_config::FirebaseConfig;
 use jsonwebtoken::{DecodingKey, EncodingKey};
 use router::create_router;
-use std::{net::SocketAddr, sync::Arc};
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use shuttle_axum::ShuttleAxum;
+use std::{/* net::SocketAddr, */ sync::Arc};
+// use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -36,24 +37,25 @@ impl AppState {
     }
 }
 
-#[tokio::main]
-async fn main() {
+// #[tokio::main]
+#[shuttle_runtime::main]
+async fn main() -> ShuttleAxum {
     dotenv().ok();
 
     // initialize tracing
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::new(
-            std::env::var("RUST_LOG").unwrap_or_else(|_| {
-                "backend=debug,axum=debug,tower_http=debug,mongodb=debug".into()
-            }),
-        ))
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    // tracing_subscriber::registry()
+    //     .with(tracing_subscriber::EnvFilter::new(
+    //         std::env::var("RUST_LOG").unwrap_or_else(|_| {
+    //             "backend=debug,axum=debug,tower_http=debug,mongodb=debug".into()
+    //         }),
+    //     ))
+    //     .with(tracing_subscriber::fmt::layer())
+    //     .init();
 
-    let server_port = std::env::var("SERVER_PORT")
-        .expect("Failed to load `SERVER_PORT` environment variable.")
-        .parse()
-        .expect("Failed to load `SERVER_PORT` environment variable.");
+    // let server_port: u16 = std::env::var("SERVER_PORT")
+    //     .expect("Failed to load `SERVER_PORT` environment variable.")
+    //     .parse()
+    //     .expect("Failed to load `SERVER_PORT` environment variable.");
 
     let db = DB::init()
         .await
@@ -90,20 +92,22 @@ async fn main() {
         refresh_jwt_secret,
     ))));
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], server_port));
-    tracing::debug!("listening on {}", addr);
+    // let addr = SocketAddr::from(([127, 0, 0, 1], server_port));
+    // tracing::debug!("listening on {}", addr);
 
-    let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
+    // let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
 
-    axum::serve(listener, app)
-        .with_graceful_shutdown(signal_shutdown())
-        .await
-        .unwrap();
+    // axum::serve(listener, app)
+    //     .with_graceful_shutdown(signal_shutdown())
+    //     .await
+    //     .unwrap();
 
-    async fn signal_shutdown() {
-        tokio::signal::ctrl_c()
-            .await
-            .expect("Expect ctrl - ctrl shutdown");
-        println!("Signal shutting down");
-    }
+    // async fn signal_shutdown() {
+    //     tokio::signal::ctrl_c()
+    //         .await
+    //         .expect("Expect ctrl - ctrl shutdown");
+    //     println!("Signal shutting down");
+    // }
+
+    Ok(app.into())
 }
