@@ -91,11 +91,14 @@ async fn main(#[shuttle_runtime::Secrets] secrets: SecretStore) -> ShuttleAxum {
         service_account: firebase_service_account,
     };
     // router creation
-    let app = create_router(State(Arc::new(AppState::new(
-        db,
-        firebase_config,
-        refresh_jwt_secret,
-    ))));
+    let app = create_router(
+        State(Arc::new(AppState::new(
+            db,
+            firebase_config,
+            refresh_jwt_secret,
+        ))),
+        secrets,
+    );
 
     // let addr = SocketAddr::from(([127, 0, 0, 1], server_port));
     // tracing::debug!("listening on {}", addr);

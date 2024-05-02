@@ -13,6 +13,7 @@ use axum::{
     },
     Router,
 };
+use shuttle_runtime::SecretStore;
 use std::{iter::once, sync::Arc, time::Duration};
 use tower::ServiceBuilder;
 use tower_http::{
@@ -20,10 +21,11 @@ use tower_http::{
     timeout::TimeoutLayer, trace::TraceLayer,
 };
 
-pub fn create_router(State(state): State<Arc<AppState>>) -> Router {
+pub fn create_router(State(state): State<Arc<AppState>>, secrets: SecretStore) -> Router {
     //setting server configs
     let server_header_value = HeaderValue::from_static("Merume");
-    let request_timeout: u64 = std::env::var("REQUEST_TIMEOUT")
+    let request_timeout: u64 = secrets
+        .get("REQUEST_TIMEOUT")
         .expect("Failed to load `REQUEST_TIMEOUT` environment variable.")
         .parse()
         .expect("Failed to parse `REQUEST_TIMEOUT` environment variable.");
