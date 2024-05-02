@@ -15,6 +15,7 @@ use firebase_config::FirebaseConfig;
 use jsonwebtoken::{DecodingKey, EncodingKey};
 use router::create_router;
 use shuttle_axum::ShuttleAxum;
+use shuttle_runtime::SecretStore;
 use std::{/* net::SocketAddr, */ sync::Arc};
 // use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -39,7 +40,7 @@ impl AppState {
 
 // #[tokio::main]
 #[shuttle_runtime::main]
-async fn main() -> ShuttleAxum {
+async fn main(#[shuttle_runtime::Secrets] secrets: SecretStore) -> ShuttleAxum {
     dotenv().ok();
 
     // initialize tracing
@@ -61,18 +62,22 @@ async fn main() -> ShuttleAxum {
         .await
         .expect("The Database initialization failed..");
 
-    let firebase_private_key = std::env::var("FIREBASE_SERVICE_PRIVATE_KEY")
+    let firebase_private_key = secrets
+        .get("FIREBASE_SERVICE_PRIVATE_KEY")
         .expect("Failed to load `FIREBASE_SERVICE_PRIVATE_KEY` environment variable.");
-    let firebase_public_key = std::env::var("FIREBASE_SERVICE_PUBLIC_KEY")
+    let firebase_public_key = secrets
+        .get("FIREBASE_SERVICE_PUBLIC_KEY")
         .expect("Failed to load `FIREBASE_SERVICE_PUBLIC_KEY` environment variable.");
-    let firebase_service_account = std::env::var("FIREBASE_SERVICE_ACCOUNT_EMAIL")
+    let firebase_service_account = secrets
+        .get("FIREBASE_SERVICE_ACCOUNT_EMAIL")
         .expect("Failed to load `FIREBASE_SERVICE_ACCOUNT_EMAIL` environment variable.");
     let firebase_token_encoding_key =
         EncodingKey::from_rsa_pem(firebase_private_key.as_bytes()).unwrap();
     let firebase_token_decoding_key =
         DecodingKey::from_rsa_pem(firebase_public_key.as_bytes()).unwrap();
 
-    let refresh_jwt_secret = std::env::var("REFRESH_JWT_SECRET")
+    let refresh_jwt_secret = secrets
+        .get("REFRESH_JWT_SECRET")
         .expect("Failed to load `REFRESH_JWT_SECRET` environment variable.");
 
     //redis initialization
