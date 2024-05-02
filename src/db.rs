@@ -11,6 +11,7 @@ use mongodb::{
     options::{ChangeStreamPreAndPostImages, ClientOptions, Compressor, CreateCollectionOptions},
     Client, Collection,
 };
+use shuttle_runtime::SecretStore;
 use std::time::Duration;
 
 #[derive(Clone, Debug)]
@@ -30,17 +31,15 @@ pub struct DB {
 }
 
 impl DB {
-    pub async fn init() -> Result<Self, ErrorResponse> {
-        let mongo_uri: String =
-            std::env::var("MONGO_URI").expect("Failed to load `MONGO_URI` environment variable.");
-        let mongo_connection_timeout: u64 = match std::env::var("MONGO_CONNECTION_TIMEOUT") {
-            Ok(val) => val
+    pub async fn init(secrets: SecretStore) -> Result<Self, ErrorResponse> {
+        let mongo_uri: String = secrets
+            .get("MONGO_URI")
+            .expect("Failed to load `MONGO_URI` environment variable.");
+        let mongo_connection_timeout: u64 = match secrets.get("MONGO_CONNECTION_TIMEOUT") {
+            Some(val) => val
                 .parse()
                 .expect("Failed to parse `MONGO_CONNECTION_TIMEOUT` environment variable."),
-            Err(err) => panic!(
-                "Failed to load `MONGO_CONNECTION_TIMEOUT` environment variable: {}",
-                err
-            ),
+            None => panic!("Failed to load `MONGO_CONNECTION_TIMEOUT` environment variable"),
         };
         let mongo_min_pool_size: u32 = std::env::var("MONGO_MIN_POOL_SIZE")
             .expect("Failed to load `MONGO_MIN_POOL_SIZE` environment variable.")

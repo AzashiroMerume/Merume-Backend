@@ -58,7 +58,7 @@ async fn main(#[shuttle_runtime::Secrets] secrets: SecretStore) -> ShuttleAxum {
     //     .parse()
     //     .expect("Failed to load `SERVER_PORT` environment variable.");
 
-    let db = DB::init()
+    let db = DB::init(secrets.clone())
         .await
         .expect("The Database initialization failed..");
 
