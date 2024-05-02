@@ -10,7 +10,7 @@ mod utils;
 
 use axum::extract::State;
 use db::DB;
-use dotenv::dotenv;
+// use dotenv::dotenv;
 use firebase_config::FirebaseConfig;
 use jsonwebtoken::{DecodingKey, EncodingKey};
 use router::create_router;
@@ -41,7 +41,7 @@ impl AppState {
 // #[tokio::main]
 #[shuttle_runtime::main]
 async fn main(#[shuttle_runtime::Secrets] secrets: SecretStore) -> ShuttleAxum {
-    dotenv().ok();
+    // dotenv().ok();
 
     // initialize tracing
     // tracing_subscriber::registry()
