@@ -17,7 +17,7 @@ use router::create_router;
 use shuttle_axum::ShuttleAxum;
 use shuttle_runtime::SecretStore;
 use std::{/* net::SocketAddr, */ sync::Arc};
-// use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -44,14 +44,12 @@ async fn main(#[shuttle_runtime::Secrets] secrets: SecretStore) -> ShuttleAxum {
     // dotenv().ok();
 
     // initialize tracing
-    // tracing_subscriber::registry()
-    //     .with(tracing_subscriber::EnvFilter::new(
-    //         std::env::var("RUST_LOG").unwrap_or_else(|_| {
-    //             "backend=debug,axum=debug,tower_http=debug,mongodb=debug".into()
-    //         }),
-    //     ))
-    //     .with(tracing_subscriber::fmt::layer())
-    //     .init();
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::EnvFilter::new(
+            secrets.get("RUST_LOG").unwrap()
+        ))
+        .with(tracing_subscriber::fmt::layer())
+        .init();
 
     // let server_port: u16 = std::env::var("SERVER_PORT")
     //     .expect("Failed to load `SERVER_PORT` environment variable.")
