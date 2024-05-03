@@ -76,7 +76,7 @@ impl DB {
 
         let mut client_options = ClientOptions::parse(mongo_uri).await.map_err(|err| {
             eprintln!("Failed to parse MongoDB URI: {}", err);
-            ErrorResponse::ServerError(None)
+            ErrorResponse::ServerError(Some("Mongo uri"))
         })?;
 
         client_options.connect_timeout = Some(Duration::from_secs(mongo_connection_timeout));
@@ -96,7 +96,7 @@ impl DB {
 
         let client = Client::with_options(client_options).map_err(|err| {
             eprintln!("Error applying options to client: {}", err);
-            ErrorResponse::ServerError(None)
+            ErrorResponse::ServerError(Some("Error applying options to client"))
         })?;
 
         let database = client.database(db_name.as_str());
@@ -131,7 +131,7 @@ impl DB {
                 "Error creating posts collection with change stream options: {}",
                 err
             );
-            ErrorResponse::ServerError(None)
+            ErrorResponse::ServerError(Some("posts collection with change stream options failed"))
         })?;
         let posts_collection = database.collection::<Post>(&posts_collection_name);
         let posts_collection_bson = database.collection::<Document>(&posts_collection_name);
