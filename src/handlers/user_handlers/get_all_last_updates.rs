@@ -20,7 +20,6 @@ use std::sync::Arc;
 struct WebSocketResponse {
     operation_type: OperationType,
     post: Option<Post>,
-    post_id: Option<ObjectId>,
 }
 
 pub async fn all_last_updates(
@@ -70,20 +69,14 @@ async fn websocket(socket: WebSocket, state: State<Arc<AppState>>, user_id: Obje
                         let response = WebSocketResponse {
                             operation_type: OperationType::Insert,
                             post: change_event.full_document,
-                            post_id: None,
                         };
                         send_response(&mut sender, response).await;
                     }
                     OperationType::Delete => {
-                        let post_id = change_event
-                            .document_key
-                            .unwrap()
-                            .get_object_id("_id")
-                            .unwrap();
+                        let post = change_event.full_document_before_change;
                         let response = WebSocketResponse {
                             operation_type: OperationType::Delete,
-                            post: None,
-                            post_id: Some(post_id),
+                            post,
                         };
                         send_response(&mut sender, response).await;
                     }
@@ -91,7 +84,6 @@ async fn websocket(socket: WebSocket, state: State<Arc<AppState>>, user_id: Obje
                         let response = WebSocketResponse {
                             operation_type: OperationType::Update,
                             post: change_event.full_document,
-                            post_id: None,
                         };
                         send_response(&mut sender, response).await;
                     }
