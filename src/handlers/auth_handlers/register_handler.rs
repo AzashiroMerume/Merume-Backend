@@ -123,7 +123,7 @@ pub async fn register(
                     last_time_online: user.last_time_online,
                 };
                 Ok((
-                    StatusCode::OK,
+                    StatusCode::CREATED,
                     Json(AuthResponse {
                         token: Some(access_token),
                         refresh_token: Some(refresh_token),
