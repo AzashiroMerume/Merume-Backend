@@ -1,15 +1,13 @@
 pub mod preferences_routes;
 pub mod user_channels_routes;
 
-use std::sync::Arc;
-
 use super::content_routes;
 use crate::{
     handlers::user_handlers::{
         get_all_last_updates::all_last_updates, get_email_handler::get_email_by_nickname,
         heartbeat_handler::heartbeat,
     },
-    middlewares::auth_middleware,
+    middlewares::auth_middleware::{self, PassFromAuth},
     AppState,
 };
 use axum::{
@@ -18,6 +16,7 @@ use axum::{
     routing::{get, post},
     Router,
 };
+use std::sync::Arc;
 use tower_http::limit::RequestBodyLimitLayer;
 
 pub fn user_routes(State(state): State<Arc<AppState>>) -> Router<Arc<AppState>> {
@@ -29,7 +28,7 @@ pub fn user_routes(State(state): State<Arc<AppState>>) -> Router<Arc<AppState>> 
         .route("/heartbeat", get(heartbeat))
         .route("/last_updates", get(all_last_updates))
         .layer(middleware::from_fn_with_state(state, |state, req, next| {
-            auth_middleware::auth(state, req, next, None)
+            auth_middleware::auth(state, req, next, PassFromAuth::UserId)
         }))
         .route("/get_email", post(get_email_by_nickname))
         .layer(RequestBodyLimitLayer::new(1024))

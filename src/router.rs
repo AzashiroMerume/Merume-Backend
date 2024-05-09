@@ -11,6 +11,7 @@ use axum::{
         header::{self, AUTHORIZATION},
         HeaderValue,
     },
+    routing::get,
     Router,
 };
 use std::{iter::once, sync::Arc, time::Duration};
@@ -36,11 +37,7 @@ pub fn create_router(State(state): State<Arc<AppState>>) -> Router {
     let users_routes = users_routes::user_routes(State(state.clone()));
 
     let app = Router::new()
-        // .route("/test", get(common_handler::_test_handler))
-        // .route_layer(middleware::from_fn_with_state(
-        //     client,
-        //     |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
-        // ))
+        .route("/test", get(common_handler::test_handler))
         .nest("/user", user_routes)
         .nest("/users", users_routes)
         .nest("/auth", auth_routes)

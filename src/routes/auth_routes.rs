@@ -1,8 +1,9 @@
-use std::sync::Arc;
-
 use crate::{
     handlers::{self},
-    middlewares::{auth_middleware, verify_refresh_token_middleware},
+    middlewares::{
+        auth_middleware::{self, PassFromAuth},
+        verify_refresh_token_middleware,
+    },
     AppState,
 };
 use axum::{
@@ -13,6 +14,7 @@ use axum::{
     Router,
 };
 use handlers::auth_handlers;
+use std::sync::Arc;
 use tower_http::limit::RequestBodyLimitLayer;
 
 pub fn auth_routes(State(state): State<Arc<AppState>>) -> Router<Arc<AppState>> {
@@ -21,7 +23,7 @@ pub fn auth_routes(State(state): State<Arc<AppState>>) -> Router<Arc<AppState>> 
         .route("/logout", post(auth_handlers::logout_handler::logout))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
-            |state, req, next| auth_middleware::auth(state, req, next, Some(false)),
+            |state, req, next| auth_middleware::auth(state, req, next, PassFromAuth::Author),
         ))
         .route("/register", post(auth_handlers::register_handler::register))
         .route("/login", post(auth_handlers::login_handler::login))

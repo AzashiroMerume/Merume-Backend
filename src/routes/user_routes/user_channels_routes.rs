@@ -1,15 +1,13 @@
-use std::sync::Arc;
-
 use crate::{
     handlers::user_handlers::user_channels_handlers as channel_handlers, middlewares, AppState,
 };
-
 use axum::{
     extract::State,
     middleware,
     routing::{get, post},
     Router,
 };
+use std::sync::Arc;
 use tower_http::limit::RequestBodyLimitLayer;
 
 pub fn user_channels_routes(State(state): State<Arc<AppState>>) -> Router<Arc<AppState>> {
@@ -44,7 +42,7 @@ pub fn user_channels_routes(State(state): State<Arc<AppState>>) -> Router<Arc<Ap
             post(channel_handlers::new_channel_handler::new_channel),
         )
         .layer(middleware::from_fn_with_state(state, |state, req, next| {
-            middlewares::auth_middleware::auth(state, req, next, Some(false))
+            middlewares::auth_middleware::auth(state, req, next, middlewares::auth_middleware::PassFromAuth::Author)
         }))
         .layer(RequestBodyLimitLayer::new(1024))
 }

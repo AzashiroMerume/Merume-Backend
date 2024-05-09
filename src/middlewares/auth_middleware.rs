@@ -11,11 +11,17 @@ use bson::doc;
 use jsonwebtoken::errors::ErrorKind;
 use std::sync::Arc;
 
+pub enum PassFromAuth {
+    FullUser,
+    Author,
+    UserId,
+}
+
 pub async fn auth(
     State(state): State<Arc<AppState>>,
     mut req: Request,
     next: Next,
-    pass_full_user: Option<bool>,
+    pass_from_auth: PassFromAuth,
 ) -> Result<Response, ErrorResponse> {
     let access_token_header = match req.headers().get("access_token") {
         Some(header) => header.to_str().ok(),
@@ -66,11 +72,11 @@ pub async fn auth(
         last_time_online: None,
     };
 
-    if let Some(true) = pass_full_user {
+    if let PassFromAuth::FullUser = pass_from_auth {
         req.extensions_mut().insert(user);
-    } else if let Some(false) = pass_full_user {
+    } else if let PassFromAuth::Author = pass_from_auth {
         req.extensions_mut().insert(author_info);
-    } else {
+    } else if let PassFromAuth::UserId = pass_from_auth {
         req.extensions_mut().insert(user.id);
     }
 

@@ -1,4 +1,8 @@
-use crate::{handlers, middlewares, AppState};
+use crate::{
+    handlers,
+    middlewares::{self, auth_middleware::PassFromAuth},
+    AppState,
+};
 use axum::{
     extract::State,
     middleware,
@@ -33,7 +37,7 @@ pub fn channels_routes(State(state): State<Arc<AppState>>) -> Router<Arc<AppStat
             get(channels_handlers::get_more_channel_posts_handler::more_channel_posts),
         )
         .layer(middleware::from_fn_with_state(state, |state, req, next| {
-            auth_middleware::auth(state, req, next, Some(false))
+            auth_middleware::auth(state, req, next, PassFromAuth::Author)
         }))
 }
 
@@ -66,7 +70,7 @@ pub fn post_routes(State(state): State<Arc<AppState>>) -> Router<Arc<AppState>> 
         .merge(without_post_id)
         .merge(with_post_id)
         .layer(middleware::from_fn_with_state(state, |state, req, next| {
-            auth_middleware::auth(state, req, next, Some(false))
+            auth_middleware::auth(state, req, next, PassFromAuth::Author)
         }))
         .layer(RequestBodyLimitLayer::new(1024))
 }
