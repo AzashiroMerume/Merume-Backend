@@ -45,22 +45,22 @@ pub async fn get_channel_followers(
 
         while let Some(doc) = cursor.next().await {
             if let Ok(doc) = doc {
-                if let Some(user_id) = doc.get_object_id("user_id").ok() {
-                    if let Ok(user) = user_collection.find_one(doc! {"_id": user_id}, None).await {
-                        if let Some(user) = user {
-                            // Convert User model to UserInfo here
-                            let user_info = UserInfo {
-                                id: user.id,
-                                nickname: user.nickname,
-                                username: user.username,
-                                email: None,
-                                pfp_link: user.pfp_link,
-                                preferences: user.preferences,
-                                is_online: user.is_online,
-                                last_time_online: user.last_time_online,
-                            };
-                            subscribers_info.push(user_info);
-                        }
+                if let Ok(user_id) = doc.get_object_id("user_id") {
+                    if let Ok(Some(user)) =
+                        user_collection.find_one(doc! {"_id": user_id}, None).await
+                    {
+                        // Convert User model to UserInfo here
+                        let user_info = UserInfo {
+                            id: user.id,
+                            nickname: user.nickname,
+                            username: user.username,
+                            email: None,
+                            pfp_link: user.pfp_link,
+                            preferences: user.preferences,
+                            is_online: user.is_online,
+                            last_time_online: user.last_time_online,
+                        };
+                        subscribers_info.push(user_info);
                     }
                 }
             }

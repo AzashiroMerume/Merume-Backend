@@ -15,7 +15,6 @@ pub async fn update_post_by_id(
     Path((_channel_id, post_id)): Path<(ObjectId, ObjectId)>,
     Json(payload): Json<UpdatePost>,
 ) -> impl IntoResponse {
-    println!("Wtf");
     //check if post already changed once
     match state
         .db
@@ -44,7 +43,7 @@ pub async fn update_post_by_id(
             );
         }
         Err(err) => {
-            eprintln!("Failed to find a post: {}", err.to_string());
+            eprintln!("Failed to find a post: {}", err);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(OperationStatusResponse {

@@ -24,7 +24,7 @@ pub async fn subscribe_to_channel(
         .await;
 
     if let Err(err) = channel {
-        eprintln!("Failed to retrieve channel: {}", err.to_string());
+        eprintln!("Failed to retrieve channel: {}", err);
         return Err(ErrorResponse::ServerError(None));
     }
 
@@ -78,21 +78,16 @@ pub async fn subscribe_to_channel(
                 )
                 .await
             {
-                Ok(_) => {
-                    return Ok(StatusCode::OK);
-                }
+                Ok(_) => Ok(StatusCode::OK),
                 Err(err) => {
-                    eprintln!(
-                        "Failed to update channel subscription field: {}",
-                        err.to_string()
-                    );
-                    return Err(ErrorResponse::ServerError(None));
+                    eprintln!("Failed to update channel subscription field: {}", err);
+                    Err(ErrorResponse::ServerError(None))
                 }
             }
         }
         Err(err) => {
-            eprintln!("Failed to insert user channel: {}", err.to_string());
-            return Err(ErrorResponse::ServerError(None));
+            eprintln!("Failed to insert user channel: {}", err);
+            Err(ErrorResponse::ServerError(None))
         }
     }
 }

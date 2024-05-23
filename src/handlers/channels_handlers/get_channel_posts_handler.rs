@@ -180,16 +180,14 @@ fn transform_posts(posts: Vec<Post>) -> Result<BTreeMap<String, Vec<Vec<Post>>>,
 
     let interval_limit = match TimeDelta::try_minutes(5) {
         Some(time) => Some(time),
-        None => return Err(format!("Failed to calculate time interval")),
+        None => return Err("Failed to calculate time interval".to_string()),
     };
 
     for post in posts {
         let created_date_str = post.created_at.date_naive().to_string();
 
         // Check if there's an existing array for the created date
-        let entry = result
-            .entry(created_date_str.clone())
-            .or_insert_with(Vec::new);
+        let entry = result.entry(created_date_str.clone()).or_default();
 
         if let Some(interval_limit) = interval_limit {
             // Check if there's an existing array for the time interval
